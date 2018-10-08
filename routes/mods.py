@@ -26,6 +26,7 @@ class Userland(RouteCog):
 
     # === Mods ===
     # TODO: Owner auth
+    # TODO: Finish endpoints
     @route("/api/v1/mods", methods=["POST"])
     @json
     def post_mods(self):
