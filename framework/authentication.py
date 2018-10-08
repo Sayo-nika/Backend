@@ -8,6 +8,8 @@ from flask import request
 class Authenticator:
     """
     Service to check API key validity
+
+    TODO: Rewrite with keycloak
     """
     def __init__(self, token_path: str):
         self.auth_tokens = []
@@ -23,5 +25,6 @@ class Authenticator:
         return request.headers["API-KEY"] in self.auth_tokens
 
     def reload_tokens(self):
+        return
         with open(self.token_path) as file:
             self.auth_tokens = json.load(file)
