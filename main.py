@@ -1,5 +1,7 @@
+# Stdlib
 import sys
 
+# Sayonika Internals
 from framework.objects import sayonika_instance
 
 sayonika_instance.debug = (len(sys.argv) > 1 and

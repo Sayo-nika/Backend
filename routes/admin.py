@@ -1,8 +1,10 @@
-from flask import jsonify, abort
+# External Libraries
+from flask import abort, jsonify
 
+# Sayonika Internals
 from framework.objects import mods_json
 from framework.route import route
-from framework.route_wrappers import auth_only, json
+from framework.route_wrappers import json, auth_only
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 

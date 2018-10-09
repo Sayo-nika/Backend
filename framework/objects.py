@@ -1,5 +1,6 @@
 # Stdlib
 import logging
+import os
 
 # External Libraries
 from flask_limiter import Limiter
@@ -13,6 +14,11 @@ from framework.sayonika import Sayonika
 __all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "mods_json")
 
 sayonika_instance = Sayonika()
+
+# Use env vars to update config
+sayonika_instance.config.update({k[9:]: v  # Strip 'SAYONIKA_'
+                                 for k, v in os.environ.items()
+                                 if k.startswith("SAYONIKA_")})
 
 limiter = Limiter(
     sayonika_instance,

@@ -1,5 +1,7 @@
-from flask import jsonify, abort, send_file
+# External Libraries
+from flask import abort, jsonify, send_file
 
+# Sayonika Internals
 from framework.objects import mods_json
 from framework.route import route, multiroute
 from framework.route_wrappers import json
@@ -34,7 +36,7 @@ class Userland(RouteCog):
     @json
     def get_recent_releases(self):
         sorted_mods = reversed(sorted(self.verified,
-                                      key=lambda mod: mod["released_at"]))  # Generator[Dict[str, Any]]
+                                      key=lambda mod: mod["released_at"]))
         return jsonify(list(sorted_mods)[:10])
 
     @route("/api/v1/mods/popular")

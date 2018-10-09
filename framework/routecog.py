@@ -2,9 +2,9 @@
 import inspect
 
 # Sayonika Internals
-from framework.sayonika import Sayonika
 from framework.objects import logger
 from framework.route import Route
+from framework.sayonika import Sayonika
 
 __all__ = ("RouteCog", )
 

@@ -1,11 +1,14 @@
-import os
+# Stdlib
 from datetime import datetime
+import os
 from secrets import token_hex
 
-from flask import jsonify, abort, request
+# External Libraries
+from flask import abort, jsonify, request
 
+# Sayonika Internals
 from framework.objects import mods_json
-from framework.route import route, multiroute
+from framework.route import multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
@@ -26,7 +29,6 @@ class Mods(RouteCog):
 
     # === Mods ===
     # TODO: Owner auth
-    # TODO: Finish endpoints
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @json
     def post_mods(self):
