@@ -6,7 +6,7 @@ from flask import request
 
 from framework.sayonika import Sayonika
 
-__all__ = ("route", "Route")
+__all__ = ("route", "Route", "multiroute")
 
 
 def route(path, **kwargs):
