@@ -5,13 +5,13 @@ from secrets import token_hex
 from flask import jsonify, abort, request
 
 from framework.objects import mods_json
-from framework.route import route
+from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
 
-class Userland(RouteCog):
+class Mods(RouteCog):
     def __init__(self, core: Sayonika):
         super().__init__(core)
         self.data = mods_json
@@ -27,7 +27,7 @@ class Userland(RouteCog):
     # === Mods ===
     # TODO: Owner auth
     # TODO: Finish endpoints
-    @route("/api/v1/mods", methods=["POST"])
+    @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @json
     def post_mods(self):
         file = request.files.get('file')
@@ -58,7 +58,7 @@ class Userland(RouteCog):
 
         return jsonify(mod)
 
-    @route("/api/v1/mods/<mod_name>", methods=["PATCH"])
+    @multiroute("/api/v1/mods/<mod_name>", methods=["PATCH"], other_methods=["GET"])
     @json
     def patch_mod(self, mod_name):
         file = request.files.get('file')
@@ -93,7 +93,7 @@ class Userland(RouteCog):
 
         return jsonify(mod)
 
-    @route("/api/v1/mods/<mod_name>/reviews", methods=["POST"])
+    @multiroute("/api/v1/mods/<mod_name>/reviews", methods=["POST"], other_methods=["GET"])
     @json
     def post_review(self, mod_name: str):
         if mod_name not in [mod["title"] for mod in self.data["mods"]]:
@@ -105,16 +105,16 @@ class Userland(RouteCog):
             val = request.form.get(attribute)
             if val is None:
                 abort(400, f"Missing POST parameter: '{attribute}'.")
-            mod[attribute] = val
+            review[attribute] = val
 
-        if review["author"] not in [user["name"] for user in self.data["users"]]
+        if review["author"] not in [user["name"] for user in self.data["users"]]:
             abort(400, f"A user with name '{review['author']}' does not exist.")
 
         self.data["reviews"].append(review)
 
         return jsonify(review)
 
-    @route("/api/v1/users", methods=["POST"])
+    @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
     @json
     def post_users(self):
         user = {}
@@ -125,7 +125,7 @@ class Userland(RouteCog):
                 abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
-        if user["name"] in [user["name"] for user in self.data["users"]]
+        if user["name"] in [user["name"] for user in self.data["users"]]:
             abort(400, f"A user with name '{user['name']}' already exists.")
 
         user["mods"] = []
@@ -135,7 +135,7 @@ class Userland(RouteCog):
 
         return jsonify(user)
 
-    @route("/api/v1/users/<user_name>", methods=["patch"])
+    @multiroute("/api/v1/users/<user_name>", methods=["PATCH"], other_methods=["GET"])
     @json
     def patch_user(self, user_name: str):
         user = {}
@@ -146,9 +146,8 @@ class Userland(RouteCog):
                 abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
-        if user_name not in [user["name"] for user in self.data["users"]]
+        if user_name not in [user["name"] for user in self.data["users"]]:
             abort(400, f"A user with name '{user['name']}' does not exist.")
-
 
         old_user = [user for user in self.data["users"]
                     if user["name"] == user_name][0]
@@ -164,4 +163,4 @@ class Userland(RouteCog):
 
 
 def setup(core: Sayonika):
-    Userland(core).register()
+    Mods(core).register()
