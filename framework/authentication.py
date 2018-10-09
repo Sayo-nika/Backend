@@ -4,6 +4,8 @@ import json
 # External Libraries
 from flask import request
 
+from keycloak import KeycloakOpenID
+
 
 class Authenticator:
     """
@@ -11,20 +13,19 @@ class Authenticator:
 
     TODO: Rewrite with keycloak
     """
-    def __init__(self, token_path: str):
+    def __init__(self, config_path: str):
         self.auth_tokens = []
-        self.token_path = token_path
+        with open(config_path) as f:
+            self.koid = KeycloakOpenID(json.load(f))
 
-    def check_key(self) -> str:
-        return request.headers["API-KEY"]
+    def has_authorized_access(self, *args, **kwargs) -> bool:
+        # TODO: Implement
+        # Test if user has access to specified route and arguments
+        # -> Does this page belong to this user?
+        raise NotImplemented()
 
-    def is_authenticated(self) -> bool:
-        return "API-KEY" in request.headers and self.valid_key()
-
-    def valid_key(self) -> bool:
-        return request.headers["API-KEY"] in self.auth_tokens
-
-    def reload_tokens(self):
-        return
-        with open(self.token_path) as file:
-            self.auth_tokens = json.load(file)
+    def has_admin_access(self) -> bool:
+        # TODO: Implement
+        # Test if user has access to specified route and arguments
+        # -> Does this user belong to the admin group?
+        raise NotImplemented()

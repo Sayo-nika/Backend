@@ -29,7 +29,6 @@ limiter = Limiter(
 logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
-auth_service = Authenticator("resources/json/keys.json")
-auth_service.reload_tokens()
+auth_service = Authenticator("settings.json")
 
 mods_json = JsonFile("mods/mods.json")

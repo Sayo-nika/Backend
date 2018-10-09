@@ -53,7 +53,7 @@ class Userland(RouteCog):
                       if mod["title"] == mod_name]
 
         if not valid_mods:
-            abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_name}' not found on the server.")
 
         return jsonify(valid_mods[0])
 
@@ -64,7 +64,7 @@ class Userland(RouteCog):
                       if mod["title"] == mod_name]
 
         if not valid_mods:
-            abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_name}' not found on the server.")
 
         return send_file(f"mods/{valid_mods[0]['path']}.zip")
 
@@ -75,7 +75,7 @@ class Userland(RouteCog):
                       if mod["title"] == mod_name]
 
         if not valid_mods:
-            abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_name}' not found on the server.")
 
         reviews = [review for review in self.verified
                    if review["mod"] == mod_name]
@@ -89,7 +89,7 @@ class Userland(RouteCog):
                       if mod["title"] == mod_name]
 
         if not valid_mods:
-            abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_name}' not found on the server.")
 
         authors = [user for user in self.data["users"]
                    if user["name"] in valid_mods[0]["authors"]]
@@ -111,7 +111,7 @@ class Userland(RouteCog):
                        if user["name"] == user_name]
 
         if not valid_users:
-            abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"Mod '{user_name}' not found on the server.")
 
         return jsonify(valid_users[0])
 
@@ -122,7 +122,7 @@ class Userland(RouteCog):
                        if user["name"] == user_name]
 
         if not valid_users:
-            abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"Mod '{user_name}' not found on the server.")
 
         return jsonify(valid_users[0]["favorites"])
 
@@ -133,7 +133,7 @@ class Userland(RouteCog):
                        if user["name"] == user_name]
 
         if not valid_users:
-            abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"Mod '{user_name}' not found on the server.")
 
         mods = [mod for mod in self.verified
                 if mod["title"] in valid_users[0]["mods"]]
@@ -147,7 +147,7 @@ class Userland(RouteCog):
                        if user["name"] == user_name]
 
         if not valid_users:
-            abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"Mod '{user_name}' not found on the server.")
 
         reviews = [review for review in self.data["reviews"]
                    if review["id"] in valid_users[0]["reviews"]]

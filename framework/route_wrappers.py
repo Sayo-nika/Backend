@@ -40,36 +40,20 @@ def json(func):
     return inner
 
 
-def auth_has_ratelimit(*rates: list):
-    """
-    Sets a custom ratelimit when using authorization keys
-    """
-    rates = rates or ("1 per second", "40 per minute", "2000 per hour")
-
-    def decorator(func):
-        func_wrapper = limiter.limit(
-            ";".join(rates),
-            key_func=auth_service.check_key
-        )
-        alt_func = func_wrapper(func)
-
-        @wraps(func)
-        def inner(*args, **kwargs):
-            f = alt_func if auth_service.is_authenticated() else func
-            return f(*args, **kwargs)
-
-        return inner
-
-    return decorator
-
-
-def auth_only(func):
-    """
-    Only for requests with valid authorization keys
-    """
+def requires_keycloak_login(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        if auth_service.is_authenticated():
+        if auth_service.has_authorized_access(*args, **kwargs):
+            return func(*args, **kwargs)
+        return abort(403)
+
+    return inner
+
+
+def requires_keycloak_admin(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        if auth_service.has_admin_access(*args, **kwargs):
             return func(*args, **kwargs)
         return abort(403)
 

@@ -1,5 +1,5 @@
 [all]
-# Todo: pytest when tests are needed
+# TODO: pytest when tests are needed
 linters = flake8, pylint, isort, vulture
 
 [flake8]
