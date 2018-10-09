@@ -2,6 +2,8 @@
 import functools
 
 # Sayonika Internals
+from flask import request
+
 from framework.sayonika import Sayonika
 
 __all__ = ("route", "Route")
@@ -15,6 +17,28 @@ def route(path, **kwargs):
         return Route(func, path, **kwargs)
 
     return decorator
+
+
+routes = {}
+
+
+def multiroute(path, methods=["GET"], other_methods=[]):
+    if path not in routes:
+        routes[path] = {"methods": methods + other_methods}
+
+    def f(func):
+        for method in methods:
+            routes[path][method] = func
+
+        @functools.wraps(func)
+        def switch(*args, **kwargs):
+            return routes[path][request.method](*args, **kwargs)
+
+        if all(key in routes[path] for key in routes[path]["methods"]):
+            return Route(switch, path, methods=routes[path]["methods"])
+        return
+
+    return f
 
 
 class Route:

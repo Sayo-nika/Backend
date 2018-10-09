@@ -1,7 +1,7 @@
 from flask import jsonify, abort, send_file
 
 from framework.objects import mods_json
-from framework.route import route
+from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
@@ -24,7 +24,7 @@ class Userland(RouteCog):
     def verified(self):
         return [mod for mod in self.data["mods"] if mod["verified"]]
 
-    @route("/api/v1/mods")
+    @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
     def get_mods(self):
         # TODO: Pagination
@@ -44,7 +44,7 @@ class Userland(RouteCog):
                              key=lambda mod: mod["downloads"])  # Generator[Dict[str, Any]]
         return jsonify(list(sorted_mods)[:10])
 
-    @route("/api/v1/mods/<mod_name>")
+    @multiroute("/api/v1/mods/<mod_name>", methods=["GET"], other_methods=["PATCH"])
     @json
     def get_mod(self, mod_name: str):
         valid_mods = [mod for mod in self.verified
@@ -66,7 +66,7 @@ class Userland(RouteCog):
 
         return send_file(f"mods/{valid_mods[0]['path']}.zip")
 
-    @route("/api/v1/mods/<mod_name>/reviews")
+    @multiroute("/api/v1/mods/<mod_name>/reviews", methods=["GET"], other_methods=["POST"])
     @json
     def get_mod_reviews(self, mod_name: str):
         valid_mods = [mod for mod in self.verified
@@ -96,13 +96,13 @@ class Userland(RouteCog):
 
     # === Users ===
 
-    @route("/api/v1/users")
+    @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
-    def get_mods(self):
+    def get_users(self):
         # TODO: Pagination
         return jsonify(self.data["users"])
 
-    @route("/api/v1/users/<user_name>")
+    @multiroute("/api/v1/users/<user_name>", methods=["GET"], other_methods=["POST"])
     @json
     def get_user(self, user_name: str):
         valid_users = [user for user in self.data["users"]
