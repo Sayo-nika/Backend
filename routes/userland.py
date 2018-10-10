@@ -46,53 +46,53 @@ class Userland(RouteCog):
                              key=lambda mod: mod["downloads"])  # Generator[Dict[str, Any]]
         return jsonify(list(sorted_mods)[:10])
 
-    @multiroute("/api/v1/mods/<mod_name>", methods=["GET"], other_methods=["PATCH"])
+    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
-    def get_mod(self, mod_name: str):
+    def get_mod(self, mod_id: str):
         valid_mods = [mod for mod in self.verified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         return jsonify(valid_mods[0])
 
-    @route("/api/v1/mods/<mod_name>/download")
+    @route("/api/v1/mods/<mod_id>/download")
     @json
-    def get_download(self, mod_name: str):
+    def get_download(self, mod_id: str):
         valid_mods = [mod for mod in self.verified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         return send_file(f"mods/{valid_mods[0]['path']}.zip")
 
-    @multiroute("/api/v1/mods/<mod_name>/reviews", methods=["GET"], other_methods=["POST"])
+    @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
-    def get_mod_reviews(self, mod_name: str):
+    def get_mod_reviews(self, mod_id: str):
         valid_mods = [mod for mod in self.verified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         reviews = [review for review in self.verified
-                   if review["mod"] == mod_name]
+                   if review["mod"] == mod_id]
 
         return jsonify(reviews)
 
-    @route("/api/v1/mods/<mod_name>/authors")
+    @route("/api/v1/mods/<mod_id>/authors")
     @json
-    def get_mod_authors(self, mod_name: str):
+    def get_mod_authors(self, mod_id: str):
         valid_mods = [mod for mod in self.verified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         authors = [user for user in self.data["users"]
-                   if user["name"] in valid_mods[0]["authors"]]
+                   if user["id"] in valid_mods[0]["authors"]]
 
         return jsonify(authors)
 
@@ -104,50 +104,50 @@ class Userland(RouteCog):
         # TODO: Pagination
         return jsonify(self.data["users"])
 
-    @multiroute("/api/v1/users/<user_name>", methods=["GET"], other_methods=["POST"])
+    @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["POST"])
     @json
-    def get_user(self, user_name: str):
+    def get_user(self, user_id: str):
         valid_users = [user for user in self.data["users"]
-                       if user["name"] == user_name]
+                       if user["id"] == user_id]
 
         if not valid_users:
-            return abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"User '{user_id}' not found on the server.")
 
         return jsonify(valid_users[0])
 
-    @route("/api/v1/users/<user_name>/favorites")
+    @route("/api/v1/users/<user_id>/favorites")
     @json
-    def get_favorites(self, user_name: str):
+    def get_favorites(self, user_id: str):
         valid_users = [user for user in self.data["users"]
-                       if user["name"] == user_name]
+                       if user["id"] == user_id]
 
         if not valid_users:
-            return abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"User '{user_id}' not found on the server.")
 
         return jsonify(valid_users[0]["favorites"])
 
-    @route("/api/v1/users/<user_name>/mods")
+    @route("/api/v1/users/<user_id>/mods")
     @json
-    def get_user_mods(self, user_name: str):
+    def get_user_mods(self, user_id: str):
         valid_users = [user for user in self.data["users"]
-                       if user["name"] == user_name]
+                       if user["id"] == user_id]
 
         if not valid_users:
-            return abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"User '{user_id}' not found on the server.")
 
         mods = [mod for mod in self.verified
-                if mod["title"] in valid_users[0]["mods"]]
+                if mod["id"] in valid_users[0]["mods"]]
 
         return jsonify(mods)
 
-    @route("/api/v1/users/<user_name>/reviews")
+    @route("/api/v1/users/<user_id>/reviews")
     @json
-    def get_user_reviews(self, user_name: str):
+    def get_user_reviews(self, user_id: str):
         valid_users = [user for user in self.data["users"]
                        if user["name"] == user_name]
 
         if not valid_users:
-            return abort(404, f"Mod '{user_name}' not found on the server.")
+            return abort(404, f"User '{user_id}' not found on the server.")
 
         reviews = [review for review in self.data["reviews"]
                    if review["id"] in valid_users[0]["reviews"]]

@@ -28,7 +28,6 @@ class Mods(RouteCog):
         return path
 
     # === Mods ===
-    # TODO: Owner auth
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_keycloak_login
     @json
@@ -53,6 +52,7 @@ class Mods(RouteCog):
         mod["last_updated"] = mod["released_at"] = datetime.utcnow().timestamp()
         mod["downloads"] = 0
         mod["path"] = self.new_path()
+        mod["id"] = self.new_id()
 
         file.save(f"mods/{mod['path']}.zip")
 
@@ -61,10 +61,10 @@ class Mods(RouteCog):
 
         return jsonify(mod)
 
-    @multiroute("/api/v1/mods/<mod_name>", methods=["PATCH"], other_methods=["GET"])
+    @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET"])
     @requires_keycloak_login
     @json
-    def patch_mod(self, mod_name):
+    def patch_mod(self, mod_id: str):
         file = request.files.get('file')
 
         if file is None or not file.endswith(".zip"):
@@ -78,8 +78,8 @@ class Mods(RouteCog):
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             mod[attribute] = val
 
-        if mod_name not in [mod["title"] for mod in self.data["mods"]]:
-            return abort(400, f"The mod '{mod_name}' does not exist.")
+        if mod_id not in [mod["id"] for mod in self.data["mods"]]:
+            return abort(400, f"The mod '{mod_id}' does not exist.")
 
         old_mod = [mod for mod in self.data["mods"] if mod["title"] == mod_name][0]
 
@@ -87,24 +87,25 @@ class Mods(RouteCog):
         mod["last_updated"] = datetime.utcnow().timestamp()
         mod["downloads"] = old_mod["downloads"]
         mod["path"] = self.new_path()
+        mod["id"] = old_mod["id"]
 
         os.remove(f"mods/{old_mod['path']}.zip")
         file.save(f"mods/{mod['path']}.zip")
 
-        self.data["mods"] = [mod for mod in self.data["mods"] if not mod["title"] == mod_name]
+        self.data["mods"] = [mod for mod in self.data["mods"] if not mod["id"] == mod_id]
         self.data["mods"].append(mod)
         self.data["update"] = 0
 
         return jsonify(mod)
 
-    @multiroute("/api/v1/mods/<mod_name>/reviews", methods=["POST"], other_methods=["GET"])
+    @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
     @requires_keycloak_login
     @json
-    def post_review(self, mod_name: str):
-        if mod_name not in [mod["title"] for mod in self.data["mods"]]:
+    def post_review(self, mod_id: str):
+        if mod_id not in [mod["id"] for mod in self.data["mods"]]:
             return abort(400, f"The mod '{mod_name}' does not exist.")
 
-        review = {"mod": mod_name}
+        review = {"mod": mod_id}
 
         for attribute in ("author", "message"):
             val = request.form.get(attribute)
@@ -112,8 +113,10 @@ class Mods(RouteCog):
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             review[attribute] = val
 
-        if review["author"] not in [user["name"] for user in self.data["users"]]:
-            return abort(400, f"A user with name '{review['author']}' does not exist.")
+        if review["author"] not in [user["id"] for user in self.data["users"]]:
+            return abort(400, f"A user with ID '{review['author']}' does not exist.")
+
+        review["id"] = self.new_id()
 
         self.data["reviews"].append(review)
 
@@ -131,20 +134,18 @@ class Mods(RouteCog):
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
-        if user["name"] in [user["name"] for user in self.data["users"]]:
-            return abort(400, f"A user with name '{user['name']}' already exists.")
-
         user["mods"] = []
         user["favorites"] = []
+        user["id"] = self.new_id()
 
         self.data["users"].append(user)
 
         return jsonify(user)
 
-    @multiroute("/api/v1/users/<user_name>", methods=["PATCH"], other_methods=["GET"])
+    @multiroute("/api/v1/users/<user_id>", methods=["PATCH"], other_methods=["GET"])
     @requires_keycloak_login
     @json
-    def patch_user(self, user_name: str):
+    def patch_user(self, user_id: str):
         user = {}
 
         for attribute in ("name", "bio"):
@@ -153,16 +154,17 @@ class Mods(RouteCog):
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
-        if user_name not in [user["name"] for user in self.data["users"]]:
-            return abort(400, f"A user with name '{user['name']}' does not exist.")
+        if user_id not in [user["id"] for user in self.data["users"]]:
+            return abort(400, f"A user with ID '{user['id']}' does not exist.")
 
         old_user = [user for user in self.data["users"]
-                    if user["name"] == user_name][0]
+                    if user["id"] == user_id][0]
 
         user["mods"] = old_user["mods"]
         user["favorites"] = old_user["favorites"]
+        user["id"] = old_user["id"]
 
-        self.data["users"] = [user for user in self.data["users"] if not user["name"] == user_name]
+        self.data["users"] = [user for user in self.data["users"] if not user["id"] == user_id]
         self.data["users"].append(user)
         self.data["update"] = 0
 

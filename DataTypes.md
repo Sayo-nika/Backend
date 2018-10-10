@@ -20,8 +20,9 @@ A Mod object looks like this:
   "released_at": 0,
   "last_updated": 0,
   "downloads": 0,
-  "authors": ["User#name", ...],
-  "verified": false
+  "authors": ["User#id", ...],
+  "verified": false,
+  "id": "snowflake"
 }
 ```
 
@@ -30,16 +31,18 @@ User:
 {
   "name": "Username",
   "bio": "lorem ipsum yadda yadda",
-  "mods": ["Mod#title", ...],
-  "favorites": ["Mod#title", ...]
+  "mods": ["Mod#id", ...],
+  "favorites": ["Mod#id", ...],
+  "id": "snowflake"
 }
 ```
 
 Reviews:
 ```json
 {
-  "author": "User#name",
-  "mod": "Mod#name",
-  "message": "review contents"
+  "author": "User#id",
+  "mod": "Mod#id",
+  "message": "review contents",
+  "id": "snowflake"
 }
 ```

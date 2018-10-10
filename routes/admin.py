@@ -28,35 +28,35 @@ class Admin(RouteCog):
     def get_queue(self):
         return jsonify(self.unverified)
 
-    @route("/api/v1/<mod_name>/verify", methods=["POST"])
+    @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_keycloak_admin
     @json
-    def post_verify(self, mod_name: str):
+    def post_verify(self, mod_id: str):
         valid_mods = [mod for mod in self.unverified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         valid_mods[0]["verified"] = True
         self.data["update"] = 0
 
-        return jsonify(f"Mod '{mod_name}' was succesfully verified.")
+        return jsonify(f"Mod '{mod_id}' was succesfully verified.")
 
-    @route("/api/v1/<mod_name>/reject", methods=["POST"])
+    @route("/api/v1/<mod_id>/reject", methods=["POST"])
     @requires_keycloak_admin
     @json
-    def post_reject(self, mod_name: str):
+    def post_reject(self, mod_id: str):
         valid_mods = [mod for mod in self.unverified
-                      if mod["title"] == mod_name]
+                      if mod["id"] == mod_id]
 
         if not valid_mods:
-            return abort(404, f"Mod '{mod_name}' not found on the server.")
+            return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         valid_mods[0]["verified"] = True
         self.data["update"] = 0
 
-        return jsonify(f"Mod '{mod_name}' was succesfully rejected.")
+        return jsonify(f"Mod '{mod_id}' was succesfully rejected.")
 
 
 def setup(core: Sayonika):
