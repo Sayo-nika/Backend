@@ -14,6 +14,7 @@ def route(path, **kwargs):
     """
     Wraps a function to turn it into a `Route`.
     """
+
     def decorator(func):
         return Route(func, path, **kwargs)
 
@@ -46,6 +47,7 @@ class Route:
     """
     Route class wrapper to register them on the application
     """
+
     def __init__(self, func, path: str, **kwargs):
         self.func = func
         self.path = path

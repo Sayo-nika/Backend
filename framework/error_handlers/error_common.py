@@ -10,6 +10,7 @@ def error_handler(func):
     """
     Similar to `json`, but a different format
     """
+
     def inner(*args, **kwargs):
         response = func(*args, **kwargs)
         text = response.response[0].decode()

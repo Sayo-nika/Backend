@@ -1,11 +1,3 @@
-# Stdlib
-import json
-
-# External Libraries
-from flask import request
-
-from keycloak import KeycloakOpenID
-
 
 class Authenticator:
     """
@@ -13,6 +5,7 @@ class Authenticator:
 
     TODO: Rewrite with keycloak
     """
+
     def __init__(self, settings: dict):
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
         pass

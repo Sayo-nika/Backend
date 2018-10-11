@@ -5,11 +5,10 @@ from secrets import token_hex
 
 # External Libraries
 from flask import abort, jsonify, request
-from pony.orm import select, db_session
-
-# Sayonika Internals
+from pony.orm import db_session
 from simpleflake import simpleflake
 
+# Sayonika Internals
 from framework.models import Mod, User
 from framework.objects import database_handle
 from framework.route import multiroute
@@ -19,12 +18,11 @@ from framework.sayonika import Sayonika
 
 
 class Mods(RouteCog):
-    def __init__(self, core: Sayonika):
-        super().__init__(core)
 
+    @staticmethod
     @db_session
-    def new_path(self):
-        used = [mod.path for mod in database_handle.mods]
+    def new_path():
+        used = [mod.path for mod in database_handle.mods]  # flake8: noqa pylint: disable=not-an-iterable
         path = token_hex(8)
         while path in used:
             path = token_hex(8)
@@ -120,7 +118,7 @@ class Mods(RouteCog):
         return jsonify(database_handle.new_review(**review).json)
 
     @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
-    #@requires_keycloak_login
+    # @requires_keycloak_login
     @json
     def post_users(self):
         user = {}
@@ -140,7 +138,7 @@ class Mods(RouteCog):
     @multiroute("/api/v1/users/<user_id>", methods=["PATCH"], other_methods=["GET"])
     @requires_keycloak_login
     @json
-    def patch_user(self, user_id: str):
+    def patch_user(self, user_id: str):  # pylint: disable=no-self-use
         user = {}
 
         for attribute in ("name", "bio"):

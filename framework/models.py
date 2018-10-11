@@ -1,4 +1,5 @@
-from pony.orm import Required, Set, Database, PrimaryKey, db_session
+# External Libraries
+from pony.orm import Set, Database, Required, PrimaryKey, db_session
 
 db = Database()
 
@@ -7,16 +8,16 @@ class Base:
     @classmethod
     @db_session
     def exists(cls, id_: str):
-        return cls.get(id=id_) is not None
+        return cls.get(id=id_) is not None  # pylint: disable=no-member
 
     @classmethod
     @db_session
     def get_s(cls, arg):
-        return cls.get(id=arg)
+        return cls.get(id=arg)  # pylint: disable=no-member
 
     @property
     def json(self):
-        return self.to_json()
+        return self.to_json()  # pylint: disable=no-member
 
 
 class Mod(db.Entity, Base):

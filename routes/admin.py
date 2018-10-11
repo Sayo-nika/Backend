@@ -1,9 +1,8 @@
 # External Libraries
 from flask import abort, jsonify
-
-# Sayonika Internals
 from pony.orm import delete, db_session
 
+# Sayonika Internals
 from framework.models import Mod
 from framework.objects import database_handle
 from framework.route import route
@@ -13,14 +12,12 @@ from framework.sayonika import Sayonika
 
 
 class Admin(RouteCog):
-    def __init__(self, core: Sayonika):
-        super().__init__(core)
-
     # === Verify ===
 
+    @staticmethod
     @property
-    def unverified(self):
-        return [mod for mod in database_handle.mods if not mod.verified]
+    def unverified():
+        return [mod for mod in database_handle.mods if not mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
 
     @staticmethod
     def as_json(data: list):
@@ -35,7 +32,7 @@ class Admin(RouteCog):
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_keycloak_admin
     @json
-    def post_verify(self, mod_id: str):
+    def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
         if Mod.exists(mod_id) is None:
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
@@ -47,7 +44,7 @@ class Admin(RouteCog):
     @requires_keycloak_admin
     @json
     @db_session
-    def post_reject(self, mod_id: str):
+    def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
         if Mod.exists(mod_id) is None:
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 

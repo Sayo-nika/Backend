@@ -17,6 +17,7 @@ class Sayonika(Flask):
     while the user only has to run `run` without providing additional arguments.
     Additionally, we use this class to pass around to register all routes
     """
+
     def __init__(self):
         self.route_dir = ""
         super().__init__("Sayonika")
@@ -36,5 +37,6 @@ class Sayonika(Flask):
             module.setup(self)
             del module
 
-    def run(self, host: str = "localhost", port: int = 4444, *args, **kwargs):  # flake8: noqa pylint: disable=arguments-differ,keyword-arg-before-vararg
+    def run(self, host: str = "localhost", port: int = 4444, *args,
+            **kwargs):  # flake8: noqa pylint: disable=arguments-differ,keyword-arg-before-vararg
         super().run(host, port, *args, **kwargs)

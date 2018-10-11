@@ -6,7 +6,7 @@ import json as _json
 from flask import Response, abort
 
 # Sayonika Internals
-from framework.objects import limiter, auth_service
+from framework.objects import auth_service
 
 __all__ = ("json", "requires_keycloak_login", "requires_keycloak_admin")
 
@@ -15,6 +15,7 @@ def json(func):
     """
     Wraps a function to return a unified JSON format
     """
+
     @wraps(func)
     def inner(*args, **kwargs):
         response = func(*args, **kwargs)

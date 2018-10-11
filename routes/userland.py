@@ -1,14 +1,26 @@
 # External Libraries
-from datetime import datetime
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
+# Stdlib
 from secrets import token_hex
 
-from flask import abort, jsonify, send_file, request
-
-# Sayonika Internals
+from flask import abort, jsonify, request, send_file
 from pony.orm import select, db_session
 from simpleflake import simpleflake
 
-from framework.models import User, Mod, Review
+# Sayonika Internals
+from framework.models import Mod, User, Review
 from framework.objects import database_handle
 from framework.route import route, multiroute
 from framework.route_wrappers import json
@@ -17,14 +29,12 @@ from framework.sayonika import Sayonika
 
 
 class Userland(RouteCog):
-    def __init__(self, core: Sayonika):
-        super().__init__(core)
-
     # === Compat with mods.py ===
 
+    @staticmethod
     @db_session
-    def new_path(self):
-        used = [mod.path for mod in database_handle.mods]
+    def new_path():
+        used = [mod.path for mod in database_handle.mods]  # flake8: noqa pylint: disable=not-an-iterable
         path = token_hex(8)
         while path in used:
             path = token_hex(8)
@@ -41,9 +51,10 @@ class Userland(RouteCog):
     def as_json(data: list):
         return [item.json for item in data]
 
+    @staticmethod
     @property
-    def verified(self):
-        return [mod for mod in database_handle.mods if mod.verified]
+    def verified():
+        return [mod for mod in database_handle.mods if mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
 
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
@@ -75,7 +86,7 @@ class Userland(RouteCog):
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
-    def get_mod(self, mod_id: str):
+    def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
         if Mod.exists(mod_id) is None:
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
@@ -83,11 +94,11 @@ class Userland(RouteCog):
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
-    def get_download(self, mod_id: str):
+    def get_download(self, mod_id: str):  # pylint: disable=no-self-use
         if Mod.exists(mod_id) is None:
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
-        return send_file(f"mods/{valid_mods[0]['path']}.zip")
+        return send_file(f"mods/{Mod.get_s(mod_id).path}.zip")
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
@@ -128,7 +139,7 @@ class Userland(RouteCog):
 
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["POST"])
     @json
-    def get_user(self, user_id: str):
+    def get_user(self, user_id: str):  # pylint: disable=no-self-use
         if User.exists(user_id) is None:
             return abort(404, f"User '{user_id}' not found on the server.")
 
@@ -165,7 +176,9 @@ class Userland(RouteCog):
         else:
             page = 1
 
-        return jsonify(self.as_json(Review.select(lambda review: review.author == user_id).page(page)))
+        return jsonify(self.as_json(
+            Review.select(lambda review: review.author == user_id).page(page)
+        ))
 
 
 def setup(core: Sayonika):

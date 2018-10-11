@@ -6,13 +6,14 @@ from framework.objects import logger
 from framework.route import Route
 from framework.sayonika import Sayonika
 
-__all__ = ("RouteCog", )
+__all__ = ("RouteCog",)
 
 
 class RouteCog:
     """
     Similar to a discord.py cog, this holds several routes with unified concept
     """
+
     def __init__(self, core: Sayonika):
         self.core = core
         self.logger = logger

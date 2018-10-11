@@ -1,6 +1,8 @@
-from pony.orm import db_session, commit, select
+# External Libraries
+from pony.orm import commit, db_session
 
-from framework.models import db, Mod, User, Review
+# Sayonika Internals
+from framework.models import Mod, User, Review, db
 
 
 class DBHandler:
@@ -8,49 +10,57 @@ class DBHandler:
         db.bind(provider='postgres', **kwargs)
         db.generate_mapping(create_tables=True)
 
+    @staticmethod
     @property
     @db_session
-    def mods(self):
+    def mods():
         return list(Mod.select())
 
+    @staticmethod
     @property
     @db_session
-    def users(self):
+    def users():
         return list(User.select())
 
+    @staticmethod
     @property
     @db_session
-    def reviews(self):
+    def reviews():
         return list(Review.select())
 
+    @staticmethod
     @db_session
-    def new_mod(self, **kwargs):
+    def new_mod(**kwargs):
         obj = Mod(**kwargs)
 
         commit()
 
         return obj
 
+    @staticmethod
     @db_session
-    def edit_mod(self, id_: str, **kwargs):
+    def edit_mod(id_: str, **kwargs):
         mod = Mod[id_]
         mod.set(**kwargs)
 
+    @staticmethod
     @db_session
-    def new_user(self, **kwargs):
+    def new_user(**kwargs):
         obj = User(**kwargs)
 
         commit()
 
         return obj
 
+    @staticmethod
     @db_session
-    def edit_user(self, id_: str, **kwargs):
+    def edit_user(id_: str, **kwargs):
         user = User[id_]
         user.set(**kwargs)
 
+    @staticmethod
     @db_session
-    def new_review(self, **kwargs):
+    def new_review(**kwargs):
         obj = Review(**kwargs)
 
         commit()
