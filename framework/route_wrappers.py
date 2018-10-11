@@ -8,7 +8,7 @@ from flask import Response, abort
 # Sayonika Internals
 from framework.objects import limiter, auth_service
 
-__all__ = ("json", "auth_has_ratelimit", "auth_only")
+__all__ = ("json", "requires_keycloak_login", "requires_keycloak_admin")
 
 
 def json(func):

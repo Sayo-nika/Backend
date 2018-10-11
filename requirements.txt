@@ -1,3 +1,6 @@
 flask
 flask-limiter
 python-keycloak
+psycopg2-binary
+pony
+simpleflake

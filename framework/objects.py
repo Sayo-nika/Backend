@@ -8,27 +8,28 @@ from flask_limiter.util import get_remote_address
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.jsonfile import JsonFile
+from framework.database import DBHandler
 from framework.sayonika import Sayonika
 
-__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "mods_json")
+__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "database_handle")
 
 sayonika_instance = Sayonika()
 
+SETTINGS = {k[9:]: v for k, v in os.environ.items()
+            if k.startswith("SAYONIKA_")}
+
 # Use env vars to update config
-sayonika_instance.config.update({k[9:]: v  # Strip 'SAYONIKA_'
-                                 for k, v in os.environ.items()
-                                 if k.startswith("SAYONIKA_")})
+sayonika_instance.config.update()
 
 limiter = Limiter(
     sayonika_instance,
     key_func=get_remote_address,
-    default_limits=["1 per 2 seconds", "20 per minute", "1000 per hour"]
+    default_limits=SETTINGS.get("RATELIMITS", "1 per 2 seconds;20 per minute;1000 per hour").split(";")
 )
 
 logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
-auth_service = Authenticator("settings.json")
+auth_service = Authenticator(SETTINGS)
 
-mods_json = JsonFile("mods/mods.json")
+database_handle = DBHandler(user="Mart", password="", database="sayonika", host="localhost")
