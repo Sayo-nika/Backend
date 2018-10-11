@@ -6,20 +6,17 @@ This repository contains the Sayonika server code.
 
 Sayonika uses a Microservice layout for serving its mod listing. This means, each component has to be deployed individually but increases fault tolerance.
 
-Sayonika server is built with Express and :heart: and runs along with the ORY Authentication backend.
+Sayonika server is built with Flask and :heart:.
 
 ## Running
 
-Sayonika requires Node.js, and TypeScript to run. Go to [Node.js website](https://nodejs.org) to get a copy.
+Sayonika requires Python to run. Go to the [Python website](https://python.org) to get a copy.
 
-Then, clone the repository and run `npm install`.
+Then, clone the repository and run `python -m pip install -r requirements.txt`.
 
 ## Contributing
 
-We use TypeScript for coding the server. You are required to follow the coding style set on our repository.
-
-We rely on [ORY](https://github.com/ory) for the Gateway system. Please consult their repository
-if you find something off on the gateway, not here.
+We use Python for coding the server. You are required to follow the coding style set on our repository.
 
 The full contribution guide can be found [here](CONTRIBUTING.md)
 
