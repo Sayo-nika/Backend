@@ -3,7 +3,7 @@ from functools import wraps
 import json as _json
 
 # External Libraries
-from flask import Response, abort
+from flask import Response, abort, request
 
 # Sayonika Internals
 from framework.objects import auth_service
@@ -29,7 +29,7 @@ def json(func):
             "result": data,
             "status": response._status_code,  # flake8: noqa pylint: disable=protected-access
             "success": True if 200 <= response._status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
-        })
+        }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
             response=result,

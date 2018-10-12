@@ -2,7 +2,7 @@
 import json
 
 # External Libraries
-from flask import Response
+from flask import Response, request
 
 
 # Moved out of response_wrappers.py due to circular imports
@@ -19,7 +19,7 @@ def error_handler(func):
             "error": text,
             "status": response._status_code,  # flake8: noqa pylint: disable=protected-access
             "success": True if 200 <= response._status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
-        })
+        }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
             response=result,

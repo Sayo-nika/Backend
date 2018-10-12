@@ -1,5 +1,5 @@
 # External Libraries
-from pony.orm import Set, Database, Required, PrimaryKey, db_session
+from pony.orm import Set, Database, Required, PrimaryKey, db_session, Optional
 
 db = Database()
 
@@ -16,32 +16,54 @@ class Base:
         return cls.get(id=arg)  # pylint: disable=no-member
 
     @property
+    @db_session
     def json(self):
-        return self.to_json()  # pylint: disable=no-member
+        return self.__class__[self.id].to_dict(with_collections=True, exclude="password")  # pylint: disable=no-member
 
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str)
+    icon = Optional(str, nullable=True)
     path = Required(str)
+    # TODO: Media
+    tagline = Required(str)
+    description = Required(str)
+    website = Required(str)
+    # TODO: Category
     released_at = Required(int)
     last_updated = Required(int)
     downloads = Required(int)
     authors = Set('User', reverse='mods')
-    favourite_by = Set('User', reverse='favorites')
+    favorite_by = Set('User', reverse='favorites')
+    reviews = Set('Review', reverse="mod")
     verified = Required(bool)
 
 
 class User(db.Entity, Base):
     id = PrimaryKey(str)
-    name = Required(str)
+    username = Required(str)
+    avatar = Optional(str, nullable=True)
+    donator = Required(bool)
+    developer = Required(bool)
+    moderator = Required(bool)
     bio = Required(str)
-    mods = Set(Mod, reverse="authors")
-    favorites = Set(Mod, reverse="favourite_by")
+    mods = Set(Mod)
+    favorites = Set(Mod)
+    reviews = Set('Review', reverse="author")
+    upvoted = Set('Review', reverse='upvoters')
+    downvoted = Set('Review', reverse='downvoters')
+    helpful = Set('Review', reverse='helpfuls')
+    password = Required(str)
+    lastPassReset = Optional(int, nullable=True)
 
 
 class Review(db.Entity, Base):
     id = PrimaryKey(str)
-    mod = Required(str)
-    message = Required(str)
-    author = Required(str)
+    rating = Required(str)
+    mod = Required(Mod)
+    content = Required(str)
+    author = Required(User)
+    upvoters = Set(User)
+    downvoters = Set(User)
+    helpfuls = Set(User)

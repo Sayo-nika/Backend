@@ -1,18 +1,4 @@
-# External Libraries
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
-# Stdlib
+
 from secrets import token_hex
 
 from flask import abort, jsonify, request, send_file
@@ -74,20 +60,20 @@ class Userland(RouteCog):
     @json
     def get_recent_releases(self):
         sorted_mods = reversed(sorted(self.verified,
-                                      key=lambda mod: mod["released_at"]))
+                                      key=lambda mod: mod.released_at))
         return jsonify(self.as_json(sorted_mods)[:10])
 
     @route("/api/v1/mods/popular")
     @json
     def get_popular(self):
-        sorted_mods = sorted(self.verified,
-                             key=lambda mod: mod["downloads"])  # Generator[Dict[str, Any]]
+        sorted_mods = reversed(sorted(self.verified,
+                                      key=lambda mod: mod.downloads))
         return jsonify(self.as_json(sorted_mods)[:10])
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
     def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         return jsonify(Mod.get_s(mod_id).json)
@@ -95,7 +81,7 @@ class Userland(RouteCog):
     @route("/api/v1/mods/<mod_id>/download")
     @json
     def get_download(self, mod_id: str):  # pylint: disable=no-self-use
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         return send_file(f"mods/{Mod.get_s(mod_id).path}.zip")
@@ -104,7 +90,7 @@ class Userland(RouteCog):
     @json
     @db_session
     def get_mod_reviews(self, mod_id: str):
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         reviews = select(review for review in Review if review.mod == mod_id)
@@ -114,7 +100,7 @@ class Userland(RouteCog):
     @route("/api/v1/mods/<mod_id>/authors")
     @json
     def get_mod_authors(self, mod_id: str):
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         authors = select(user for user in User if Mod.get_s(mod_id) in user.mods)
@@ -140,7 +126,7 @@ class Userland(RouteCog):
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["POST"])
     @json
     def get_user(self, user_id: str):  # pylint: disable=no-self-use
-        if User.exists(user_id) is None:
+        if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
         return jsonify(User.get_s(user_id).json)
@@ -148,7 +134,7 @@ class Userland(RouteCog):
     @route("/api/v1/users/<user_id>/favorites")
     @json
     def get_favorites(self, user_id: str):
-        if User.exists(user_id) is None:
+        if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
         return jsonify(self.as_json(User.get_s(user_id).favorites))
@@ -156,7 +142,7 @@ class Userland(RouteCog):
     @route("/api/v1/users/<user_id>/mods")
     @json
     def get_user_mods(self, user_id: str):
-        if User.exists(user_id) is None:
+        if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
         return jsonify(self.as_json(User.get_s(user_id).mods))
@@ -165,7 +151,7 @@ class Userland(RouteCog):
     @json
     @db_session
     def get_user_reviews(self, user_id: str):
-        if User.exists(user_id) is None:
+        if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
         if "page" in request.args:

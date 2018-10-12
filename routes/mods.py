@@ -43,22 +43,28 @@ class Mods(RouteCog):
         if file is None or not file.filename.endswith(".zip"):
             return abort(400, "Expecting 'file' zipfile multipart.")
 
-        mod = {}
+        mod = {
+            "verified": False,
+            "last_updated": datetime.utcnow().timestamp(),
+            "downloads": 0,
+            "path": self.new_path(),
+            "id": self.new_id(),
+            "reviews": [],
+            "favorite_by": []
+        }
 
-        for attribute in ("title", "authors"):
+        for attribute in ("title", "authors", "tagline", "description", "website"):
             val = request.json.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             mod[attribute] = val
 
+        mod["icon"] = request.json.get("icon")
+
         if Mod.get(title=mod["title"]) is not None:
             return abort(400, f"A mod with the name '{mod['title']}' already exists.")
 
-        mod["verified"] = False
-        mod["last_updated"] = mod["released_at"] = datetime.utcnow().timestamp()
-        mod["downloads"] = 0
-        mod["path"] = self.new_path()
-        mod["id"] = self.new_id()
+        mod["released_at"] = mod["last_updated"]
 
         file.save(f"mods/{mod['path']}.zip")
 
@@ -75,13 +81,13 @@ class Mods(RouteCog):
 
         mod = {}
 
-        for attribute in ("title", "authors"):
+        for attribute in ("title", "authors", "tagline", "description", "website"):
             val = request.json.get(attribute)
-            if val is None:
-                return abort(400, f"Missing POST parameter: '{attribute}'.")
-            mod[attribute] = val
 
-        if Mod.exists(mod_id) is None:
+            if val is not None:
+                mod[attribute] = val
+
+        if not Mod.exists(mod_id):
             return abort(400, f"The mod '{mod_id}' does not exist.")
 
         old_mod = Mod.get_s(mod_id)
@@ -99,18 +105,18 @@ class Mods(RouteCog):
     @requires_keycloak_login
     @json
     def post_review(self, mod_id: str):
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(400, f"The mod '{mod_id}' does not exist.")
 
         review = {"mod": mod_id}
 
-        for attribute in ("author", "message"):
+        for attribute in ("author", "content"):
             val = request.json.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             review[attribute] = val
 
-        if User.get(review["author"]) is None:
+        if not User.exists(review["author"]):
             return abort(400, f"A user with ID '{review['author']}' does not exist.")
 
         review["id"] = self.new_id()
@@ -118,20 +124,29 @@ class Mods(RouteCog):
         return jsonify(database_handle.new_review(**review).json)
 
     @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
-    # @requires_keycloak_login
+    @requires_keycloak_login
     @json
     def post_users(self):
-        user = {}
+        user = {
+            "mods": [],
+            "favorites": [],
+            "reviews": [],
+            "upvoted": [],
+            "downvoted": [],
+            "helpful": [],
+            "id": self.new_id(),
+            "developer": False,
+            "moderator": False,
+            "donator": False
+        }
 
-        for attribute in ("name", "bio"):
+        for attribute in ("username", "bio", "password"):
             val = request.json.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
-        user["mods"] = []
-        user["favorites"] = []
-        user["id"] = self.new_id()
+        user["avatar"] = request.json.get("avatar")
 
         return jsonify(database_handle.new_user(**user).json)
 
@@ -141,14 +156,14 @@ class Mods(RouteCog):
     def patch_user(self, user_id: str):  # pylint: disable=no-self-use
         user = {}
 
-        for attribute in ("name", "bio"):
+        for attribute in ("username", "bio", "password", "avatar"):
             val = request.json.get(attribute)
-            if val is None:
-                return abort(400, f"Missing POST parameter: '{attribute}'.")
-            user[attribute] = val
 
-        if User.exists(user_id) is None:
-            return abort(400, f"A user with ID '{user['id']}' does not exist.")
+            if val is not None:
+                user[attribute] = val
+
+        if not User.exists(user_id):
+            return abort(400, f"A user with ID '{user_id}' does not exist.")
 
         old_user = User.get_s(user_id)
 

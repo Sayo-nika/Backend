@@ -33,7 +33,7 @@ class Admin(RouteCog):
     @requires_keycloak_admin
     @json
     def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         database_handle.edit_mod(mod_id, verified=True)
@@ -45,7 +45,7 @@ class Admin(RouteCog):
     @json
     @db_session
     def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
-        if Mod.exists(mod_id) is None:
+        if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
         delete(Mod.get_s(mod_id))
