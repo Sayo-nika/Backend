@@ -10,7 +10,7 @@ from simpleflake import simpleflake
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import Mod, User
+from framework.models import Mod, User, ModStatus
 from framework.objects import database_handle
 from framework.route import multiroute
 from framework.route_wrappers import json, requires_keycloak_login
@@ -51,7 +51,7 @@ class Mods(RouteCog):
             "path": self.new_path(),
             "id": self.new_id(),
             "reviews": [],
-            "favorite_by": []
+            "favorite_by": [],
         }
 
         for attribute in ("title", "authors", "tagline", "description", "website"):
@@ -61,6 +61,8 @@ class Mods(RouteCog):
             mod[attribute] = val
 
         mod["icon"] = request.json.get("icon")
+        attr = request.json.get("status", "Planning")
+        mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
 
         if Mod.get(title=mod["title"]) is not None:
             return abort(400, f"A mod with the name '{mod['title']}' already exists.")
@@ -82,7 +84,7 @@ class Mods(RouteCog):
 
         mod = {}
 
-        for attribute in ("title", "authors", "tagline", "description", "website"):
+        for attribute in ("title", "authors", "tagline", "description", "website", "icon"):
             val = request.json.get(attribute)
 
             if val is not None:
@@ -92,6 +94,9 @@ class Mods(RouteCog):
             return abort(400, f"The mod '{mod_id}' does not exist.")
 
         old_mod = Mod.get_s(mod_id)
+
+        attr = request.json.get("status", old_mod["status"])
+        mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
 
         mod["path"] = self.new_path()
 
@@ -165,6 +170,7 @@ class Mods(RouteCog):
             if val is not None:
                 if attribute == "password":
                     val = Authenticator.hash_password(val)
+                    user["lastPassReset"] = datetime.utcnow().timestamp()
                 user[attribute] = val
 
         if not User.exists(user_id):
