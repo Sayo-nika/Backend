@@ -1,3 +1,5 @@
+import hashlib
+
 
 class Authenticator:
     """
@@ -5,6 +7,8 @@ class Authenticator:
 
     TODO: Rewrite with keycloak
     """
+
+    hash_class = hashlib.sha3_512
 
     def __init__(self, settings: dict):
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
@@ -21,3 +25,9 @@ class Authenticator:
         # Test if user has access to specified route and arguments
         # -> Does this user belong to the admin group?
         raise NotImplementedError()
+
+    @classmethod
+    def hash_password(cls, password: str) -> bytes:
+        inst = cls.hash_class()
+        inst.update(password.encode())
+        return inst.digest()

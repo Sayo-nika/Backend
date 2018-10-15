@@ -9,6 +9,7 @@ from pony.orm import db_session
 from simpleflake import simpleflake
 
 # Sayonika Internals
+from framework.authentication import Authenticator
 from framework.models import Mod, User
 from framework.objects import database_handle
 from framework.route import multiroute
@@ -21,7 +22,7 @@ class Mods(RouteCog):
 
     @staticmethod
     @db_session
-    def new_path():
+    def new_path() -> str:
         used = [mod.path for mod in database_handle.mods]  # flake8: noqa pylint: disable=not-an-iterable
         path = token_hex(8)
         while path in used:
@@ -30,8 +31,8 @@ class Mods(RouteCog):
         return path
 
     @staticmethod
-    def new_id():
-        return str(simpleflake())
+    def new_id() -> str:
+        return str(simpleflake())  # easier than converting ID passed to route to int every time
 
     # === Mods ===
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
@@ -140,13 +141,15 @@ class Mods(RouteCog):
             "donator": False
         }
 
-        for attribute in ("username", "bio", "password"):
+        for attribute in ("username", "password"):
             val = request.json.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             user[attribute] = val
 
         user["avatar"] = request.json.get("avatar")
+        user["bio"] = request.json.get("bio")
+        user["password"] = Authenticator.hash_password(user["password"])
 
         return jsonify(database_handle.new_user(**user).json)
 
@@ -160,6 +163,8 @@ class Mods(RouteCog):
             val = request.json.get(attribute)
 
             if val is not None:
+                if attribute == "password":
+                    val = Authenticator.hash_password(val)
                 user[attribute] = val
 
         if not User.exists(user_id):

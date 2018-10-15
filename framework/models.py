@@ -1,4 +1,6 @@
 # External Libraries
+from enum import Enum
+
 from pony.orm import Set, Database, Required, PrimaryKey, db_session, Optional
 
 db = Database()
@@ -21,6 +23,14 @@ class Base:
         return self.__class__[self.id].to_dict(with_collections=True, exclude="password")  # pylint: disable=no-member
 
 
+class ModStatus(Enum):
+    Planning = 1
+    InDevelop = 2
+    PlayTesting = 3
+    Released = 4
+    Verified = 5
+
+
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str)
@@ -31,13 +41,14 @@ class Mod(db.Entity, Base):
     description = Required(str)
     website = Required(str)
     # TODO: Category
-    released_at = Required(int)
+    created_at = Required(int)
     last_updated = Required(int)
     downloads = Required(int)
     authors = Set('User', reverse='mods')
     favorite_by = Set('User', reverse='favorites')
     reviews = Set('Review', reverse="mod")
     verified = Required(bool)
+    status = Required(ModStatus)
 
 
 class User(db.Entity, Base):
@@ -47,14 +58,14 @@ class User(db.Entity, Base):
     donator = Required(bool)
     developer = Required(bool)
     moderator = Required(bool)
-    bio = Required(str)
+    bio = Optional(str, nullable=True)
     mods = Set(Mod)
     favorites = Set(Mod)
     reviews = Set('Review', reverse="author")
     upvoted = Set('Review', reverse='upvoters')
     downvoted = Set('Review', reverse='downvoters')
     helpful = Set('Review', reverse='helpfuls')
-    password = Required(str)
+    password = Required(bytes)
     lastPassReset = Optional(int, nullable=True)
 
 

@@ -2,12 +2,13 @@
 from pony.orm import commit, db_session
 
 # Sayonika Internals
+from framework.dbutils import PGProvider
 from framework.models import Mod, User, Review, db
 
 
 class DBHandler:
     def __init__(self, **kwargs):
-        db.bind(provider='postgres', **kwargs)
+        db.bind(provider=PGProvider, **kwargs)
         db.generate_mapping(create_tables=True)
 
     @staticmethod
