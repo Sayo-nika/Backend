@@ -1,6 +1,7 @@
-
+# Stdlib
 from secrets import token_hex
 
+# External Libraries
 from flask import abort, jsonify, request, send_file
 from pony.orm import select, db_session
 from simpleflake import simpleflake

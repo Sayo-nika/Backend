@@ -1,7 +1,10 @@
+# Stdlib
 import hashlib
 
-from flask import request, abort
+# External Libraries
+from flask import abort, request
 
+# Sayonika Internals
 from framework.models import User
 
 
@@ -33,14 +36,17 @@ class Authenticator:
         if self.hash_password(pass_) != user.password:
             abort(401, "Invalid login credentials!")
 
-        if (request.method == "PATCH" and  # only check editing
-            not any(resource_id in collection
-                    for collection in (
-                        (mod.id for mod in user.mods),  # User can edit their own mods
-                        (review.id for review in user.reviews),  # User can edit their own reviews
-                        (user.id,)  # User can edit themselves
-                    ))):
-            abort(403, "User does not have permission to access this resource")
+        if request.method == "PATCH":  # only check editing
+            if not any(resource_id in collection
+                       for collection in [
+                               # User can edit their own mods
+                               (mod.id for mod in user.mods),
+                               # User can edit their own reviews
+                               (review.id for review in user.reviews),
+                               # User can edit themselves
+                               (user.id,)
+                       ]):
+                abort(403, "User does not have permission to access this resource")
 
         return True
 

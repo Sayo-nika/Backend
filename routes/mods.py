@@ -95,7 +95,8 @@ class Mods(RouteCog):
             return abort(400, f"The mod '{mod_id}' does not exist.")
 
         if "authors" in mod:
-            mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",") if User.exists(id_)]
+            mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",")
+                              if User.exists(id_)]
 
         old_mod = Mod.get_s(mod_id)
 

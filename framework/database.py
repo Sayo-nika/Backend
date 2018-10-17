@@ -16,10 +16,9 @@ class DBHandler:
     def mods(self) -> list:
         return list(Mod.select())
 
-    @staticmethod
     @property
     @db_session
-    def users() -> list:
+    def users(self) -> list:
         return list(User.select())
 
     @property

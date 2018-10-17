@@ -1,7 +1,8 @@
-# External Libraries
+# Stdlib
 from enum import Enum
 
-from pony.orm import Set, Database, Required, PrimaryKey, db_session, Optional
+# External Libraries
+from pony.orm import Set, Database, Optional, Required, PrimaryKey, db_session
 
 db = Database()
 
@@ -20,7 +21,8 @@ class Base:
     @property
     @db_session
     def json(self):
-        return self.__class__[self.id].to_dict(with_collections=True, exclude=("password","email"))  # pylint: disable=no-member
+        return self.__class__[self.id].to_dict(with_collections=True,  # pylint: disable=no-member
+                                               exclude=("password", "email"))
 
 
 class ModStatus(Enum):

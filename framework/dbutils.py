@@ -1,5 +1,7 @@
+# Stdlib
 from enum import Enum
 
+# External Libraries
 from pony.orm.dbapiprovider import Converter
 from pony.orm.dbproviders.postgres import PGProvider as PGProvider_
 from pony.utils import throw
@@ -11,7 +13,7 @@ class EnumConverter(Converter):
     def init(self, kwargs):
         self.type_ = self.attr.py_type
 
-    def validate(self, val):
+    def validate(self, val):  # pylint: disable=arguments-differ
         if not isinstance(val, self.type_):
             throw(ValueError, 'Value type for EnumConverter incorrect.')
         return val

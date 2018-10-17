@@ -5,7 +5,7 @@ linters = flake8, pylint, isort, vulture
 [flake8]
 max-line-length=100
 exclude=.git,tests
-ignore=B311,S311,E731,B006
+ignore=B311,S311,E731,B006,E126
 
 [isort]
 line_length=100
