@@ -11,22 +11,20 @@ class DBHandler:
         db.bind(provider=PGProvider, **kwargs)
         db.generate_mapping(create_tables=True)
 
-    @staticmethod
     @property
     @db_session
-    def mods():
+    def mods(self) -> list:
         return list(Mod.select())
 
     @staticmethod
     @property
     @db_session
-    def users():
+    def users() -> list:
         return list(User.select())
 
-    @staticmethod
     @property
     @db_session
-    def reviews():
+    def reviews(self) -> list:
         return list(Review.select())
 
     @staticmethod

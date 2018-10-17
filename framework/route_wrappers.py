@@ -8,7 +8,7 @@ from flask import Response, abort, request
 # Sayonika Internals
 from framework.objects import auth_service
 
-__all__ = ("json", "requires_keycloak_login", "requires_keycloak_admin")
+__all__ = ("json", "requires_login", "requires_admin")
 
 
 def json(func):
@@ -41,7 +41,7 @@ def json(func):
     return inner
 
 
-def requires_keycloak_login(func):
+def requires_login(func):
     @wraps(func)
     def inner(*args, **kwargs):
         if auth_service.has_authorized_access(*args, **kwargs):
@@ -51,10 +51,10 @@ def requires_keycloak_login(func):
     return inner
 
 
-def requires_keycloak_admin(func):
+def requires_admin(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        if auth_service.has_admin_access(*args, **kwargs):
+        if auth_service.has_admin_access():
             return func(*args, **kwargs)
         return abort(403)
 

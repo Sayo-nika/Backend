@@ -20,7 +20,7 @@ class Base:
     @property
     @db_session
     def json(self):
-        return self.__class__[self.id].to_dict(with_collections=True, exclude="password")  # pylint: disable=no-member
+        return self.__class__[self.id].to_dict(with_collections=True, exclude=("password","email"))  # pylint: disable=no-member
 
 
 class ModStatus(Enum):
@@ -41,7 +41,7 @@ class Mod(db.Entity, Base):
     description = Required(str)
     website = Required(str)
     # TODO: Category
-    created_at = Required(int)
+    released_at = Required(int)
     last_updated = Required(int)
     downloads = Required(int)
     authors = Set('User', reverse='mods')
@@ -53,6 +53,7 @@ class Mod(db.Entity, Base):
 
 class User(db.Entity, Base):
     id = PrimaryKey(str)
+    email = Required(str)
     username = Required(str)
     avatar = Optional(str, nullable=True)
     donator = Required(bool)

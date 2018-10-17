@@ -9,9 +9,7 @@ class EnumConverter(Converter):
     type_: type
 
     def init(self, kwargs):
-        super().init(kwargs)
         self.type_ = self.attr.py_type
-        print(self.type_)
 
     def validate(self, val):
         if not isinstance(val, self.type_):

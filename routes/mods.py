@@ -13,7 +13,7 @@ from framework.authentication import Authenticator
 from framework.models import Mod, User, ModStatus
 from framework.objects import database_handle
 from framework.route import multiroute
-from framework.route_wrappers import json, requires_keycloak_login
+from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
@@ -36,7 +36,7 @@ class Mods(RouteCog):
 
     # === Mods ===
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
-    @requires_keycloak_login
+    @requires_login
     @json
     def post_mods(self):
         file = request.files.get('file')
@@ -46,7 +46,7 @@ class Mods(RouteCog):
 
         mod = {
             "verified": False,
-            "last_updated": datetime.utcnow().timestamp(),
+            "last_updated": round(datetime.utcnow().timestamp()),
             "downloads": 0,
             "path": self.new_path(),
             "id": self.new_id(),
@@ -55,37 +55,38 @@ class Mods(RouteCog):
         }
 
         for attribute in ("title", "authors", "tagline", "description", "website"):
-            val = request.json.get(attribute)
+            val = request.form.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
             mod[attribute] = val
 
-        mod["icon"] = request.json.get("icon")
-        attr = request.json.get("status", "Planning")
-        mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
+        mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",") if User.exists(id_)]
 
-        if Mod.get(title=mod["title"]) is not None:
-            return abort(400, f"A mod with the name '{mod['title']}' already exists.")
+        mod["icon"] = request.form.get("icon")
+        attr = request.form.get("status", "Planning")
+        mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
 
         mod["released_at"] = mod["last_updated"]
 
         file.save(f"mods/{mod['path']}.zip")
 
+        print(mod)
+
         return jsonify(database_handle.new_mod(**mod).json)
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET"])
-    @requires_keycloak_login
+    @requires_login
     @json
     def patch_mod(self, mod_id: str):
         file = request.files.get('file')
 
-        if file is None or not file.endswith(".zip"):
+        if file is None or not file.filename.endswith(".zip"):
             return abort(400, "Expecting 'file' zipfile multipart.")
 
         mod = {}
 
         for attribute in ("title", "authors", "tagline", "description", "website", "icon"):
-            val = request.json.get(attribute)
+            val = request.form.get(attribute)
 
             if val is not None:
                 mod[attribute] = val
@@ -93,9 +94,12 @@ class Mods(RouteCog):
         if not Mod.exists(mod_id):
             return abort(400, f"The mod '{mod_id}' does not exist.")
 
+        if "authors" in mod:
+            mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",") if User.exists(id_)]
+
         old_mod = Mod.get_s(mod_id)
 
-        attr = request.json.get("status", old_mod["status"])
+        attr = request.form.get("status", old_mod["status"])
         mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
 
         mod["path"] = self.new_path()
@@ -108,7 +112,7 @@ class Mods(RouteCog):
         return jsonify(old_mod.json)
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
-    @requires_keycloak_login
+    @requires_login
     @json
     def post_review(self, mod_id: str):
         if not Mod.exists(mod_id):
@@ -130,7 +134,6 @@ class Mods(RouteCog):
         return jsonify(database_handle.new_review(**review).json)
 
     @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
-    @requires_keycloak_login
     @json
     def post_users(self):
         user = {
@@ -146,7 +149,7 @@ class Mods(RouteCog):
             "donator": False
         }
 
-        for attribute in ("username", "password"):
+        for attribute in ("username", "password", "email"):
             val = request.json.get(attribute)
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
@@ -159,12 +162,12 @@ class Mods(RouteCog):
         return jsonify(database_handle.new_user(**user).json)
 
     @multiroute("/api/v1/users/<user_id>", methods=["PATCH"], other_methods=["GET"])
-    @requires_keycloak_login
+    @requires_login
     @json
     def patch_user(self, user_id: str):  # pylint: disable=no-self-use
         user = {}
 
-        for attribute in ("username", "bio", "password", "avatar"):
+        for attribute in ("username", "bio", "password", "avatar", "email"):
             val = request.json.get(attribute)
 
             if val is not None:

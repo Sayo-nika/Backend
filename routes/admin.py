@@ -6,7 +6,7 @@ from pony.orm import delete, db_session
 from framework.models import Mod
 from framework.objects import database_handle
 from framework.route import route
-from framework.route_wrappers import json, requires_keycloak_admin
+from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
@@ -24,13 +24,13 @@ class Admin(RouteCog):
         return [item.json for item in data]
 
     @route("/api/v1/mods/verify_queue")
-    @requires_keycloak_admin
+    @requires_admin
     @json
     def get_queue(self):
         return jsonify(self.as_json(self.unverified))
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
-    @requires_keycloak_admin
+    @requires_admin
     @json
     def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
@@ -41,7 +41,7 @@ class Admin(RouteCog):
         return jsonify(f"Mod '{mod_id}' was succesfully verified.")
 
     @route("/api/v1/<mod_id>/reject", methods=["POST"])
-    @requires_keycloak_admin
+    @requires_admin
     @json
     @db_session
     def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
