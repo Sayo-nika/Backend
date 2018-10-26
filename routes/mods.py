@@ -34,6 +34,10 @@ class Mods(RouteCog):
     def new_id() -> str:
         return str(simpleflake())  # easier than converting ID passed to route to int every time
 
+    @staticmethod
+    def as_json(data: list):
+        return [item.json for item in data]
+
     # === Mods ===
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_login

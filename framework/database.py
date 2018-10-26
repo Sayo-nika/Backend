@@ -30,9 +30,6 @@ class DBHandler:
     @db_session
     def new_mod(**kwargs):
         obj = Mod(**kwargs)
-
-        commit()
-
         return obj
 
     @staticmethod
@@ -45,9 +42,6 @@ class DBHandler:
     @db_session
     def new_user(**kwargs):
         obj = User(**kwargs)
-
-        commit()
-
         return obj
 
     @staticmethod
@@ -60,7 +54,4 @@ class DBHandler:
     @db_session
     def new_review(**kwargs):
         obj = Review(**kwargs)
-
-        commit()
-
         return obj
