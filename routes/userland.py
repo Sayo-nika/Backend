@@ -39,7 +39,7 @@ class Userland(RouteCog):
         return [item.json for item in data]
 
     @staticmethod
-    @property
+    @db_session
     def verified():
         return [mod for mod in database_handle.mods if mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
 
@@ -60,14 +60,14 @@ class Userland(RouteCog):
     @route("/api/v1/mods/recent_releases")
     @json
     def get_recent_releases(self):
-        sorted_mods = reversed(sorted(self.verified,
+        sorted_mods = reversed(sorted(self.verified(),
                                       key=lambda mod: mod.released_at))
         return jsonify(self.as_json(sorted_mods)[:10])
 
     @route("/api/v1/mods/popular")
     @json
     def get_popular(self):
-        sorted_mods = reversed(sorted(self.verified,
+        sorted_mods = reversed(sorted(self.verified(),
                                       key=lambda mod: mod.downloads))
         return jsonify(self.as_json(sorted_mods)[:10])
 
@@ -94,7 +94,7 @@ class Userland(RouteCog):
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
-        reviews = select(review for review in Review if review.mod == mod_id)
+        reviews = select(review for review in Review if review.mod.id == mod_id)
 
         return jsonify(self.as_json(reviews))
 
@@ -134,6 +134,7 @@ class Userland(RouteCog):
 
     @route("/api/v1/users/<user_id>/favorites")
     @json
+    @db_session
     def get_favorites(self, user_id: str):
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
@@ -142,6 +143,7 @@ class Userland(RouteCog):
 
     @route("/api/v1/users/<user_id>/mods")
     @json
+    @db_session
     def get_user_mods(self, user_id: str):
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
@@ -164,7 +166,7 @@ class Userland(RouteCog):
             page = 1
 
         return jsonify(self.as_json(
-            Review.select(lambda review: review.author == user_id).page(page)
+            Review.select(lambda review: review.author.id == user_id).page(page)
         ))
 
 

@@ -1,10 +1,13 @@
 # Stdlib
+
 import hashlib
 
 # External Libraries
 from flask import abort, request
+from pony.orm import db_session
 
 # Sayonika Internals
+
 from framework.models import User
 
 
@@ -21,10 +24,10 @@ class Authenticator:
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
         pass
 
-    def has_authorized_access(self, resource_id: str = None) -> bool:
+    @db_session
+    def has_authorized_access(self, _, **kwargs) -> bool:
         id_ = (request.json or request.form).get("id")
         pass_ = (request.json or request.form).get("password")
-
         if id_ is None or pass_ is None:
             abort(401, "User not authorized")
 
@@ -37,22 +40,20 @@ class Authenticator:
             abort(401, "Invalid login credentials!")
 
         if request.method == "PATCH":  # only check editing
-            if not any(resource_id in collection
-                       for collection in [
-                               # User can edit their own mods
-                               (mod.id for mod in user.mods),
-                               # User can edit their own reviews
-                               (review.id for review in user.reviews),
-                               # User can edit themselves
-                               (user.id,)
-                       ]):
+            if "mod_id" in kwargs:
+                if kwargs["mod_id"] in (mod.id for mod in user.mods):
+                    return True
                 abort(403, "User does not have permission to access this resource")
-
+            elif "user_id" in kwargs:
+                if kwargs["user_id"] == user.id:
+                    return True
+                abort(403, "User does not have permission to access this resource")
+            abort(403, "User does not have permission to access this resource")
         return True
 
     def has_admin_access(self) -> bool:
-        id_ = (request.json or request.form).get("id")
-        pass_ = (request.json or request.form).get("password")
+        id_ = (request.json or request.form or request.args).get("id")
+        pass_ = (request.json or request.form or request.args).get("password")
 
         if id_ is None or pass_ is None:
             abort(401, "User not authorized")
@@ -74,3 +75,4 @@ class Authenticator:
         inst = cls.hash_class()
         inst.update(password.encode())
         return inst.digest()
+

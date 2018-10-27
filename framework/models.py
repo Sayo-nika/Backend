@@ -21,8 +21,7 @@ class Base:
     @property
     @db_session
     def json(self):
-        return self.__class__[self.id].to_dict(with_collections=True,  # pylint: disable=no-member
-                                               exclude=("password", "email"))
+        return self.__class__[self.id].to_dict(with_collections=True)  # pylint: disable=no-member
 
 
 class ModStatus(Enum):
@@ -54,6 +53,10 @@ class Mod(db.Entity, Base):
 
 
 class User(db.Entity, Base):
+    @property
+    def json(self):
+        return self.__class__[self.id].to_dict(with_collections=True, exclude=("password", "email"))
+
     id = PrimaryKey(str)
     email = Required(str)
     username = Required(str)

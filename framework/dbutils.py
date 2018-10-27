@@ -13,13 +13,16 @@ class EnumConverter(Converter):
     def init(self, kwargs):
         self.type_ = self.attr.py_type
 
-    def validate(self, val):  # pylint: disable=arguments-differ
+    def validate(self, val, obj=None):
         if not isinstance(val, self.type_):
             throw(ValueError, 'Value type for EnumConverter incorrect.')
         return val
 
+    def py2sql(self, val):
+        return val.value
+
     def sql2py(self, val):
-        return int(val)
+        return self.type_(int(val))
 
     @staticmethod
     def sql_type():

@@ -1,5 +1,5 @@
 # External Libraries
-from pony.orm import commit, db_session
+from pony.orm import db_session
 
 # Sayonika Internals
 from framework.dbutils import PGProvider
