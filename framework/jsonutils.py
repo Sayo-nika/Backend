@@ -3,7 +3,6 @@
 from enum import Enum
 
 # External Libraries
-
 from flask.json import JSONEncoder
 
 

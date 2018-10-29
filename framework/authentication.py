@@ -7,7 +7,6 @@ from flask import abort, request
 from pony.orm import db_session
 
 # Sayonika Internals
-
 from framework.models import User
 
 
@@ -75,4 +74,3 @@ class Authenticator:
         inst = cls.hash_class()
         inst.update(password.encode())
         return inst.digest()
-

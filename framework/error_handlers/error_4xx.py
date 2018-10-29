@@ -35,6 +35,7 @@ def handle_405(err: HTTPException):
 def handle_418(err: HTTPException):
     return Response(err.description, 418)
 
+
 @error_handler
 def handle_429(err: HTTPException):
     return Response(f"Ratelimit for this endpoint: {err.description}", 429)
