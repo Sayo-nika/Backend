@@ -40,14 +40,13 @@ class Authenticator:
 
         if request.method == "PATCH":  # only check editing
             if "mod_id" in kwargs:
-                if kwargs["mod_id"] in (mod.id for mod in user.mods):
-                    return True
-                abort(403, "User does not have permission to access this resource")
+                if kwargs["mod_id"] not in (mod.id for mod in user.mods):
+                    abort(403, "User does not have permission to access this resource")
             elif "user_id" in kwargs:
-                if kwargs["user_id"] == user.id:
-                    return True
-                abort(403, "User does not have permission to access this resource")
-            abort(403, "User does not have permission to access this resource")
+                if kwargs["user_id"] != user.id:
+                    abort(403, "User does not have permission to access this resource")
+            else:
+                abort(400, "Nothing specified to edit.")
         return True
 
     def has_admin_access(self) -> bool:
