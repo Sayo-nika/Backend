@@ -18,8 +18,10 @@ sayonika_instance = Sayonika()
 SETTINGS = {
     # Default
     "DB_HOST": "localhost",
+    "DB_PORT": 5432,
     "DB_USER": "mart",
-    "DB_PASS": "Nya"
+    "DB_PASS": "Nya",
+    "DB_NAME": "sayonika"
 }
 
 SETTINGS.update({
@@ -45,4 +47,5 @@ logger.setLevel(logging.INFO)
 auth_service = Authenticator(SETTINGS)
 
 database_handle = DBHandler(user=SETTINGS["DB_USER"], password=SETTINGS["DB_PASS"],
-                            database="Sayonika", host=SETTINGS["DB_HOST"])
+                            database=SETTINGS["DB_NAME"], host=SETTINGS["DB_HOST"],
+                            port=SETTINGS["DB_PORT"])

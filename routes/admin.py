@@ -15,9 +15,8 @@ class Admin(RouteCog):
     # === Verify ===
 
     @staticmethod
-    @property
     def unverified():
-        return [mod for mod in database_handle.mods if not mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
+        return [mod for mod in database_handle.mods if not mod.verified]
 
     @staticmethod
     def as_json(data: list):
@@ -26,12 +25,14 @@ class Admin(RouteCog):
     @route("/api/v1/mods/verify_queue")
     @requires_admin
     @json
+    @db_session
     def get_queue(self):
-        return jsonify(self.as_json(self.unverified))
+        return jsonify(self.as_json(self.unverified()))
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
+    @db_session
     def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
@@ -48,7 +49,7 @@ class Admin(RouteCog):
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
-        delete(Mod.get_s(mod_id))
+        delete(mod for mod in Mod if mod_id == mod.id)
 
         return jsonify(f"Mod '{mod_id}' was succesfully rejected.")
 

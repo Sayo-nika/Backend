@@ -7,6 +7,7 @@ from flask import Flask
 
 # Sayonika Internals
 from framework.error_handlers.error_4xx import all_4xx
+from framework.jsonutils import EnumJsonEncoder
 
 __all__ = ("Sayonika",)
 
@@ -21,6 +22,8 @@ class Sayonika(Flask):
     def __init__(self):
         self.route_dir = ""
         super().__init__("Sayonika")
+
+        self.json_encoder = EnumJsonEncoder
 
         for code, func in all_4xx.items():
             self.register_error_handler(code, func)
