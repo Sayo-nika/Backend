@@ -1,9 +1,12 @@
 # External Libraries
+# Stdlib
+from typing import Iterator
+
 from flask import abort, jsonify
 from pony.orm import delete, db_session
 
 # Sayonika Internals
-from framework.models import Mod
+from framework.models import Mod, Base
 from framework.objects import database_handle
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
@@ -19,7 +22,7 @@ class Admin(RouteCog):
         return [mod for mod in database_handle.mods if not mod.verified]
 
     @staticmethod
-    def as_json(data: list):
+    def as_json(data: Iterator[Base]):
         return [item.json for item in data]
 
     @route("/api/v1/mods/verify_queue")

@@ -1,5 +1,6 @@
 # Stdlib
 from secrets import token_hex
+from typing import Iterator
 
 # External Libraries
 from flask import abort, jsonify, request, send_file
@@ -7,7 +8,7 @@ from pony.orm import select, db_session
 from simpleflake import simpleflake
 
 # Sayonika Internals
-from framework.models import Mod, User, Review
+from framework.models import Mod, User, Review, Base
 from framework.objects import database_handle
 from framework.route import route, multiroute
 from framework.route_wrappers import json
@@ -35,7 +36,7 @@ class Userland(RouteCog):
     # === Mods ===
 
     @staticmethod
-    def as_json(data: list):
+    def as_json(data: Iterator[Base]):
         return [item.json for item in data]
 
     @staticmethod

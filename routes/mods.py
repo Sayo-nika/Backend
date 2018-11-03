@@ -2,6 +2,7 @@
 from datetime import datetime
 import os
 from secrets import token_hex
+from typing import Iterator
 
 # External Libraries
 from flask import abort, jsonify, request
@@ -10,7 +11,7 @@ from simpleflake import simpleflake
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import Mod, User, ModStatus
+from framework.models import Mod, User, ModStatus, Base
 from framework.objects import database_handle
 from framework.route import multiroute
 from framework.route_wrappers import json, requires_login
@@ -35,7 +36,7 @@ class Mods(RouteCog):
         return str(simpleflake())  # easier than converting ID passed to route to int every time
 
     @staticmethod
-    def as_json(data: list):
+    def as_json(data: Iterator[Base]):
         return [item.json for item in data]
 
     # === Mods ===
