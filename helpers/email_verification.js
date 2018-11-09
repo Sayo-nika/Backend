@@ -29,7 +29,7 @@ const mailer = require("nodemailer").createTransport({
     }
 });
 
-const server = micro( async req => {
+const server = micro(async req => {
     const data = await json(req);
     // generate a token, add it to redis
     let id = idGen.nextId();
