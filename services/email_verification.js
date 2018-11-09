@@ -10,7 +10,10 @@ const redis = require("redis");
 const Redite = require("redite");
 const config = require("./email.config");
 const snowflake = require("snowflake-codon");
-const client = redis.createClient();
+const client = redis.createClient({
+    host: config.redis.host,
+    password: config.redis.password
+});
 const db = new Redite({client});
 const idGen = new snowflake(12, Math.floor(Math.random() * 1129), 2018, 200);
 
@@ -65,7 +68,7 @@ const server = micro(async req => {
         }, async(err, info) => {
              if (err) send(res, 500, '{"code": 500, "message": "failed to send to subject."}');
              else send(res, 200, '{"code": 200, "message": "Transport to subject successful"}');
-             mailer.close(); 
+             mailer.close();
         });
     });
     // expire token by 24 hours.
