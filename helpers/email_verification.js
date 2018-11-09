@@ -4,9 +4,11 @@
 * @license BSD-3-Clause
 */
 
-const {json} = require("micro");
+const micro = require("micro");
+const {json} = micro;
 const redis = require("redis");
-const redite = require("redite");
+const Redite = require("redite");
+const config = require("./email.config");
 const snowflake = require("snowflake-codon");
 const client = redis.createClient();
 const db = new Redite({client});
