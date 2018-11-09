@@ -10,7 +10,7 @@ const redite = require("redite");
 const snowflake = require("snowflake-codon");
 const client = redis.createClient();
 const db = new Redite({client});
-const idGen = new snowflake(12, Math.floor(Math.random() * 29).toFixed(2), 2018, 200);
+const idGen = new snowflake(12, Math.floor(Math.random() * 29), 2018, 200);
 
 const mailer = require("nodemailer").createTransport({
     host: config.host,
@@ -61,8 +61,8 @@ const server = micro(async req => {
               <p align="left">Happy Modding!</p>
             `
         }, async(err, info) => {
-             if (err) send(res, 500, '{code: 500, message: "failed to send to subject."}');
-             else send(res, 200, '{code: 200, message: "Transport to subject successful"}');
+             if (err) send(res, 500, '{"code": 500, "message": "failed to send to subject."}');
+             else send(res, 200, '{"code": 200, "message": "Transport to subject successful"}');
              mailer.close(); 
         });
     });
