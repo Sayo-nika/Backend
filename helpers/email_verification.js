@@ -10,7 +10,7 @@ const redite = require("redite");
 const snowflake = require("snowflake-codon");
 const client = redis.createClient();
 const db = new Redite({client});
-const idGen = new snowflake(12, Math.floor(Math.random() * 29), 2018, 200);
+const idGen = new snowflake(12, Math.floor(Math.random() * 1129), 2018, 200);
 
 const mailer = require("nodemailer").createTransport({
     host: config.host,
