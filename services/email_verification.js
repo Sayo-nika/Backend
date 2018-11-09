@@ -35,10 +35,10 @@ const mailer = require("nodemailer").createTransport({
 });
 
 const server = micro(async req => {
-    const data = await json(req);
+    const data = await json(req.body);
     // generate a token, add it to redis
     let id = idGen.nextId();
-    client.hset(data.user.name, `email_verification`, JSON.stringify({
+    client.hset(data.user.email, `email_verification`, JSON.stringify({
         deleteThis: true,
         id
     }), async err => {
@@ -48,6 +48,7 @@ const server = micro(async req => {
         // While we have this on urlencoded, the Redis entry serves as a verification point.
         // We want to confirm if this is created by us or maliciously created by someone.
         // However, this is handled by the REST Server, and not this microservice.
+        // TODO : Check if this a Redis entry exist to prevent resends.
 
         else mailer.sendMail({
             to: `${data.user.name} <${data.user.email}>`,
