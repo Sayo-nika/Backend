@@ -42,6 +42,7 @@ const server = micro(async req => {
         deleteThis: true,
         id
     }), async err => {
+
         if (err) send(res, 500, `{code: 500, message: ${err}`);
 
         // While we have this on urlencoded, the Redis entry serves as a verification point.
@@ -56,17 +57,17 @@ const server = micro(async req => {
               <br>
               <p align="center">
                 As a security measure we would like to ask you to confirm your account.
-                Your account won't be accessible if you don't confirm for 24 hours.
+                You will not be able to access your account if you don't confirm your email within 24 hours.
               </p>
               <br>
               <center><a href="${config.url}/api/v1/verify?token=${id}">Click to confirm your account</a></center>
               <br>
-              <p align="center">If you have questions, do not hesitate to ask us on <code>hello@sayonika.moe</code>.</p>
+              <p align="center">If you have questions, do not hesitate to ask us on <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a>.</p>
 
               <p align="left">Happy Modding!</p>
             `
         }, async(err, info) => {
-             if (err) send(res, 500, '{"code": 500, "message": "failed to send to subject."}');
+             if (err) send(res, 500, `{"code": 500, "message": "failed to send to subject. Reason: ${err}"}`);
              else send(res, 200, '{"code": 200, "message": "Transport to subject successful"}');
              mailer.close();
         });
@@ -75,4 +76,4 @@ const server = micro(async req => {
     client.expireat(data.username, parseInt((+new Date)/1000) + 86400);
 });
 
-server.listen(3000);
+server.listen(config.port);
