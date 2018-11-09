@@ -1,0 +1,30 @@
+{
+  "name": "server",
+  "version": "0.0.1",
+  "description": "Sayonika REST server",
+  "main": "echo \"No index\"",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sayo-nika/server.git"
+  },
+  "keywords": [
+    "sayonika",
+    "server",
+    "git"
+  ],
+  "author": "sr229",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/Sayo-nika/server/issues"
+  },
+  "homepage": "https://github.com/Sayo-nika/server#readme",
+  "dependencies": {
+    "jwt-generator": "^3.1.0",
+    "micro": "^9.3.3",
+    "nodemailer": "^4.6.8",
+    "redite": "^3.0.1"
+  }
+}
