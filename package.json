@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/Sayo-nika/server#readme",
   "dependencies": {
-    "jwt-generator": "^3.1.0",
     "micro": "^9.3.3",
     "nodemailer": "^4.6.8",
     "redite": "^3.0.1",
