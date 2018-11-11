@@ -6,7 +6,7 @@
 
 global.Promise = require("bluebird");
 const micro = require("micro");
-const {json} = micro;
+const {json, send} = micro;
 const redis = require("redis");
 const config = require("./email.config");
 const bcrypt = require("bcrypt");
@@ -54,7 +54,7 @@ function isEmpty(obj) {
 if (isEmpty(config)) return new Error("Config is empty! Exiting.");
 
 const server = micro(async (req, res) => {
-    const data = await json(req.body);
+    const data = await json(req);
     // generate a token, add it to redis
     const id = idGen.nextId();
     const token = bcrypt.hashSync(`${data.user.email}:${id}`)
