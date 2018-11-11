@@ -22,9 +22,11 @@
   },
   "homepage": "https://github.com/Sayo-nika/server#readme",
   "dependencies": {
+    "bcrypt": "^3.0.2",
+    "bluebird": "^3.5.3",
     "micro": "^9.3.3",
     "nodemailer": "^4.6.8",
-    "redite": "^3.0.1",
+    "redis": "^2.8.0",
     "snowflake-codon": "^4.1.1"
   },
   "devDependencies": {
