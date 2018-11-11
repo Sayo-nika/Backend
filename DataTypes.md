@@ -1,3 +1,5 @@
+# Sayonika API Data Types
+
 Understanding the format of mods/mods.json might be difficult to understand, so here it is explained in further detail
 
 Top structure:
@@ -10,9 +12,11 @@ Top structure:
   "update": 0
 }
 ```
+
 NOTE: the `update` value is only used for triggering saving the json back to disk
 
 A Mod object looks like this:
+
 ```json
 {
   "title": "Mod Title",
@@ -27,6 +31,7 @@ A Mod object looks like this:
 ```
 
 User:
+
 ```json
 {
   "name": "Username",
@@ -38,6 +43,7 @@ User:
 ```
 
 Reviews:
+
 ```json
 {
   "author": "User#id",
