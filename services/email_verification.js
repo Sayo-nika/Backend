@@ -56,8 +56,8 @@ if (isEmpty(config)) return new Error("Config is empty! Exiting.");
 const server = micro(async (req, res) => {
     const data = await json(req.body);
     // generate a token, add it to redis
-    let id = idGen.nextId();
-    let token = bcrypt.hashSync(`${data.user.email}:${id}`)
+    const id = idGen.nextId();
+    const token = bcrypt.hashSync(`${data.user.email}:${id}`)
     
     try {
       await client.set(`${data.user.email}:email_verify`, token, 'EX', 60 * 60 * 24);
