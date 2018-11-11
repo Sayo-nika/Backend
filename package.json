@@ -26,6 +26,7 @@
     "bluebird": "^3.5.3",
     "micro": "^9.3.3",
     "nodemailer": "^4.6.8",
+    "nodemailer-smtp-transport": "^2.7.4",
     "redis": "^2.8.0",
     "snowflake-codon": "^4.1.1"
   },

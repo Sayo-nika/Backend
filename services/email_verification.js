@@ -39,25 +39,37 @@ const mailer = require("nodemailer").createTransport({
         'X-Logokas-is': 'hot'
     }
 });
+/**
+ * Checks if a specific object is empty
+ * @param {Object} obj Object to analyze.
+ * @returns {Boolean} True if non-empty, False if not. 
+ */
+function isEmpty(obj) {
+    for(let key in obj) {
+        if(!obj[key]) return false;
+    }
+    return true;
+}
 
-const server = micro(async req => {
+if (isEmpty(config)) return new Error("Config is empty! Exiting.");
+
+const server = micro(async (req, res) => {
     const data = await json(req.body);
     // generate a token, add it to redis
     let id = idGen.nextId();
     let token = bcrypt.hashSync(`${data.user.email}:${id}`)
-    client.set(`${data.user.email}:email_verify`, token, async err => {
-
-        if (err) send(res, 500, `{"code": "500", "message": ${err}`);
+    
+    try {
+      await client.set(`${data.user.email}:email_verify`, token, 'EX', 60 * 60 * 24);
 
         // While we have this on urlencoded, the Redis entry serves as a verification point.
         // We want to confirm if this is created by us or maliciously created by someone.
         // However, this is handled by the REST Server, and not this microservice.
         // TODO : Check if this a Redis entry exist to prevent resends.
-
-        else mailer.sendMail({
-            to: `${data.user.name} <${data.user.email}>`,
-            subject: 'Welcome to Sayonika - Confirm your email!',
-            html: `
+      await mailer.sendMail({
+          to: `${data.user.name} <${data.user.email}>`,
+          subject: 'Welcome to Sayonika - Confirm your email!',
+          html: `
               <html>
                <head>
                  <style>
@@ -84,14 +96,11 @@ const server = micro(async req => {
               <p>Happy Modding!</p>
               </body>
             `
-        }, async(err, info) => {
-             if (err) send(res, 500, `{"code": "500", "message": "failed to send to subject. Reason: ${err}"}`);
-             else send(res, 200, '{"code": "200", "message": "Transport to subject successful"}');
-             mailer.close();
         });
-    });
-    // expire token by 24 hours.
-    client.expireat(data.user.name, parseInt((+new Date)/1000) + 86400);
-});
 
-server.listen(config.port);
+        send(res, 200, JSON.stringify({code: "200", message: `Sent to ${data.user.name} via email (${data.user.email}).`}));
+    } catch (err) {
+        send(res, 500, JSON.stringify({code: "500", message: `Failed to send attachment. Reason: ${err}`}));
+    }
+});
+server.listen(config.port)
