@@ -105,4 +105,5 @@ const server = micro(async (req, res) => {
         send(res, 500, JSON.stringify({code: "500", message: `Failed to send attachment. Reason: ${err}`}));
     }
 });
-server.listen(config.port)
+
+server.listen(parseInt(config.port));

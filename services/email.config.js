@@ -1,7 +1,6 @@
 module.exports = {
-     url: '' || process.env.SAYONIKA_BASE_URL,
      host: '' || process.env.SAYONIKA_EMAIL_HOST || 3000,
-     port: '' || process.env.SAYONIKA_EMAIL_PORT,
+     port: '' || process.env.SAYONIKA_EMAIL_PORT || '67',
      auth: {
         user: '' || process.env.SAYONIKA_EMAIL_USER,
         password: '' || process.env.SAYONIKA_EMAIL_PASSWORD
