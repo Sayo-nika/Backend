@@ -5,6 +5,7 @@
  */
 global.Promise = require("bluebird");
 const micro = require("micro");
+const https = require("https");
 const {json, send} = micro;
 const config = require('./av.config');
 
