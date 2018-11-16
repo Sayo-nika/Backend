@@ -7,18 +7,18 @@ global.Promise = require("bluebird");
 const micro = require("micro");
 const https = require("https");
 const {json, send} = micro;
-const config = require('./av.config');
+const config = require("./av.config");
 
-const server = micro(async (req, res) => {
-     const data = json(req);
+const server = micro(async req => {
+    const data = json(req);
 
-     request('POST', `https://www.virustotal.com/vtapi/v2/url/scan?apikey=${config.apiKey}`, {}, {}).then(res => {
+    request("POST", `https://www.virustotal.com/vtapi/v2/url/scan?apikey=${config.apiKey}`, {}, {data}).then(res => {
 
-        if (res.statusCode === '204') send(res, 204, JSON.stringify({code: "204", reason: "Exceeded VirusTotal Ratelimit."}));
+        if (res.statusCode === "204") send(res, 204, JSON.stringify({code: "204", reason: "Exceeded VirusTotal Ratelimit."}));
         // TODO: Check to VT if its a safe file.
         // because this one returns only a permalink.
         else send(res, 200, JSON.stringify(res));
-     })
+    });
 });
 
 server.listen(parseInt(config.port));
@@ -27,14 +27,14 @@ server.listen(parseInt(config.port));
 function request(method, url, options={}, payload) {
     return new Promise((resolve, reject) => {
         let req = https.request(Object.assign(URL.parse(url), options, {method}), res => {
-            let chunked = '';
+            let chunked = "";
 
             if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
 
-            res.setEncoding('utf8');
-            res.on('data', chunk => chunked += chunk);
-            res.on('error', reject);
-            res.on('end', () => {
+            res.setEncoding("utf8");
+            res.on("data", chunk => chunked += chunk);
+            res.on("error", reject);
+            res.on("end", () => {
                 let val;
 
                 try {
@@ -48,7 +48,7 @@ function request(method, url, options={}, payload) {
             });
         });
 
-        req.on('error', reject);
+        req.on("error", reject);
         if (payload) req.write(payload);
         req.end();
     });
