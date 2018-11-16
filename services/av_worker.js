@@ -29,7 +29,7 @@ function request(method, url, options={}, payload) {
         let req = https.request(Object.assign(URL.parse(url), options, {method}), res => {
             let chunked = '';
 
-            if (res.statusCode === 200) return reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
+            if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}: ${res.statusMessage}`));
 
             res.setEncoding('utf8');
             res.on('data', chunk => chunked += chunk);
