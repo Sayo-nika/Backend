@@ -62,7 +62,12 @@ const server = micro(async (req, res) => {
     const token = bcrypt.hashSync(`${data.user.email}:${id}`)
     
     try {
-      await client.set(`${data.user.email}:email_verify`, token, 'EX', 60 * 60 * 24);
+      // check if this person has already sent a verification mail.
+      client.exists(`${data.user.email}:email_verify`, async reply => {
+          // if this is reply 1, we throw an error
+          if (reply !== 1) await client.set(`${data.user.email}:email_verify`, token, 'EX', 60 * 60 * 24);
+          else send(res, 409, JSON.stringify({code: "409", message: "Key exists."}));
+      });
 
         // While we have this on urlencoded, the Redis entry serves as a verification point.
         // We want to confirm if this is created by us or maliciously created by someone.
