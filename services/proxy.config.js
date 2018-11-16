@@ -1,3 +1,3 @@
 module.exports = {
-    port: "" || process.env.MICROSERVICES_PORT || 9000
+    port: process.env.MICROSERVICES_PORT || 9000
 };
