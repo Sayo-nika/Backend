@@ -6,13 +6,13 @@ This repository contains the Sayonika server code.
 
 Sayonika uses a Microservice layout for serving its mod listing. This means, each component has to be deployed individually but increases fault tolerance.
 
-Sayonika server is built with Flask and :heart:.
+Sayonika server is built with Flask, Micro, and :heart:.
 
 ## Running
 
-Sayonika requires Python to run. Go to the [Python website](https://python.org) to get a copy.
+Sayonika requires Python and Node.js to run. Go to the [Python website](https://python.org) to get the latest Python and [Node.js Site](https://nodejs.org) for Node.js.
 
-Then, clone the repository and run `python -m pip install -r requirements.txt`.
+Then, clone the repository and run `python -m pip install -r requirements.txt` and `npm i --save`.
 
 ## Contributing
 
