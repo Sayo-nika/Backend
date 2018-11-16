@@ -96,7 +96,7 @@ const server = micro(async (req, res) => {
                 You will not be able to access your account if you don't confirm your email within 24 hours.
               </p>
               <br>
-              <a href="${config.url}/api/v1/verify?token=${token}">Click to confirm your account</a>
+              <a href="${config.host}/api/v1/verify?token=${token}">Click to confirm your account</a>
               <br>
               <p >If you have questions, do not hesitate to ask us on <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a>.</p>
 
