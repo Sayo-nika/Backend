@@ -12,7 +12,7 @@ const config = require("./av.config");
 const server = micro(async (req, res) => {
     let uwu = json(req);
     try {
-        let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
+        let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {headers: {"Content-Type": "appplication/json", "Accept-Encoding": "gzip, deflate"}}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
 
         if (vtRes !== "204") send(res, 429, JSON.stringify({code: "429", message: "Exceeded Virustotal ratelimit."}));
         else {
