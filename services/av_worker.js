@@ -10,11 +10,15 @@ const {json, send} = micro;
 const config = require("./av.config");
 
 const server = micro(async (req, res) => {
+
     let uwu = json(req);
+
     try {
+
         let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {headers: {"Content-Type": "appplication/json", "Accept-Encoding": "gzip, deflate"}}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
 
         if (vtRes !== "204") send(res, 429, JSON.stringify({code: "429", message: "Exceeded Virustotal ratelimit."}));
+        
         else {
 
             // Scans the URL. We inform the front-facing REST if its safe or not.
@@ -26,7 +30,7 @@ const server = micro(async (req, res) => {
             else send(res, 200, JSON.stringify({code: "200", is_bad: false, message: "URL Reported OK. No Malware found."}));
         }
     } catch(err) {
-        send(res, 500, JSON.stringify({message: `Could not fulfill request. ${err}`}));
+        send(res, 500, JSON.stringify({code: "500", message: err}));
     }
 });
 
