@@ -9,22 +9,28 @@ const https = require("https");
 const {json, send} = micro;
 const config = require("./av.config");
 
-const server = micro(async req => {
-    const data = json(req);
+const server = micro(async (req, res) => {
+    let uwu = json(req);
 
-    request("POST", `https://www.virustotal.com/vtapi/v2/url/scan?apikey=${config.apiKey}`, {}, {data}).then(res => {
+    let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
 
-        if (res.statusCode === "204") send(res, 204, JSON.stringify({code: "204", reason: "Exceeded VirusTotal Ratelimit."}));
-        // TODO: Check to VT if its a safe file.
-        // because this one returns only a permalink.
-        else send(res, 200, JSON.stringify(res));
-    });
+    if (vtRes !== "204") send(res, 429, JSON.stringify({code: "429", message: "Exceeded Virustotal ratelimit."}));
+    else {
+
+        // Scans the URL. We inform the front-facing REST if its safe or not.
+
+        let data = JSON.parse(vtRes).body;
+
+        if (data.scans.MalwarePatrol.detected !== "false") send(res, 451, JSON.stringify({code: "451", message: "Reported URL Malware. Delete immediately."}));
+
+        else send(res, 200, JSON.stringify({code: "200", message: "URL Reported OK. No Malware found."}));
+    }
 });
 
 server.listen(parseInt(config.port));
 
 // simple request function for creating a Promisified HTTP/S request.
-function request(method, url, options={}, payload) {
+function request(method, url, options = {}, payload) {
     return new Promise((resolve, reject) => {
         let req = https.request(Object.assign(URL.parse(url), options, {method}), res => {
             let chunked = "";
