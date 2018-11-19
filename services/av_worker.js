@@ -21,9 +21,9 @@ const server = micro(async (req, res) => {
 
         let data = JSON.parse(vtRes).body;
 
-        if (data.scans.MalwarePatrol.detected !== "false") send(res, 451, JSON.stringify({code: "451", message: "Reported URL Malware. Delete immediately."}));
+        if (data.scans.MalwarePatrol.detected !== "false") send(res, 200, JSON.stringify({code: "200", is_bad: true, message: "Reported URL Malware. Delete immediately."}));
 
-        else send(res, 200, JSON.stringify({code: "200", message: "URL Reported OK. No Malware found."}));
+        else send(res, 200, JSON.stringify({code: "200", is_bad: false, message: "URL Reported OK. No Malware found."}));
     }
 });
 
