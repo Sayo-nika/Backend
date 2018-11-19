@@ -11,19 +11,22 @@ const config = require("./av.config");
 
 const server = micro(async (req, res) => {
     let uwu = json(req);
+    try {
+        let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
 
-    let vtRes = await request("POST", `https://www.virustotal.com/vtapi/v2/url/report`, {}, JSON.stringify({resource: uwu.url, apikey: config.apiKey, scan: "1"}));
+        if (vtRes !== "204") send(res, 429, JSON.stringify({code: "429", message: "Exceeded Virustotal ratelimit."}));
+        else {
 
-    if (vtRes !== "204") send(res, 429, JSON.stringify({code: "429", message: "Exceeded Virustotal ratelimit."}));
-    else {
+            // Scans the URL. We inform the front-facing REST if its safe or not.
 
-        // Scans the URL. We inform the front-facing REST if its safe or not.
+            let data = JSON.parse(vtRes).body;
 
-        let data = JSON.parse(vtRes).body;
+            if (data.scans.MalwarePatrol.detected !== "false") send(res, 200, JSON.stringify({code: "200", is_bad: true, message: "Reported URL Malware. Delete immediately."}));
 
-        if (data.scans.MalwarePatrol.detected !== "false") send(res, 200, JSON.stringify({code: "200", is_bad: true, message: "Reported URL Malware. Delete immediately."}));
-
-        else send(res, 200, JSON.stringify({code: "200", is_bad: false, message: "URL Reported OK. No Malware found."}));
+            else send(res, 200, JSON.stringify({code: "200", is_bad: false, message: "URL Reported OK. No Malware found."}));
+        }
+    } catch(err) {
+        send(res, 500, JSON.stringify({message: `Could not fulfill request. ${err}`}));
     }
 });
 
