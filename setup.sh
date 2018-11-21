@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "-------- TODOs: --------"
-grep -i "TODO" $(find . -type d \( -path mods -o -path routes \) -prune -o -print | grep .py$)
-grep -i "TODO" $(find ./services/| grep .js$)
+grep -i "TODO" $(find -wholename "./*/*.py"  | grep .py$)
+grep -i "TODO" $(find -wholename "./services/*.js" | grep .js)
 echo "------------------------"
 
