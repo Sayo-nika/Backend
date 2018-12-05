@@ -96,7 +96,7 @@ const server = micro(async (req, res) => {
                 You will not be able to access your account if you don't confirm your email within 24 hours.
               </p>
               <br>
-              <a href="${config.host}/api/v1/verify?token=${token}">Click to confirm your account</a>
+              <a href="${config.host}/api/v1/verify?token=${token}&email=${data.email}">Click to confirm your account</a>
               <br>
               <p >If you have questions, do not hesitate to ask us on <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a>.</p>
 
@@ -105,7 +105,7 @@ const server = micro(async (req, res) => {
             `
         });
 
-        send(res, 200, JSON.stringify({code: "200", message: `Sent to ${data.user.name} via email (${data.email}).`}));
+        send(res, 200, JSON.stringify({code: "200", message: `Sent to ${data.username} via email (${data.email}).`}));
     } catch(err) {
         send(res, 500, JSON.stringify({code: "500", message: `Failed to send attachment. Reason: ${err}`}));
     }
