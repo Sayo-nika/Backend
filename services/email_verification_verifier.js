@@ -47,7 +47,7 @@ const server = micro(async (req, res) => {
             } else {
 
                 // compare, then throw error if not match.
-                if (reply !== data.token) send(res, 403, JSON.stringify({code: 403, message: `Incorrect token for user ${data.id}`}));
+                if (reply !== data.token) send(res, 403, JSON.stringify({code: "403", message: `Incorrect token for user ${data.id}`}));
                 else { 
                     send(res, 200, JSON.stringify({code: "200", message: "Tokens match. Mark as verify in REST."}));
 
