@@ -102,6 +102,7 @@ const server = micro(async (req, res) => {
 
               <p>Happy Modding!</p>
               </body>
+             </html>
             `
         });
 
