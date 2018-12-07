@@ -65,48 +65,46 @@ const server = micro(async (req, res) => {
         // check if this person has already sent a verification mail.
         client.exists(`${data.email}:email_verify`, async reply => {
             // if this is reply 1, we throw an error
-            if (reply !== 1) await client.set(`${data.email}:email_verify`, token, "EX", 60 * 60 * 24);
-            else send(res, 409, JSON.stringify({code: "409", message: "Key exists."}));
+            if (reply !== 1) { 
+                await client.set(`${data.email}:email_verify`, token, "EX", 60 * 60 * 24);
+                // While we have this on urlencoded, the Redis entry serves as a verification point.
+                // We want to confirm if this is created by us or maliciously created by someone.
+                // However, this is handled by the REST Server, and not this microservice.
+                // TODO : Check if this a Redis entry exist to prevent resends.
+                await mailer.sendMail({
+                    to: data.email,
+                    subject: "Welcome to Sayonika - Confirm your email!",
+                    html: `
+                         <html>
+                         <head>
+                         <style>
+                            p {
+                             text-align: center;
+                            } 
+                            a {
+                             text-align: center;
+                            }
+                        </style>
+                        </head>
+                        <body>
+                         <p>Hey there, we would like to welcome you in Sayonika!</p>
+                         <br>
+                         <p>
+                          As a security measure we would like to ask you to confirm your account.
+                          You will not be able to access your account if you don't confirm your email within 24 hours.
+                         </p>
+                         <br>
+                         <a href="${config.host}/api/v1/verify?token=${token}&email=${data.email}">Click to confirm your account</a>
+                         <br>
+                         <p >If you have questions, do not hesitate to ask us on <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a>.</p>
+                         <p>Happy Modding!</p>
+                        </body>
+                    </html>
+                    `
+                });
+                send(res, 200, JSON.stringify({code: "200", message: `Sent to ${data.username} via email (${data.email}).`}));
+            } else send(res, 409, JSON.stringify({code: "409", message: "Key exists."}));
         });
-
-        // While we have this on urlencoded, the Redis entry serves as a verification point.
-        // We want to confirm if this is created by us or maliciously created by someone.
-        // However, this is handled by the REST Server, and not this microservice.
-        // TODO : Check if this a Redis entry exist to prevent resends.
-        await mailer.sendMail({
-            to: data.email,
-            subject: "Welcome to Sayonika - Confirm your email!",
-            html: `
-              <html>
-               <head>
-                 <style>
-                   p {
-                      text-align: center;
-                   } 
-                   a {
-                       text-align: center;
-                   }
-                 </style>
-               </head>
-              <body>
-              <p>Hey there, we would like to welcome you in Sayonika!</p>
-              <br>
-              <p>
-                As a security measure we would like to ask you to confirm your account.
-                You will not be able to access your account if you don't confirm your email within 24 hours.
-              </p>
-              <br>
-              <a href="${config.host}/api/v1/verify?token=${token}&email=${data.email}">Click to confirm your account</a>
-              <br>
-              <p >If you have questions, do not hesitate to ask us on <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a>.</p>
-
-              <p>Happy Modding!</p>
-              </body>
-             </html>
-            `
-        });
-
-        send(res, 200, JSON.stringify({code: "200", message: `Sent to ${data.username} via email (${data.email}).`}));
     } catch(err) {
         send(res, 500, JSON.stringify({code: "500", message: `Failed to send attachment. Reason: ${err}`}));
     }
