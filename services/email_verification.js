@@ -56,7 +56,7 @@ if (isEmpty(config)) throw new Error("Config is empty! Exiting.");
 const server = micro(async (req, res) => {
     // Add sanity check to prevent mart fucking up
     if (typeof req !== "object") send(res, 400, JSON.stringify({code: "400", message: "POST payload not an object."}));
-    const data = json(req);
+    const data = json(req.json());
     // generate a token, add it to redis
     const id = idGen.nextId();
     const token = bcrypt.hashSync(`${data.email}:${id}`);

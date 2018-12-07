@@ -6,7 +6,8 @@
 
 global.Promise = require("bluebird");
 const micro = require("micro");
-const {json, send} = micro;
+const parse = require("urlencoded-body-parser");
+const {send} = micro;
 const redis = require("redis");
 const config  = require("./email.config");
 const client = redis.createClient({
@@ -33,9 +34,9 @@ function isEmpty(obj) {
 if (isEmpty(config)) throw new Error("Config is empty! Exiting.");
 
 const server = micro(async (req, res) => {
-    const data = json(req);
 
-    if (typeof req !== "object") send(res, 400, JSON.stringify({code: "400", message: "Malformed response. Must be JSON."}));
+    // Parses this into a Promise Object.
+    const data = await parse(req);
 
     client.exists(`${data.email}:email_verify`, async reply => {
         if (reply !== 1) send(res, 410, JSON.stringify({code: "410", message: "Token does not exist. It may have expired."}));

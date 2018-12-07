@@ -29,7 +29,8 @@
     "nodemailer": "^4.6.8",
     "nodemailer-smtp-transport": "^2.7.4",
     "redis": "^2.8.0",
-    "snowflake-codon": "^4.1.1"
+    "snowflake-codon": "^4.1.1",
+    "urlencoded-body-parser": "^2.0.1"
   },
   "devDependencies": {
     "eslint": "^5.8.0"
