@@ -32,11 +32,11 @@ class Authenticator:
 
         user = User.get_s(id_)
 
-        if not user.email_verified:
-            abort(401, "Account needs verification")
-
         if user is None:
             abort(401, "Unknown user ID!")
+
+        if not user.email_verified:
+            abort(401, "Account needs verification")
 
         if self.hash_password(pass_) != user.password:
             abort(401, "Invalid login credentials!")
