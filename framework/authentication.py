@@ -32,6 +32,9 @@ class Authenticator:
 
         user = User.get_s(id_)
 
+        if user.email_verified != "true":
+            abort(401, "Account needs verification")
+
         if user is None:
             abort(401, "Unknown user ID!")
 
