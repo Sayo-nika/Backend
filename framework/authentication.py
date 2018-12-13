@@ -11,11 +11,6 @@ from framework.models import User
 
 
 class Authenticator:
-    """
-    Service to check API key validity
-
-    TODO: Add OAuth2
-    """
 
     hash_class = hashlib.sha3_512
 
