@@ -32,7 +32,7 @@ class Authenticator:
 
         user = User.get_s(id_)
 
-        if user.email_verified != True:
+        if user.email_verified is False:
             abort(401, "Account needs verification")
 
         if user is None:
