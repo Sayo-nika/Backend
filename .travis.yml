@@ -7,10 +7,10 @@ python:
 install:
   - "pip install -r requirements.txt"
   - "pip install -r requirements-ci.txt"
+  - bash setup.sh
 
 script:
-   - snekchek
-   - echo "No tests for now"
+  - echo "No tests"
 
 cache: pip
 
