@@ -8,10 +8,9 @@ matrix:
        python: 
          - "3.6"
          - "3.7"
-       before_script:
+       install:
          - pip install -r requirements.txt
          - pip install -r requirements-ci.txt
-       install:
          - bash setup.sh 
        script:
           - snekcheck
@@ -23,11 +22,11 @@ matrix:
        node_js:
          - "8"
          - "10"
-       before_script:
-        - cd services
        install:
+        - cd services
         - npm i --save
         - npm ci 
+        - bash setup.sh 
        script:
          - echo "No tests for now"
          
