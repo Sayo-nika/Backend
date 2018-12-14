@@ -1,18 +1,36 @@
-language: python
-
-python:
-  - "3.6"
-  - "3.7"
-
-install:
-  - "pip install -r requirements.txt"
-  - "pip install -r requirements-ci.txt"
-  - bash setup.sh
-
-script:
-  - echo "No tests"
-
-cache: pip
+matrix:
+   include:
+    #######################
+    #    Python Matrix    #
+    #######################
+     - language: python
+       dist: xenial
+       python: 
+         - "3.6"
+         - "3.7"
+       before_script:
+         - pip install -r requirements.txt
+         - pip install -r requirements-ci.txt
+       install:
+         - bash setup.sh 
+       script:
+          - snekcheck
+    #######################
+    #    Node.js Matrix   #
+    #######################
+     - language: node_js
+       dist: xenial
+       node_js:
+         - "8"
+         - "10"
+       before_script:
+        - cd services
+       install:
+        - npm i --save
+        - npm ci 
+       script:
+         - echo "No tests for now"
+         
 
 notifications:
   email: false
