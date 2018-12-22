@@ -25,7 +25,6 @@ matrix:
        install:
         - cd services
         - yarn --production
-        - bash setup.sh 
        script:
          - echo "No tests for now"
     #######################
