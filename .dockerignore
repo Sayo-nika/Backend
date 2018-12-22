@@ -1,0 +1,5 @@
+*.md
+services/
+.*
+README.md
+setup.sh

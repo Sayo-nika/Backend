@@ -6,7 +6,6 @@ or not available through Python.
 The following applications of the internal API right now is:
 
 - VirusTotal-based mod Scanning
-- Upload
 - Email verification
 
 ## Installing
