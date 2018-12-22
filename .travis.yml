@@ -24,8 +24,7 @@ matrix:
          - "10"
        install:
         - cd services
-        - npm i --save
-        - npm ci 
+        - yarn --production
         - bash setup.sh 
        script:
          - echo "No tests for now"
