@@ -29,6 +29,14 @@ matrix:
         - bash setup.sh 
        script:
          - echo "No tests for now"
+    #######################
+    #    Docker Matrix    #
+    #######################
+     - language: generic
+       dist: xenial
+       script:
+         - docker build -t sayonika/server-core:latest .
+         - cd services && docker build -t sayonika/server-internal:latest .
          
 
 notifications:
