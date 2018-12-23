@@ -32,17 +32,29 @@ class ModStatus(Enum):
     Released = 4
     Verified = 5
 
+class ConnectionType(Enum):
+    GitHub = 1
+    GitLab = 2
+    Discord = 3
+
+class MediaType(Enum):
+    Video = 1
+    Image = 2
+
+class Media(db.Entity, Base):
+    type = Required(MediaType)
+    url = Required(str)
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str)
     icon = Optional(str, nullable=True)
     path = Required(str)
-    # TODO: Media
+    media = Set(Media)
     tagline = Required(str)
     description = Required(str)
     website = Required(str)
-    # TODO: Category
+    category = Required(int)
     released_at = Required(date)
     last_updated = Required(date)
     downloads = Required(int)
@@ -60,7 +72,7 @@ class Connection(db.Entity, Base):
     #  Type will be having a range of what provider it is.
     #  Sadly, I didn't account for the int ranges per-provider
     #  so this will be defined impromptu.
-    type = Required(int)
+    type = Required(ConnectionType)
 
 
 class User(db.Entity, Base):
