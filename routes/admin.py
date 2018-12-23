@@ -25,7 +25,7 @@ class Admin(RouteCog):
     def as_json(data: Iterator[Base]):
         return [item.json for item in data]
 
-    @route("/api/v1/mods/verify_queue")
+    @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
     @db_session
