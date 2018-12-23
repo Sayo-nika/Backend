@@ -4,5 +4,5 @@ WORKDIR /app
 COPY . .
 RUN pip install --user -r requirements.txt
 EXPOSE 4444
-ENV PYTHONPATH="$PYTHONPATH:./"
+ENV PYTHONPATH="$PYTHONPATH:/app"
 CMD ["python", "main.py"]
