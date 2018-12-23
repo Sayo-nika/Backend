@@ -52,6 +52,16 @@ class Mod(db.Entity, Base):
     status = Required(ModStatus)
 
 
+# Handles the Connection type
+# Has two properties, and that's about it.
+class Connection(db.Entity, Base):
+    name = Required(str)
+    #  Type will be having a range of what provider it is.
+    #  Sadly, I didn't account for the int ranges per-provider
+    #  so this will be defined impromptu.
+    type = Required(int)
+
+
 class User(db.Entity, Base):
     @property
     def json(self):
@@ -70,13 +80,13 @@ class User(db.Entity, Base):
     email_verified = Required(bool)
     editor = Required(bool)
     favorites = Set(Mod)
+    connections = Set(Connection)
     reviews = Set('Review', reverse="author")
     upvoted = Set('Review', reverse='upvoters')
     downvoted = Set('Review', reverse='downvoters')
     helpful = Set('Review', reverse='helpfuls')
     password = Required(bytes)
     lastPassReset = Optional(int, nullable=True)
-
 
 class Review(db.Entity, Base):
     id = PrimaryKey(str)
