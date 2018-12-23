@@ -68,6 +68,7 @@ class User(db.Entity, Base):
     mods = Set(Mod)
     # FIXME: Set email_verfied by default to false!
     email_verified = Required(bool)
+    editor = Required(bool)
     favorites = Set(Mod)
     reviews = Set('Review', reverse="author")
     upvoted = Set('Review', reverse='upvoters')
