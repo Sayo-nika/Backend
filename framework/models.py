@@ -1,5 +1,6 @@
 # Stdlib
 from enum import Enum
+from datetime import date
 
 # External Libraries
 from pony.orm import Set, Database, Optional, Required, PrimaryKey, db_session
@@ -42,8 +43,8 @@ class Mod(db.Entity, Base):
     description = Required(str)
     website = Required(str)
     # TODO: Category
-    released_at = Required(int)
-    last_updated = Required(int)
+    released_at = Required(date)
+    last_updated = Required(date)
     downloads = Required(int)
     authors = Set('User', reverse='mods')
     favorite_by = Set('User', reverse='favorites')
