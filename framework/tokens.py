@@ -26,7 +26,7 @@ class JWT:
         return token
 
     @db_session
-    def verify_token(self, token):
+    def verify_token(self, token, return_parsed=False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
         except:
@@ -40,4 +40,4 @@ class JWT:
         if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
             return False
 
-        return True
+        return decoded if returned_parsed else True
