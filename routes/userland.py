@@ -52,7 +52,7 @@ class Userland(RouteCog):
         password = request.json.get("password")
 
         if username is None or password is None:
-            abort(400, "Invalid credentials")
+            abort(400, "Needs `username` and `password`")
 
         user = User.get_any(username=username, email=username)
 
