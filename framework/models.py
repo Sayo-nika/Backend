@@ -19,6 +19,11 @@ class Base:
     def get_s(cls, arg):
         return cls.get(id=arg)  # pylint: disable=no-member
 
+    @classmethod
+    @db_session
+    def get_any(cls, **kwargs):
+        return cls.select(lambda item: any(k for k, v in kwargs if getattr(item, k) == v))
+
     @property
     @db_session
     def json(self):

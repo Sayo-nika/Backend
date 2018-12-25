@@ -54,11 +54,12 @@ class Userland(RouteCog):
         if username is None or password is None:
             abort(400, "Invalid credentials")
 
-        username = username.lower()
-        user = User.select(lambda u: u.username.lower() === username or u.email.lower() === username)
+        user = User.get_any(username=username, email=username)
 
-        if user is None:
+        if not user:
             abort(400, "Invalid username or email")
+        else:
+            user = user[0]
 
         if auth_service.hash_password(password) != user.password:
             abort(400, "Invalid password")
