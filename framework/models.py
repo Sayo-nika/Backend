@@ -47,7 +47,7 @@ class Media(db.Entity, Base):
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
-    title = Required(str)
+    title = Required(str, unique=True)
     icon = Optional(str, nullable=True)
     path = Required(str)
     media = Set(Media)
@@ -76,8 +76,8 @@ class User(db.Entity, Base):
         return self.__class__[self.id].to_dict(with_collections=True, exclude=("password", "email"))
 
     id = PrimaryKey(str)
-    email = Required(str)
-    username = Required(str)
+    email = Required(str, unique=True)
+    username = Required(str, unique=True)
     avatar = Optional(str, nullable=True)
     donator = Required(bool)
     developer = Required(bool)
