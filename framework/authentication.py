@@ -23,7 +23,7 @@ class Authenticator:
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
-            abort(401)
+            abort(401, "No token")
 
         parsed_token = jwt_service.verify_token(token, True)
 
@@ -31,6 +31,9 @@ class Authenticator:
             abort(400, "Invalid token")
 
         user = User.get_s(parsed_token.id)
+
+        if not user.email_verified:
+            abort(401, "User email needs to be verified")
 
         if request.method == "PATCH":  # only check editing
             if "mod_id" in kwargs:
