@@ -161,7 +161,8 @@ class Mods(RouteCog):
             "id": self.new_id(),
             "developer": False,
             "moderator": False,
-            "donator": False
+            "donator": False,
+            "editor": False
         }
 
         for attribute in ("username", "password", "email"):
