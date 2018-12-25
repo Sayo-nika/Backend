@@ -93,7 +93,7 @@ class User(db.Entity, Base):
     downvoted = Set('Review', reverse='downvoters')
     helpful = Set('Review', reverse='helpfuls')
     password = Required(bytes)
-    lastPassReset = Optional(int, nullable=True)
+    last_pass_reset = Optional(int, nullable=True)
 
 class Review(db.Entity, Base):
     id = PrimaryKey(str)

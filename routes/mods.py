@@ -191,7 +191,7 @@ class Mods(RouteCog):
             if val is not None:
                 if attribute == "new_password":
                     user["password"] = Authenticator.hash_password(val)
-                    user["lastPassReset"] = int(datetime.utcnow().timestamp())
+                    user["last_pass_reset"] = int(datetime.utcnow().timestamp())
                 else:
                     user[attribute] = val
 
