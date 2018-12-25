@@ -4,3 +4,4 @@ python-keycloak
 psycopg2-binary
 pony
 simpleflake
+pyjwt
