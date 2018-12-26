@@ -19,6 +19,21 @@ class Base:
     def get_s(cls, arg):
         return cls.get(id=arg)  # pylint: disable=no-member
 
+    @classmethod
+    @db_session
+    def get_any(cls, lower=False, **kwargs):
+        def selector(item):
+            if type(lower) is list:
+                return any(True for k, v in kwargs if getattr(getattr(item, k),
+                          'lower' if k in lower else '', lambda: k)() ==
+                          getattr(v, 'lower' if k in lower else '', lambda: v)())
+            elif lower is True:
+                return any(True for k, v in kwargs if getattr(item, k).lower() == v.lower())
+            else:
+                return any(True for k, v in kwargs if getattr(item, k) == v)
+
+        return cls.select(selector)
+
     @property
     @db_session
     def json(self):
@@ -44,13 +59,14 @@ class MediaType(Enum):
 class Media(db.Entity, Base):
     type = Required(MediaType)
     url = Required(str)
+    mod = Required('Mod')
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
-    title = Required(str)
+    title = Required(str, unique=True)
     icon = Optional(str, nullable=True)
     path = Required(str)
-    media = Set(Media)
+    media = Set(Media, reverse="mod")
     tagline = Required(str)
     description = Required(str)
     website = Required(str)
@@ -68,6 +84,7 @@ class Mod(db.Entity, Base):
 class Connection(db.Entity, Base):
     name = Required(str)
     type = Required(ConnectionType)
+    user = Required('User')
 
 
 class User(db.Entity, Base):
@@ -76,24 +93,24 @@ class User(db.Entity, Base):
         return self.__class__[self.id].to_dict(with_collections=True, exclude=("password", "email"))
 
     id = PrimaryKey(str)
-    email = Required(str)
-    username = Required(str)
+    email = Required(str, unique=True)
+    username = Required(str, unique=True)
     avatar = Optional(str, nullable=True)
     donator = Required(bool)
     developer = Required(bool)
     moderator = Required(bool)
+    editor = Required(bool)
     bio = Optional(str, nullable=True)
     mods = Set(Mod)
-    email_verified = Required(bool)
-    editor = Required(bool)
+    email_verified = Required(bool, default=False)
     favorites = Set(Mod)
-    connections = Set(Connection)
+    connections = Set(Connection, reverse="user")
     reviews = Set('Review', reverse="author")
     upvoted = Set('Review', reverse='upvoters')
     downvoted = Set('Review', reverse='downvoters')
     helpful = Set('Review', reverse='helpfuls')
     password = Required(bytes)
-    lastPassReset = Optional(int, nullable=True)
+    last_pass_reset = Optional(int, nullable=True)
 
 class Review(db.Entity, Base):
     id = PrimaryKey(str)

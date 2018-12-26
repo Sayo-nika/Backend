@@ -1,5 +1,4 @@
 # Stdlib
-
 import hashlib
 
 # External Libraries
@@ -8,7 +7,9 @@ from pony.orm import db_session
 
 # Sayonika Internals
 from framework.models import User
+import framework.objects
 
+#jwt_service = framework.objects.jwt_service
 
 class Authenticator:
 
@@ -20,21 +21,21 @@ class Authenticator:
 
     @db_session
     def has_authorized_access(self, _, **kwargs) -> bool:
-        id_ = (request.json or request.form).get("id")
-        pass_ = (request.json or request.form).get("password")
-        if id_ is None or pass_ is None:
-            abort(401, "User not authorized")
+        token = request.headers.get("Authorization", request.cookies.get('token'))
 
-        user = User.get_s(id_)
+        if token is None:
+            abort(401, "No token")
 
-        if user is None:
-            abort(401, "Unknown user ID!")
+        # I blame py's abhorrent handling of circular dependencies for this
+        parsed_token = framework.objects.jwt_service.verify_token(token, True)
+
+        if parsed_token is False:
+            abort(400, "Invalid token")
+
+        user = User.get_s(parsed_token.id)
 
         if not user.email_verified:
-            abort(401, "Account needs verification")
-
-        if self.hash_password(pass_) != user.password:
-            abort(401, "Invalid login credentials!")
+            abort(401, "User email needs to be verified")
 
         if request.method == "PATCH":  # only check editing
             if "mod_id" in kwargs:
@@ -44,25 +45,26 @@ class Authenticator:
                 if kwargs["user_id"] != user.id:
                     abort(403, "User does not have permission to access this resource")
             else:
-                abort(400, "Nothing specified to edit.")
+                abort(400, "Nothing specified to edit")
+
         return True
 
+    @db_session
     def has_admin_access(self) -> bool:
-        id_ = (request.json or request.form or request.args).get("id")
-        pass_ = (request.json or request.form or request.args).get("password")
+        token = request.headers.get("Authorization", request.cookies.get('token'))
 
-        if id_ is None or pass_ is None:
-            abort(401, "User not authorized")
-        user = User.get_s(id_)
+        if token is None:
+            abort(401)
 
-        if user is None:
-            abort(401, "Unknown user ID!")
+        parsed_token = framework.objects.jwt_service.verify_token(token, True)
 
-        if self.hash_password(pass_) != user.password:
-            abort(401, "Invalid login credentials!")
+        if parsed_token is False:
+            abort(400, "Invalid token")
 
-        if not user.moderator:
-            abort(403, "User does not have required permissions!")
+        user = User.get_s(parsed_token.id)
+
+        if not user.moderator or not user.developer:
+            abort(403, "User does not have required permissions")
 
         return True
 

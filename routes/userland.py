@@ -9,7 +9,7 @@ from simpleflake import simpleflake
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, Base
-from framework.objects import database_handle
+from framework.objects import database_handle, auth_service, jwt_service
 from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
@@ -43,6 +43,31 @@ class Userland(RouteCog):
     @db_session
     def verified():
         return [mod for mod in database_handle.mods if mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
+
+    @route("/api/v1/login", methods=["POST"])
+    @json
+    @db_session
+    def login(self):
+        username = request.json.get("username")
+        password = request.json.get("password")
+
+        if username is None or password is None:
+            abort(400, "Needs `username` and `password`")
+
+        user = User.get_any(True, username=username, email=username)[:]
+
+        if not user:
+            abort(400, "Invalid username or email")
+        else:
+            user = user[0]
+
+        if auth_service.hash_password(password) != user.password:
+            abort(400, "Invalid password")
+
+        token = jwt_service.make_token(user.id, user.last_pass_reset)
+
+        return jsonify(token=token)
+
 
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json

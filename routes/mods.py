@@ -62,9 +62,16 @@ class Mods(RouteCog):
 
         for attribute in ("title", "authors", "tagline", "description", "website"):
             val = request.form.get(attribute)
+
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
+
             mod[attribute] = val
+
+        mods = Mod.get_any(True, title=mod["title"])
+
+        if mods:
+            return abort(400, "A mod with that title already exists")
 
         mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",") if User.exists(id_)]
 
@@ -161,14 +168,22 @@ class Mods(RouteCog):
             "id": self.new_id(),
             "developer": False,
             "moderator": False,
-            "donator": False
+            "donator": False,
+            "editor": False
         }
 
         for attribute in ("username", "password", "email"):
             val = request.json.get(attribute)
+
             if val is None:
                 return abort(400, f"Missing POST parameter: '{attribute}'.")
+
             user[attribute] = val
+
+        users = User.get_any(True, username=user["username"], email=user["email"])
+
+        if users:
+            return abort(400, "Username and/or email already in use")
 
         user["avatar"] = request.json.get("avatar")
         user["bio"] = request.json.get("bio")
@@ -191,7 +206,7 @@ class Mods(RouteCog):
             if val is not None:
                 if attribute == "new_password":
                     user["password"] = Authenticator.hash_password(val)
-                    user["lastPassReset"] = int(datetime.utcnow().timestamp())
+                    user["last_pass_reset"] = int(datetime.utcnow().timestamp())
                 else:
                     user[attribute] = val
 

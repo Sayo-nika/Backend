@@ -1,6 +1,7 @@
 # Stdlib
 import glob
 import importlib
+from os.path import sep
 
 # External Libraries
 from flask import Flask
@@ -30,7 +31,7 @@ class Sayonika(Flask):
 
     def gather(self, route_dir: str):
         for path in glob.glob(f"{route_dir}/**.py"):
-            module = importlib.import_module(path.replace('/', '.')[:-3])
+            module = importlib.import_module(path.replace(sep, '.')[:-3])
 
             if not hasattr(module, "setup"):
                 raise ValueError(
