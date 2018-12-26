@@ -54,7 +54,7 @@ class Userland(RouteCog):
         if username is None or password is None:
             abort(400, "Needs `username` and `password`")
 
-        user = User.get_any(True, username=username, email=username)
+        user = User.get_any(True, username=username, email=username)[:]
 
         if not user:
             abort(400, "Invalid username or email")
