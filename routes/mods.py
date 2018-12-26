@@ -180,7 +180,7 @@ class Mods(RouteCog):
 
             user[attribute] = val
 
-        users = User.get_any(lower, username=user["username"], email=user["email"])
+        users = User.get_any(True, username=user["username"], email=user["email"])
 
         if users:
             return abort(400, "Username and/or email already in use")
