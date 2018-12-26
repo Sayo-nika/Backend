@@ -100,7 +100,7 @@ class User(db.Entity, Base):
     editor = Required(bool)
     bio = Optional(str, nullable=True)
     mods = Set(Mod)
-    email_verified = Required(bool)
+    email_verified = Required(bool, default=False)
     favorites = Set(Mod)
     connections = Set(Connection)
     reviews = Set('Review', reverse="author")
