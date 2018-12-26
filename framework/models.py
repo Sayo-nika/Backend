@@ -27,10 +27,10 @@ class Base:
                 return any(True for k, v in kwargs if getattr(getattr(item, k),
                           'lower' if k in lower else '', lambda: k)() ==
                           getattr(v, 'lower' if k in lower else '', lambda: v)())
-            else if lower is True:
+            elif lower is True:
                 return any(True for k, v in kwargs if getattr(item, k).lower() == v.lower())
             else:
-                return any(True for k, v in kwargs if getattr(item, k) === v)
+                return any(True for k, v in kwargs if getattr(item, k) == v)
 
         return cls.select(selector)
 
