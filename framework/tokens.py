@@ -40,4 +40,4 @@ class JWT:
         if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
             return False
 
-        return decoded if returned_parsed else True
+        return decoded if return_parsed else True
