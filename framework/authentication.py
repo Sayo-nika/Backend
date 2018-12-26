@@ -7,8 +7,9 @@ from pony.orm import db_session
 
 # Sayonika Internals
 from framework.models import User
-from framework.objects import jwt_service
+import framework.objects
 
+#jwt_service = framework.objects.jwt_service
 
 class Authenticator:
 
@@ -25,7 +26,8 @@ class Authenticator:
         if token is None:
             abort(401, "No token")
 
-        parsed_token = jwt_service.verify_token(token, True)
+        # I blame py's abhorrent handling of circular dependencies for this
+        parsed_token = framework.objects.jwt_service.verify_token(token, True)
 
         if parsed_token is False:
             abort(400, "Invalid token")
@@ -54,7 +56,7 @@ class Authenticator:
         if token is None:
             abort(401)
 
-        parsed_token = jwt_service.verify_token(token, True)
+        parsed_token = framework.objects.jwt_service.verify_token(token, True)
 
         if parsed_token is False:
             abort(400, "Invalid token")

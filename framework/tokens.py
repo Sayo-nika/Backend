@@ -13,7 +13,7 @@ class JWT:
 
     def __init__(self, settings: dict):
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
-        self.secret = settings["JWT_SECET"]
+        self.secret = settings["JWT_SECRET"]
 
     def make_token(self, id, password_reset):
         payload = {
