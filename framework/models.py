@@ -59,13 +59,14 @@ class MediaType(Enum):
 class Media(db.Entity, Base):
     type = Required(MediaType)
     url = Required(str)
+    mod = Required('Mod')
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str, unique=True)
     icon = Optional(str, nullable=True)
     path = Required(str)
-    media = Set(Media)
+    media = Set(Media, reverse="mod")
     tagline = Required(str)
     description = Required(str)
     website = Required(str)
@@ -83,6 +84,7 @@ class Mod(db.Entity, Base):
 class Connection(db.Entity, Base):
     name = Required(str)
     type = Required(ConnectionType)
+    user = Required('User')
 
 
 class User(db.Entity, Base):
@@ -102,7 +104,7 @@ class User(db.Entity, Base):
     mods = Set(Mod)
     email_verified = Required(bool, default=False)
     favorites = Set(Mod)
-    connections = Set(Connection)
+    connections = Set(Connection, reverse="user")
     reviews = Set('Review', reverse="author")
     upvoted = Set('Review', reverse='upvoters')
     downvoted = Set('Review', reverse='downvoters')
