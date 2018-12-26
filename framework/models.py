@@ -21,8 +21,18 @@ class Base:
 
     @classmethod
     @db_session
-    def get_any(cls, **kwargs):
-        return cls.select(lambda item: any(k for k, v in kwargs if getattr(item, k) == v))
+    def get_any(cls, lower=False, **kwargs):
+        def selector(item):
+            if type(lower) is list:
+                return any(True for k, v in kwargs if getattr(getattr(item, k),
+                          'lower' if k in lower else '', lambda: k)() ==
+                          getattr(v, 'lower' if k in lower else '', lambda: v)())
+            else if lower is True:
+                return any(True for k, v in kwargs if getattr(item, k).lower() == v.lower())
+            else:
+                return any(True for k, v in kwargs if getattr(item, k) === v)
+
+        return cls.select(selector)
 
     @property
     @db_session
