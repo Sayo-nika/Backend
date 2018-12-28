@@ -59,7 +59,7 @@ class MediaType(Enum):
 class Media(db.Entity, Base):
     type = Required(MediaType)
     url = Required(str)
-    mod = Required('Mod')
+    mod = Required(lambda: Mod)
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
@@ -74,9 +74,9 @@ class Mod(db.Entity, Base):
     released_at = Required(date)
     last_updated = Required(date)
     downloads = Required(int)
-    authors = Set('User', reverse='mods')
-    favorite_by = Set('User', reverse='favorites')
-    reviews = Set('Review', reverse="mod")
+    authors = Set(lambda: User, reverse='mods')
+    favorite_by = Set(lambda: User, reverse='favorites')
+    reviews = Set(lambda: Review, reverse="mod")
     verified = Required(bool)
     status = Required(ModStatus)
 
@@ -84,7 +84,7 @@ class Mod(db.Entity, Base):
 class Connection(db.Entity, Base):
     name = Required(str)
     type = Required(ConnectionType)
-    user = Required('User')
+    user = Required(lambda: User)
 
 
 class User(db.Entity, Base):
@@ -105,10 +105,10 @@ class User(db.Entity, Base):
     email_verified = Required(bool, default=False)
     favorites = Set(Mod)
     connections = Set(Connection, reverse="user")
-    reviews = Set('Review', reverse="author")
-    upvoted = Set('Review', reverse='upvoters')
-    downvoted = Set('Review', reverse='downvoters')
-    helpful = Set('Review', reverse='helpfuls')
+    reviews = Set(lambda: Review, reverse="author")
+    upvoted = Set(lambda: Review, reverse='upvoters')
+    downvoted = Set(lambda: Review, reverse='downvoters')
+    helpful = Set(lambda: Review, reverse='helpfuls')
     password = Required(bytes)
     last_pass_reset = Optional(int, nullable=True)
 
