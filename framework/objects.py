@@ -12,12 +12,14 @@ from framework.database import DBHandler
 from framework.tokens import JWT
 from framework.sayonika import Sayonika
 
-__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "database_handle")
+__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "database_handle", "SETTINGS")
 
 sayonika_instance = Sayonika()
 
 SETTINGS = {
     # Default
+    "SERVER_BIND": "localhost",
+    "SERVER_PORT": 4444,
     "DB_HOST": "localhost",
     "DB_PORT": 5432,
     "DB_USER": "mart",
