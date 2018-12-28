@@ -19,7 +19,13 @@ def json(func):
     @wraps(func)
     def inner(*args, **kwargs):
         response = func(*args, **kwargs)
-        text = response.response[0].decode()
+        text = response.response[0]
+
+        # Mitigate an issue where `response.response[0]` is a string on Windows, and a `bytes` on Linux.
+        # God know's why they're different.
+        if type(text) is bytes:
+            text = text.decode()
+
         try:
             data = _json.loads(text)
         except _json.JSONDecodeError:
