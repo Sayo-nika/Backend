@@ -47,6 +47,8 @@ class Userland(RouteCog):
     @route("/api/v1/login", methods=["POST"])
     @json
     @db_session
+    @limiter.limit("10 per minute")
+    @limiter.limit("100 per day")
     def login(self):
         username = request.json.get("username")
         password = request.json.get("password")
@@ -72,6 +74,8 @@ class Userland(RouteCog):
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_mods(self):
         if "page" in request.args:
             try:
@@ -85,6 +89,8 @@ class Userland(RouteCog):
 
     @route("/api/v1/mods/recent_releases")
     @json
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_recent_releases(self):
         sorted_mods = reversed(sorted(self.verified(),
                                       key=lambda mod: mod.released_at))
@@ -92,6 +98,7 @@ class Userland(RouteCog):
 
     @route("/api/v1/mods/popular")
     @json
+    @limiter.limit("10 per minute")
     def get_popular(self):
         sorted_mods = reversed(sorted(self.verified(),
                                       key=lambda mod: mod.downloads))
@@ -99,6 +106,7 @@ class Userland(RouteCog):
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
+    @limiter.limit("100 per minute")
     def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
@@ -107,6 +115,8 @@ class Userland(RouteCog):
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_download(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
@@ -116,6 +126,8 @@ class Userland(RouteCog):
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_mod_reviews(self, mod_id: str):
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
@@ -126,6 +138,8 @@ class Userland(RouteCog):
 
     @route("/api/v1/mods/<mod_id>/authors")
     @json
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_mod_authors(self, mod_id: str):
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
@@ -139,6 +153,8 @@ class Userland(RouteCog):
     @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_users(self):
         if "page" in request.args:
             try:
@@ -161,6 +177,8 @@ class Userland(RouteCog):
     @route("/api/v1/users/<user_id>/favorites")
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_favorites(self, user_id: str):
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
@@ -170,6 +188,8 @@ class Userland(RouteCog):
     @route("/api/v1/users/<user_id>/mods")
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_user_mods(self, user_id: str):
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
@@ -179,6 +199,8 @@ class Userland(RouteCog):
     @route("/api/v1/users/<user_id>/reviews")
     @json
     @db_session
+    @limiter.limit("100 per minute")
+    @limiter.limit("8000 per hour")
     def get_user_reviews(self, user_id: str):
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
