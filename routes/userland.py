@@ -125,6 +125,7 @@ class Userland(RouteCog):
     # TODO: Should be supporter-only
     @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
     @json
+    @requires_supporter
     def upload(self, mod_id: str): #pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id} not found on this server'")
