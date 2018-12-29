@@ -47,19 +47,23 @@ class ModStatus(Enum):
     Released = 4
     Verified = 5
 
+
 class ConnectionType(Enum):
     GitHub = 1
     GitLab = 2
     Discord = 3
 
+
 class MediaType(Enum):
     Video = 1
     Image = 2
+
 
 class Media(db.Entity, Base):
     type = Required(MediaType)
     url = Required(str)
     mod = Required(lambda: Mod)
+
 
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
@@ -75,8 +79,9 @@ class Mod(db.Entity, Base):
     last_updated = Required(date)
     downloads = Required(int)
     authors = Set(lambda: User, reverse='mods')
-    favorite_by = Set(lambda: User, reverse='favorites')
+    favorited_by = Set(lambda: User, reverse='favorites')
     reviews = Set(lambda: Review, reverse="mod")
+    repors = Set(lambda: Report, reverse="mod")
     verified = Required(bool)
     status = Required(ModStatus)
 
@@ -104,20 +109,27 @@ class User(db.Entity, Base):
     mods = Set(Mod)
     email_verified = Required(bool, default=False)
     favorites = Set(Mod)
+    reports = Set(lambda: Report, reverse="author")
     connections = Set(Connection, reverse="user")
     reviews = Set(lambda: Review, reverse="author")
     upvoted = Set(lambda: Review, reverse='upvoters')
     downvoted = Set(lambda: Review, reverse='downvoters')
-    helpful = Set(lambda: Review, reverse='helpfuls')
+    found_helpful = Set(lambda: Review, reverse='helpfuls')
     password = Required(bytes)
     last_pass_reset = Optional(int, nullable=True)
 
 class Review(db.Entity, Base):
     id = PrimaryKey(str)
-    rating = Required(str)
+    rating = Required(int)
     mod = Required(Mod)
     content = Required(str)
     author = Required(User)
     upvoters = Set(User)
     downvoters = Set(User)
     helpfuls = Set(User)
+
+class Report(db.Entity, Base):
+    id = PrimaryKey(str)
+    conntent = Required(str)
+    author = Required(User)
+    mod = Required(Mod)
