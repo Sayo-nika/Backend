@@ -120,8 +120,9 @@ class Userland(RouteCog):
     def get_download(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
-
-        return send_file(f"mods/{Mod.get_s(mod_id).path}.zip")
+        
+        # We're using a URL on Upload class. Return URL only and let client handle DLs
+        return jsonify(self.as_json(mod_content))
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json

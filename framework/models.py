@@ -63,17 +63,13 @@ class Media(db.Entity, Base):
     url = Required(str)
     mod = Required(lambda: Mod)
 
-class Upload(db.Entity, Base):
-    url = Required(str)
-
-
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str, unique=True)
     icon = Optional(str, nullable=True)
     path = Required(str)
     media = Set(Media, reverse="mod")
-    mod_content = Set(Upload, reverse="mod")
+    mod_content = Required(str)
     tagline = Required(str)
     description = Required(str)
     website = Required(str)
