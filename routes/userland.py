@@ -64,6 +64,9 @@ class Userland(RouteCog):
         if auth_service.hash_password(password) != user.password:
             abort(400, "Invalid password")
 
+        if not user.email_verified:
+            abort(401, "Email needs to be verified")
+
         token = jwt_service.make_token(user.id, user.last_pass_reset)
 
         return jsonify(token=token)
