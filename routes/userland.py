@@ -122,7 +122,6 @@ class Userland(RouteCog):
     # This handles PATCH requests to add a mod_content URL.
     # Usually this would be done via a whole entry but this
     # is designed for existing content.
-    # TODO: Should be supporter-only
     @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
     @json
     @requires_supporter
