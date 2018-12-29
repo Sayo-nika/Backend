@@ -121,6 +121,9 @@ class Userland(RouteCog):
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
         
+        if not Mod.exists(mod_content):
+            return abort(404, f"Mod '{mod_id}' has no downloadables.")
+        
         # We're using a URL on Upload class. Return URL only and let client handle DLs
         return jsonify(self.as_json(mod_content))
 
