@@ -119,7 +119,11 @@ class Userland(RouteCog):
             # We're using a URL on Upload class. Return URL only and let client handle DLs
             return jsonify(self.as_json(mod_content))
     
-    @route("/api/v1/mods/<mod_id>/upload")
+    # This handles PATCH requests to add a mod_content URL.
+    # Usually this would be done via a whole entry but this
+    # is designed for existing content.
+    # TODO: Should be supporter-only
+    @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
     @json
     def upload(self, mod_id: str): #pylint: disable=no-self-use
         if not Mod.exists(mod_id):
