@@ -39,7 +39,6 @@ class Base:
     def json(self):
         return self.__class__[self.id].to_dict(with_collections=True)  # pylint: disable=no-member
 
-
 class ModStatus(Enum):
     Planning = 1
     InDevelop = 2
@@ -64,13 +63,13 @@ class Media(db.Entity, Base):
     url = Required(str)
     mod = Required(lambda: Mod)
 
-
 class Mod(db.Entity, Base):
     id = PrimaryKey(str)
     title = Required(str, unique=True)
     icon = Optional(str, nullable=True)
     path = Required(str)
     media = Set(Media, reverse="mod")
+    mod_content = Required(str)
     tagline = Required(str)
     description = Required(str)
     website = Required(str)
@@ -101,7 +100,7 @@ class User(db.Entity, Base):
     email = Required(str, unique=True)
     username = Required(str, unique=True)
     avatar = Optional(str, nullable=True)
-    donator = Required(bool)
+    supporter = Required(bool)
     developer = Required(bool)
     moderator = Required(bool)
     editor = Required(bool)

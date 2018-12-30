@@ -1,11 +1,13 @@
 # Stdlib
 from secrets import token_hex
 from typing import Iterator
+import gzip
 
 # External Libraries
 from flask import abort, jsonify, request, send_file
 from pony.orm import select, db_session
 from simpleflake import simpleflake
+import owo # Why do I have to do this
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, Base
@@ -113,8 +115,25 @@ class Userland(RouteCog):
     def get_download(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
-
-        return send_file(f"mods/{Mod.get_s(mod_id).path}.zip")
+        
+        if not Mod.exists(mod_content):
+            return abort(404, f"Mod '{mod_id}' has no downloadables.")
+        else
+            # We're using a URL on Upload class. Return URL only and let client handle DLs
+            return jsonify(self.as_json(mod_content))
+    
+    # This handles PATCH requests to add a mod_content URL.
+    # Usually this would be done via a whole entry but this
+    # is designed for existing content.
+    @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
+    @json
+    @requires_supporter
+    def upload(self, mod_id: str): #pylint: disable=no-self-use
+        if not Mod.exists(mod_id):
+            return abort(404, f"Mod '{mod_id} not found on this server'")
+        
+        return abort(501, "Not implemented. Work In Progress. I blame Mart")
+        
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json

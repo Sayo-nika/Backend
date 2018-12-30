@@ -65,3 +65,10 @@ def requires_admin(func):
         return abort(403)
 
     return inner
+
+def requires_supporter(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        if auth_service.has_supporter_features():
+            return func(*args, **kwargs)
+        return abort(403)
