@@ -40,6 +40,12 @@ class Userland(RouteCog):
     @staticmethod
     def as_json(data: Iterator[Base]):
         return [item.json for item in data]
+    
+    @staticmethod
+    def get_id_from_token(token: str):
+        parsed_token = framework.objects.jwt_service.verify_token(token, True)
+
+        return User.get_s(parsed_token.id)
 
     @staticmethod
     @db_session
@@ -206,6 +212,43 @@ class Userland(RouteCog):
             Review.select(lambda review: review.author.id == user_id).page(page)
         ))
 
+    # --- @me aliases ---
+    @route("/api/v1/users/@me", methods=["POST"], other_methods=["GET"])
+    @requires_login
+    @db_session
+    def atme_get_user():
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        user_id = self.get_id_from_token(token)
+
+        # return already defined get_user to reduce duplication
+        return get_user(self, user_id)
+    
+    @route("/api/v1/users/@me/favorites")
+    @requires_login
+    @db_session
+    def atme_get_favorites():
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        user_id = self.get_id_from_token(token)
+
+        return get_favorites(self, user_id)
+
+    @route("/api/v1/users/@me/mods")
+    @requires_login
+    @db_session
+    def atme_get_favorites():
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        user_id = self.get_id_from_token(token)
+
+        return get_user_mods(self, user_id)
+
+    @route("/api/v1/users/@me/reviews")
+    @requires_login
+    @db_session
+    def atme_get_favorites():
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        user_id = self.get_id_from_token(token)
+
+        return get_reviews(self, user_id)
 
 def setup(core: Sayonika):
     Userland(core).register()

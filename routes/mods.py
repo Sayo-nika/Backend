@@ -232,6 +232,11 @@ class Mods(RouteCog):
         
         return abort(501, "Not implemented. Work In Progress. I blame Mart")
 
+    # --- @me aliases ---
+    @route("/api/v1/users/@me", methods=["PATCH"], other_methods=["GET"])
+    @requires_login
+    @db_session 
+
 
 def setup(core: Sayonika):
     Mods(core).register()
