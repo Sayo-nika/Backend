@@ -219,6 +219,19 @@ class Mods(RouteCog):
 
         return jsonify(old_user.json)
 
+    # This handles PATCH requests to add a mod_content URL.
+    # Usually this would be done via a whole entry but this
+    # is designed for existing content.
+    @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
+    @json
+    @requires_supporter
+    @requires_login
+    def upload(self, mod_id: str): #pylint: disable=no-self-use
+        if not Mod.exists(mod_id):
+            return abort(404, f"Mod '{mod_id} not found on this server'")
+        
+        return abort(501, "Not implemented. Work In Progress. I blame Mart")
+
 
 def setup(core: Sayonika):
     Mods(core).register()
