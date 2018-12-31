@@ -1,13 +1,11 @@
 # Stdlib
 from secrets import token_hex
 from typing import Iterator
-import gzip
 
 # External Libraries
 from flask import abort, jsonify, request, send_file
 from pony.orm import select, db_session
 from simpleflake import simpleflake
-import owo # Why do I have to do this
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, Base
@@ -43,7 +41,7 @@ class Userland(RouteCog):
     
     @staticmethod
     def get_id_from_token(token: str):
-        parsed_token = framework.objects.jwt_service.verify_token(token, True)
+        parsed_token = jwt_service.verify_token(token, True)
 
         return User.get_s(parsed_token.id)
 
@@ -120,15 +118,13 @@ class Userland(RouteCog):
     @json
     def get_download(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
-            return abort(404, f"Mod '{mod_id}' not found on the server.")
-        
+            return abort(404, f"Mod '{mod_id}' not found on the server.")       
         if not Mod.exists(mod_content):
             return abort(404, f"Mod '{mod_id}' has no downloadables.")
-        else
-            # We're using a URL on Upload class. Return URL only and let client handle DLs
-            return jsonify(self.as_json(mod_content))
 
-        
+        # We're using a URL on Upload class. Return URL only and let client handle DLs
+        return jsonify(self.as_json(mod_content))
+
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
