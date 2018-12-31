@@ -235,7 +235,7 @@ class Userland(RouteCog):
     @route("/api/v1/users/@me/mods")
     @requires_login
     @db_session
-    def atme_get_favorites():
+    def atme_get_mods():
         token = request.headers.get("Authorization", request.cookies.get("token"))
         user_id = self.get_id_from_token(token)
 
@@ -244,7 +244,7 @@ class Userland(RouteCog):
     @route("/api/v1/users/@me/reviews")
     @requires_login
     @db_session
-    def atme_get_favorites():
+    def atme_get_reviews():
         token = request.headers.get("Authorization", request.cookies.get("token"))
         user_id = self.get_id_from_token(token)
 
