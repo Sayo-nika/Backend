@@ -244,7 +244,7 @@ class Userland(RouteCog):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         user_id = self.get_id_from_token(token)
 
-        return get_user_reviews(self, user_id)
+        return self.get_user_reviews(self, user_id)
 
 def setup(core: Sayonika):
     Userland(core).register()
