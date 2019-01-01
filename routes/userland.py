@@ -166,6 +166,15 @@ class Userland(RouteCog):
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["POST"])
     @json
     def get_user(self, user_id: str):  # pylint: disable=no-self-use
+        if user_id == "@me":
+            token = request.headers.get("Authorization", request.cookies.get["token"])
+
+            if token is None:
+                return abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+
+            #override user_id value to be the value of authed user's ID.
+            user_id = self.get_id_from_token(token)
+
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
@@ -175,6 +184,15 @@ class Userland(RouteCog):
     @json
     @db_session
     def get_favorites(self, user_id: str):
+        if user_id == "@me":
+            token = request.headers.get("Authorization", request.cookies.get["token"])
+
+            if token is None:
+                return abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+
+            #override user_id value to be the value of authed user's ID.
+            user_id = self.get_id_from_token(token)
+
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
@@ -184,6 +202,15 @@ class Userland(RouteCog):
     @json
     @db_session
     def get_user_mods(self, user_id: str):
+        if user_id == "@me":
+            token = request.headers.get("Authorization", request.cookies.get["token"])
+
+            if token is None:
+                return abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+
+            #override user_id value to be the value of authed user's ID.
+            user_id = self.get_id_from_token(token)
+
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
 
@@ -193,9 +220,18 @@ class Userland(RouteCog):
     @json
     @db_session
     def get_user_reviews(self, user_id: str):
+        if user_id == "@me":
+            token = request.headers.get("Authorization", request.cookies.get["token"])
+
+            if token is None:
+                return abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+
+            #override user_id value to be the value of authed user's ID.
+            user_id = self.get_id_from_token(token)
+
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
-
+        
         if "page" in request.args:
             try:
                 page = int(request.args["page"])
@@ -207,44 +243,6 @@ class Userland(RouteCog):
         return jsonify(self.as_json(
             Review.select(lambda review: review.author.id == user_id).page(page)
         ))
-
-    # --- @me aliases ---
-    @route("/api/v1/users/@me", methods=["POST"], other_methods=["GET"])
-    @requires_login
-    @db_session
-    def atme_get_user():
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        user_id = self.get_id_from_token(token)
-
-        # return already defined get_user to reduce duplication
-        return get_user(self, user_id)
-    
-    @route("/api/v1/users/@me/favorites")
-    @requires_login
-    @db_session
-    def atme_get_favorites():
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        user_id = self.get_id_from_token(token)
-
-        return get_favorites(self, user_id)
-
-    @route("/api/v1/users/@me/mods")
-    @requires_login
-    @db_session
-    def atme_get_mods():
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        user_id = self.get_id_from_token(token)
-
-        return get_user_mods(self, user_id)
-
-    @route("/api/v1/users/@me/reviews")
-    @requires_login
-    @db_session
-    def atme_get_reviews():
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        user_id = self.get_id_from_token(token)
-
-        return self.get_user_reviews(self, user_id)
 
 def setup(core: Sayonika):
     Userland(core).register()
