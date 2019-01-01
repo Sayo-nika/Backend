@@ -231,7 +231,7 @@ class Userland(RouteCog):
 
         if not User.exists(user_id):
             return abort(404, f"User '{user_id}' not found on the server.")
-        
+
         if "page" in request.args:
             try:
                 page = int(request.args["page"])
