@@ -3,7 +3,7 @@ from functools import wraps
 import json as _json
 
 # External Libraries
-from flask import Response, abort, request
+from quart import Response, abort, request
 
 # Sayonika Internals
 from framework.objects import auth_service

@@ -3,7 +3,7 @@
 from enum import Enum
 
 # External Libraries
-from flask.json import JSONEncoder
+from quart.json import JSONEncoder
 
 
 class EnumJsonEncoder(JSONEncoder):

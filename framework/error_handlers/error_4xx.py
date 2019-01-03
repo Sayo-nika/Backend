@@ -1,5 +1,5 @@
 # External Libraries
-from flask import Response
+from quart import Response
 from werkzeug.exceptions import HTTPException
 
 # Sayonika Internals

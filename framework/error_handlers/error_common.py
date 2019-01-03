@@ -2,7 +2,7 @@
 import json
 
 # External Libraries
-from flask import Response, request
+from quart import Response, request
 
 
 # Moved out of response_wrappers.py due to circular imports

@@ -4,7 +4,7 @@ import importlib
 from os.path import sep
 
 # External Libraries
-from flask import Flask
+from quart import quart
 
 # Sayonika Internals
 from framework.error_handlers.error_4xx import all_4xx
@@ -13,7 +13,7 @@ from framework.jsonutils import EnumJsonEncoder
 __all__ = ("Sayonika",)
 
 
-class Sayonika(Flask):
+class Sayonika(Quart):
     """
     Core application. Wraps Flask to use `super.run` with some default arguments,
     while the user only has to run `run` without providing additional arguments.

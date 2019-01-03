@@ -2,7 +2,7 @@
 # Stdlib
 from typing import Iterator
 
-from flask import abort, jsonify
+from quart import abort, jsonify
 from pony.orm import delete, db_session
 
 # Sayonika Internals

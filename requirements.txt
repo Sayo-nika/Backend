@@ -1,4 +1,4 @@
-flask
+quart
 flask-limiter
 owo
 python-keycloak

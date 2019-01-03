@@ -2,7 +2,7 @@
 import hashlib
 
 # External Libraries
-from flask import abort, request
+from quart import abort, request
 from pony.orm import db_session
 
 # Sayonika Internals

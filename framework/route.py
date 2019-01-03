@@ -2,7 +2,7 @@
 import functools
 
 # External Libraries
-from flask import request
+from quart import request
 
 # Sayonika Internals
 from framework.sayonika import Sayonika
@@ -55,7 +55,7 @@ class Route:
         self.parent = None
 
     def register(self, core: Sayonika):
-        # Hack around making dynamic routes for flask
+        # Hack around making dynamic routes for quart
         _route = core.route(self.path, **self.kwargs)
         func = functools.wraps(self.func)(
             functools.partial(self.func, self.parent)
