@@ -18,25 +18,25 @@ class Admin(RouteCog):
     # === Verify ===
 
     @staticmethod
-    def unverified():
+    async def unverified():
         return [mod for mod in database_handle.mods if not mod.verified]
 
     @staticmethod
-    def as_json(data: Iterator[Base]):
+    async def as_json(data: Iterator[Base]):
         return [item.json for item in data]
 
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
     @db_session
-    def get_queue(self):
+    async def get_queue(self):
         return jsonify(self.as_json(self.unverified()))
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
     @db_session
-    def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
+    async def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 
@@ -48,7 +48,7 @@ class Admin(RouteCog):
     @requires_admin
     @json
     @db_session
-    def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
+    async def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
         if not Mod.exists(mod_id):
             return abort(404, f"Mod '{mod_id}' not found on the server.")
 

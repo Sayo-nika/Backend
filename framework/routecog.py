@@ -18,7 +18,7 @@ class RouteCog:
         self.core = core
         self.logger = logger
 
-    def register(self):
+    async def register(self):
         for _, member in inspect.getmembers(self):
             if isinstance(member, Route):
                 member.set_parent(self)

@@ -20,7 +20,7 @@ class Authenticator:
         pass
 
     @db_session
-    def has_authorized_access(self, _, **kwargs) -> bool:
+    async def has_authorized_access(self, _, **kwargs) -> bool:
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -50,7 +50,7 @@ class Authenticator:
         return True
     
     @db_session
-    def has_supporter_features(self) -> bool:
+    async def has_supporter_features(self) -> bool:
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -69,7 +69,7 @@ class Authenticator:
         return True
 
     @db_session
-    def has_admin_access(self) -> bool:
+    async def has_admin_access(self) -> bool:
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -88,7 +88,7 @@ class Authenticator:
         return True
 
     @classmethod
-    def hash_password(cls, password: str) -> bytes:
+    async def hash_password(cls, password: str) -> bytes:
         inst = cls.hash_class()
         inst.update(password.encode())
         return inst.digest()
