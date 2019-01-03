@@ -6,7 +6,7 @@ This repository contains the Sayonika server code.
 
 Sayonika uses a Microservice layout for serving its mod listing. This means, each component has to be deployed individually but increases fault tolerance.
 
-Sayonika server is built with Flask, Micro, and :heart:.
+Sayonika server is built with Quart, Micro, and :heart:.
 
 ## Running
 
