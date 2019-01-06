@@ -20,7 +20,6 @@ from framework.sayonika import Sayonika
 
 
 class Mods(RouteCog):
-
     @staticmethod
     @db_session
     def new_path() -> str:

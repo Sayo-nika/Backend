@@ -6,12 +6,12 @@ from quart import Response, request
 
 
 # Moved out of response_wrappers.py due to circular imports
-async def error_handler(func):
+def error_handler(func):
     """
     Similar to `json`, but a different format
     """
 
-    async def inner(*args, **kwargs):
+    def inner(*args, **kwargs):
         response = func(*args, **kwargs)
         text = response.response[0].decode()
 

@@ -4,7 +4,7 @@ import importlib
 from os.path import sep
 
 # External Libraries
-from quart import quart
+from quart import Quart
 
 # Sayonika Internals
 from framework.error_handlers.error_4xx import all_4xx

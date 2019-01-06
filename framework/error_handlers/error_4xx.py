@@ -7,37 +7,37 @@ from framework.error_handlers.error_common import error_handler
 
 
 @error_handler
-async def handle_400(err: HTTPException):
+def handle_400(err: HTTPException):
     return Response(err.description, 400)
 
 
 @error_handler
-async def handle_401(err: HTTPException):
+def handle_401(err: HTTPException):
     return Response(err.description, 401)
 
 
 @error_handler
-async def handle_403(err: HTTPException):
+def handle_403(err: HTTPException):
     return Response(err.description, 403)
 
 
 @error_handler
-async def handle_404(err: HTTPException):
+def handle_404(err: HTTPException):
     return Response(err.description, 404)
 
 
 @error_handler
-async def handle_405(err: HTTPException):
+def handle_405(err: HTTPException):
     return Response(err.description, 405)
 
 
 @error_handler
-async def handle_418(err: HTTPException):
+def handle_418(err: HTTPException):
     return Response(err.description, 418)
 
 
 @error_handler
-async def handle_429(err: HTTPException):
+def handle_429(err: HTTPException):
     return Response(f"Ratelimit for this endpoint: {err.description}", 429)
 
 
@@ -47,6 +47,6 @@ all_4xx = {
     403: handle_403,
     404: handle_404,
     405: handle_405,
-    418: handle_418,
+    #418: handle_418,
     429: handle_429
 }
