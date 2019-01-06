@@ -13,8 +13,8 @@ from simpleflake import simpleflake
 from framework.authentication import Authenticator
 from framework.models import Mod, User, ModStatus, Base
 from framework.objects import database_handle
-from framework.route import multiroute
-from framework.route_wrappers import json, requires_login
+from framework.route import multiroute, route
+from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
@@ -230,12 +230,6 @@ class Mods(RouteCog):
             return abort(404, f"Mod '{mod_id} not found on this server'")
         
         return abort(501, "Not implemented. Work In Progress. I blame Mart")
-
-    # --- @me aliases ---
-    @route("/api/v1/users/@me", methods=["PATCH"], other_methods=["GET"])
-    @requires_login
-    @db_session 
-
 
 def setup(core: Sayonika):
     Mods(core).register()
