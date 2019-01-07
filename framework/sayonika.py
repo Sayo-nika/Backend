@@ -41,6 +41,5 @@ class Sayonika(Quart):
             module.setup(self)
             del module
 
-    def run(self, host: str = "localhost", port: int = 4444, *args,
-            **kwargs):  # flake8: noqa pylint: disable=arguments-differ,keyword-arg-before-vararg
+    def run(self, host: str = "localhost", port: int = 4444, *args, **kwargs):
         super().run(host, port, *args, **kwargs)

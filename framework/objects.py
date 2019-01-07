@@ -6,7 +6,6 @@ import os
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from gino import Gino
-from sqlalchemy.engine.url import URL
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -52,5 +51,4 @@ logger.setLevel(logging.INFO)
 auth_service = Authenticator(SETTINGS)
 jwt_service = JWT(SETTINGS)
 
-db = Gino(URL("psycopg2", username=SETTINGS["DB_NAME"], password=SETTINGS["DB_PASS"],
-              host=SETTINGS["DB_HOST"], port=SETTINGS["DB_PORT"], database=SETTINGS["DB_NAME"]))
+db = Gino()

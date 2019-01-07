@@ -8,6 +8,7 @@ from pony.orm import db_session
 # Sayonika Internals
 from framework.models import User
 
+
 class JWT:
     algorithm = 'HS256'
 
@@ -29,11 +30,11 @@ class JWT:
     def verify_token(self, token, return_parsed=False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
-        except:
-            return False # Any errors thrown during decoding probably indicate bad token in some way
+        except Exception:
+            return False  # Any errors thrown during decoding probably indicate bad token in some way
 
         if set(decoded.keys()) != set(["id", "lr", "iat"]):
-            return False # Keys should only be the ones we give
+            return False  # Keys should only be the ones we give
 
         user = User.get_s(decoded["id"])
 
