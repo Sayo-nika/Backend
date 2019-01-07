@@ -3,6 +3,6 @@ flask-limiter
 owo
 python-keycloak
 psycopg2-binary
-pony
+gino
 simpleflake
 pyjwt

@@ -5,6 +5,7 @@ import os
 # External Libraries
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from gino import Gino
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -12,7 +13,7 @@ from framework.database import DBHandler
 from framework.tokens import JWT
 from framework.sayonika import Sayonika
 
-__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "database_handle", "SETTINGS")
+__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "db", "SETTINGS")
 
 sayonika_instance = Sayonika()
 
@@ -51,6 +52,7 @@ logger.setLevel(logging.INFO)
 auth_service = Authenticator(SETTINGS)
 jwt_service = JWT(SETTINGS)
 
-database_handle = DBHandler(user=SETTINGS["DB_USER"], password=SETTINGS["DB_PASS"],
-                            database=SETTINGS["DB_NAME"], host=SETTINGS["DB_HOST"],
-                            port=SETTINGS["DB_PORT"])
+db = Gino()
+# database_handle = DBHandler(user=SETTINGS["DB_USER"], password=SETTINGS["DB_PASS"],
+#                             database=SETTINGS["DB_NAME"], host=SETTINGS["DB_HOST"],
+#                             port=SETTINGS["DB_PORT"])
