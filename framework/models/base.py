@@ -1,3 +1,9 @@
+# Stdlib
+from typing import List, Union
+
+# External Libraries
+from sqlalchemy import or_, func
+
 # Sayonika Internals
 from framework.objects import db
 
@@ -5,28 +11,22 @@ from framework.objects import db
 class Base:
     id = db.Column(db.Unicode(), primary_key=True)
 
-    # @classmethod
-    # def exists(cls, id_: str):
-    #     return cls.get(id=id_) is not None  # pylint: disable=no-member
+    @classmethod
+    def get_any(cls: db.Model, insensitive: Union[bool, List[str]]=False, **kwargs):
+        if not len(kwargs):
+            raise ValueError('No kwargs provided')
 
-    # @classmethod
-    # def get_s(cls, arg):
-    #     return cls.get(id=arg)  # pylint: disable=no-member
+        queries = []
 
-    # @classmethod
-    # def get_any(cls, lower=False, **kwargs):
-    #     def selector(item):
-    #         if type(lower) is list:
-    #             return any(True for k, v in kwargs if getattr(getattr(item, k),
-    #                       'lower' if k in lower else '', lambda: k)() ==
-    #                       getattr(v, 'lower' if k in lower else '', lambda: v)())
-    #         elif lower is True:
-    #             return any(True for k, v in kwargs if getattr(item, k).lower() == v.lower())
-    #         else:
-    #             return any(True for k, v in kwargs if getattr(item, k) == v)
+        if type(insensitive) is list:
+            for k, v in kwargs:
+                if k in insensitive:
+                    queries.push(func.lower(getattr(cls, k)) == func.lower(v))
+                else:
+                    queries.push(getattr(cls, k) == v)
+        elif insensitive is True:
+            queries = [func.lower(getattr(cls, k)) == func.lower(v) for k, v in kwargs]
+        else:
+            queries = [getattr(cls, k) == v for k, v in kwargs]
 
-    #     return cls.select(selector)
-
-    # @property
-    # def json(self):
-    #     return self.__class__[self.id].to_dict(with_collections=True)  # pylint: disable=no-member
+        return cls.query.where(or_(*queries)).gino
