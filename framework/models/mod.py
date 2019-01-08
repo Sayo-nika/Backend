@@ -16,7 +16,7 @@ class Mod(db.Model, Base):
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode(), nullable=True)
     category = db.Columnn(db.Enum(Category), default=Category.Unassigned)
-    released_at = db.Column(db.Date())
+    released_at = db.Column(db.Date(), nullable=True)
     last_updated = db.Column(db.DateTime(), default=datetime.now, onupdate=datetime.now)
     status = db.Column(db.Enum(ModStatus))
     downloads = db.Column(db.BigInteger(), default=0)
