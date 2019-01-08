@@ -49,8 +49,8 @@ def json(func):
 
 def requires_login(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_authorized_access(*args, **kwargs):
+    async def inner(*args, **kwargs):
+        if await auth_service.has_authorized_access(*args, **kwargs):
             return func(*args, **kwargs)
         return abort(403)
 
@@ -59,8 +59,8 @@ def requires_login(func):
 
 def requires_admin(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_admin_access():
+    async def inner(*args, **kwargs):
+        if await auth_service.has_admin_access():
             return func(*args, **kwargs)
         return abort(403)
 
@@ -68,7 +68,7 @@ def requires_admin(func):
 
 def requires_supporter(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_supporter_features():
+    async def inner(*args, **kwargs):
+        if await auth_service.has_supporter_features():
             return func(*args, **kwargs)
         return abort(403)

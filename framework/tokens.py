@@ -3,7 +3,6 @@ from datetime import datetime
 
 # External Libraries
 import jwt
-from pony.orm import db_session
 
 # Sayonika Internals
 from framework.models import User
@@ -26,8 +25,7 @@ class JWT:
 
         return token
 
-    @db_session
-    def verify_token(self, token, return_parsed=False):
+    async def verify_token(self, token, return_parsed=False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
         except Exception:
@@ -36,7 +34,7 @@ class JWT:
         if set(decoded.keys()) != set(["id", "lr", "iat"]):
             return False  # Keys should only be the ones we give
 
-        user = User.get_s(decoded["id"])
+        user = await User.get(decoded["id"])
 
         if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
             return False
