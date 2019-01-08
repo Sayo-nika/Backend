@@ -4,5 +4,6 @@ owo
 python-keycloak
 psycopg2-binary
 gino
+SQLAlchemy
 simpleflake
 pyjwt
