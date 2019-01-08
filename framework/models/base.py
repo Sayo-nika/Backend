@@ -2,7 +2,7 @@
 from typing import List, Union
 
 # External Libraries
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, exists
 
 # Sayonika Internals
 from framework.objects import db
@@ -10,6 +10,10 @@ from framework.objects import db
 
 class Base:
     id = db.Column(db.Unicode(), primary_key=True)
+
+    @classmethod
+    async def exists(cls: db.Model, id: str):
+        return await cls.query(exists().where(cls.id == id)).gino.scalar()
 
     @classmethod
     def get_any(cls: db.Model, insensitive: Union[bool, List[str]]=False, **kwargs):
@@ -30,3 +34,9 @@ class Base:
             queries = [getattr(cls, k) == v for k, v in kwargs]
 
         return cls.query.where(or_(*queries)).gino
+
+    @classmethod
+    def paginate(cls: db.Model, page: int, limit: int=50):
+        page = page - 1 if page > 0 else 0
+
+        return cls.query.limit(limit).offset(page * limit)
