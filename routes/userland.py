@@ -1,58 +1,32 @@
-# Stdlib
-from secrets import token_hex
-from typing import Iterator
-
 # External Libraries
-from quart import abort, jsonify, request, send_file
-from pony.orm import select, db_session
-from simpleflake import simpleflake
+from quart import abort, jsonify, request
+from sqlalchemy import and_
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, Base
-from framework.objects import database_handle, auth_service, jwt_service
+from framework.models import Mod, User, Review, UserMods, UserFavorites
+from framework.objects import auth_service, jwt_service
 from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
 
+def try_int(num, fallback):
+    try:
+        return int(num)
+    except ValueError:
+        return fallback
+
+
 class Userland(RouteCog):
-    # === Compat with mods.py ===
-
     @staticmethod
-    @db_session
-    async def new_path():
-        used = [mod.path for mod in database_handle.mods]  # flake8: noqa pylint: disable=not-an-iterable
-        path = token_hex(8)
-        while path in used:
-            path = token_hex(8)
-
-        await path
-
-    @staticmethod
-    async def new_id():
-        await str(simpleflake())
+    def dict_all(models):
+        return [m.to_dict() for m in models]
 
     # === Mods ===
 
-    @staticmethod
-    async def as_json(data: Iterator[Base]):
-        await [item.json for item in data]
-    
-    @staticmethod
-    async def get_id_from_token(token: str):
-        parsed_token = jwt_service.verify_token(token, True)
-
-        await User.get_s(parsed_token.id)
-
-    @staticmethod
-    @db_session
-    async def verified():
-        await [mod for mod in database_handle.mods if mod.verified]  # flake8: noqa pylint: disable=not-an-iterable
-
     @route("/api/v1/login", methods=["POST"])
     @json
-    @db_session
     async def login(self):
         username = request.json.get("username")
         password = request.json.get("password")
@@ -60,12 +34,10 @@ class Userland(RouteCog):
         if username is None or password is None:
             abort(400, "Needs `username` and `password`")
 
-        user = User.get_any(True, username=username, email=username)[:]
+        user = await User.get_any(True, username=username, email=username).first()
 
         if not user:
             abort(400, "Invalid username or email")
-        else:
-            user = user[0]
 
         if auth_service.hash_password(password) != user.password:
             abort(400, "Invalid password")
@@ -75,93 +47,92 @@ class Userland(RouteCog):
 
         token = jwt_service.make_token(user.id, user.last_pass_reset)
 
-        await jsonify(token=token)
-
+        return jsonify(token=token)
 
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
-    @db_session
     async def get_mods(self):
-        if "page" in request.args:
-            try:
-                page = int(request.args["page"])
-            except ValueError:
-                page = 1
-        else:
-            page = 1
+        page = try_int(request.args.get("page"), 0)
+        limit = try_int(request.args.get("limit"), 50)
 
-        await jsonify(self.as_json(Mod.select(lambda mod: mod.verified).page(page)))
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        results = await Mod.paginate(page, limit).where(Mod.verified).gino.all()
+        return jsonify(self.dict_all(results))
 
     @route("/api/v1/mods/recent_releases")
     @json
     async def get_recent_releases(self):
-        sorted_mods = reversed(sorted(self.verified(),
-                                      key=lambda mod: mod.released_at))
-        await jsonify(self.as_json(sorted_mods)[:10])
+        mods = await Mod.query.where(Mod.verified).order_by(Mod.released_at.desc()).limit(10).gino.all()
+        return jsonify(self.dict_all(mods))
 
     @route("/api/v1/mods/popular")
     @json
     async def get_popular(self):
-        sorted_mods = reversed(sorted(self.verified(),
-                                      key=lambda mod: mod.downloads))
-        await jsonify(self.as_json(sorted_mods)[:10])
+        mods = await Mod.query.where(and_(
+            Mod.verified,
+            Mod.released_at is not None
+        )).order_by(Mod.downloads.desc()).limit(10).gino.all()
+
+        return jsonify(self.dict_all(mods))
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
     async def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
-        if not Mod.exists(mod_id):
-            await abort(404, f"Mod '{mod_id}' not found on the server.")
+        mod = await Mod.get(mod_id)
 
-        await jsonify(Mod.get_s(mod_id).json)
+        if mod is None:
+            abort(404, "Unknown mod")
+
+        return jsonify(mod.to_dict())
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
     async def get_download(self, mod_id: str):  # pylint: disable=no-self-use
-        if not Mod.exists(mod_id):
-            await abort(404, f"Mod '{mod_id}' not found on the server.")       
-        if not Mod.exists(mod_content):
-            await abort(404, f"Mod '{mod_id}' has no downloadables.")
+        mod = await Mod.get(mod_id)
+
+        if mod is None:
+            abort(404, "Unknown mod")
+        elif not mod.zip_url:
+            abort(404, "Mod has no download")
 
         # We're using a URL on Upload class. await URL only and let client handle DLs
-        await jsonify(self.as_json(mod_content))
-
+        return jsonify(url=mod.zip_url)
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
-    @db_session
     async def get_mod_reviews(self, mod_id: str):
-        if not Mod.exists(mod_id):
-            await abort(404, f"Mod '{mod_id}' not found on the server.")
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        reviews = select(review for review in Review if review.mod.id == mod_id)
+        reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
 
-        await jsonify(self.as_json(reviews))
+        return jsonify(self.dict_all(reviews))
 
     @route("/api/v1/mods/<mod_id>/authors")
     @json
     async def get_mod_authors(self, mod_id: str):
-        if not Mod.exists(mod_id):
-            await abort(404, f"Mod '{mod_id}' not found on the server.")
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        authors = select(user for user in User if Mod.get_s(mod_id) in user.mods)
+        authors = await User.query.outerjoin(UserMods, UserMods.mod_id == mod_id).gino.all()
 
-        await jsonify(self.as_json(authors))
+        return jsonify(self.dict_all(authors))
 
     # === Users ===
 
     @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
-    @db_session
     async def get_users(self):
-        if "page" in request.args:
-            try:
-                page = int(request.args["page"])
-            except ValueError:
-                page = 1
-        else:
-            page = 1
+        page = try_int(request.args.get("page"), 0)
+        limit = try_int(request.args.get("limit"), 50)
 
-        await jsonify(self.as_json(User.select().page(page)))
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        results = await User.paginate(page, limit).gino.all()
+        return jsonify(self.dict_all(results))
 
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["POST"])
     @json
@@ -170,79 +141,71 @@ class Userland(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                await abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+                abort(401, "Login required")
 
-            #override user_id value to be the value of authed user's ID.
-            user_id = self.get_id_from_token(token)
+            user_id = (await jwt_service.verify_token(token, True))["id"]
 
-        if not User.exists(user_id):
-            await abort(404, f"User '{user_id}' not found on the server.")
+        user = await User.get(user_id)
 
-        await jsonify(User.get_s(user_id).json)
+        if user is None:
+            abort(404, "Unknown user")
+
+        return jsonify(user.to_dict())
 
     @route("/api/v1/users/<user_id>/favorites")
     @json
-    @db_session
     async def get_favorites(self, user_id: str):
         if user_id == "@me":
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                await abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+                abort(401, "Login required")
 
-            #override user_id value to be the value of authed user's ID.
-            user_id = self.get_id_from_token(token)
+            user_id = (await jwt_service.verify_token(token, True))["id"]
 
-        if not User.exists(user_id):
-            await abort(404, f"User '{user_id}' not found on the server.")
+        if not await User.exists(user_id):
+            abort(404, "Unknown user")
 
-        await jsonify(self.as_json(User.get_s(user_id).favorites))
+        favorites = await Mod.query.outerjoin(UserFavorites, UserFavorites.user_id == user_id).gino.all()
+
+        return jsonify(self.dict_all(favorites))
 
     @route("/api/v1/users/<user_id>/mods")
     @json
-    @db_session
     async def get_user_mods(self, user_id: str):
         if user_id == "@me":
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                await abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+                abort(401, "Login required")
 
-            #override user_id value to be the value of authed user's ID.
-            user_id = self.get_id_from_token(token)
+            user_id = (await jwt_service.verify_token(token, True))["id"]
 
-        if not User.exists(user_id):
-            await abort(404, f"User '{user_id}' not found on the server.")
+        if not await User.exists(user_id):
+            abort(404, "Unknown user")
 
-        await jsonify(self.as_json(User.get_s(user_id).mods))
+        mods = await Mod.query.outerjoin(UserMods, UserMods.user_id == user_id).gino.all()
+
+        return jsonify(self.dict_all(mods))
 
     @route("/api/v1/users/<user_id>/reviews")
     @json
-    @db_session
     async def get_user_reviews(self, user_id: str):
         if user_id == "@me":
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                await abort(400, "Unauthenticated request. calls to @me must be authenticated.")
+                abort(401, "Login required")
 
-            #override user_id value to be the value of authed user's ID.
-            user_id = self.get_id_from_token(token)
+            user_id = (await jwt_service.verify_token(token, True))["id"]
 
-        if not User.exists(user_id):
-            await abort(404, f"User '{user_id}' not found on the server.")
+        if not await User.exists(user_id):
+            abort(404, "Unknown user")
 
-        if "page" in request.args:
-            try:
-                page = int(request.args["page"])
-            except ValueError:
-                page = 1
-        else:
-            page = 1
+        reviews = await Review.query.where(Review.author_id == user_id).gino.all()
 
-        await jsonify(self.as_json(
-            Review.select(lambda review: review.author.id == user_id).page(page)
-        ))
+        return jsonify(self.dict_all(reviews))
 
-async def setup(core: Sayonika):
+
+def setup(core: Sayonika):
     Userland(core).register()
