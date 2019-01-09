@@ -22,7 +22,7 @@ class User(db.Model, Base):
         super().__init__(**kwargs)
 
         self._mods = set()
-        self._favourites = set()
+        self._favorites = set()
 
     def to_dict(self):
         return {k: v for k, v in super().to_dict().items() if k not in ['password', 'email']}
@@ -33,7 +33,7 @@ class User(db.Model, Base):
 
     @property
     def favourites(self):
-        return self._favourites
+        return self._favorites
 
     # reports = Set(lambda: Report, reverse="author")
     # connections = Set(Connection, reverse="user")
@@ -47,7 +47,7 @@ class UserMods(db.Model):
     mod_id = db.Column(None, db.ForeignKey("mods.id"))
 
 
-class UserFavourites(db.Model):
+class UserFavorites(db.Model):
     __tablename__ = "user_favourites"
 
     user_id = db.Column(None, db.ForeignKey("users.id"))
