@@ -2,6 +2,7 @@
 from typing import List, Union
 
 # External Libraries
+from simpleflake import simpleflake
 from sqlalchemy import or_, func, exists
 
 # Sayonika Internals
@@ -9,7 +10,7 @@ from framework.objects import db
 
 
 class Base:
-    id = db.Column(db.Unicode(), primary_key=True)
+    id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
 
     @classmethod
     async def exists(cls: db.Model, id: str):
