@@ -33,7 +33,7 @@ def multiroute(path, methods=["GET"], other_methods=[]):
             routes[path][method] = func
 
         @functools.wraps(func)
-        async def switch(*args, **kwargs):
+        def switch(*args, **kwargs):
             return routes[path][request.method](*args, **kwargs)
 
         if all(key in routes[path] for key in routes[path]["methods"]):
