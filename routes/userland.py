@@ -3,8 +3,9 @@ from quart import abort, jsonify, request
 from sqlalchemy import and_
 
 # Sayonika Internals
+from framework.authentication import Authenticator
 from framework.models import Mod, User, Review, UserMods, UserFavorites
-from framework.objects import auth_service, jwt_service
+from framework.objects import jwt_service
 from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
@@ -39,7 +40,7 @@ class Userland(RouteCog):
         if not user:
             abort(400, "Invalid username or email")
 
-        if auth_service.hash_password(password) != user.password:
+        if Authenticator.hash_password(password) != user.password:
             abort(400, "Invalid password")
 
         if not user.email_verified:
