@@ -15,7 +15,7 @@ class JWT:
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
         self.secret = settings["JWT_SECRET"]
 
-    def make_token(self, id, password_reset):
+    def make_token(self, id: str, password_reset: int):
         payload = {
             "id": id,
             "lr": password_reset,
@@ -25,7 +25,7 @@ class JWT:
 
         return token
 
-    async def verify_token(self, token, return_parsed=False):
+    async def verify_token(self, token: str, return_parsed: bool=False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
         except Exception:
