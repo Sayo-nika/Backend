@@ -10,7 +10,6 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import try_int
 
 
 class Userland(RouteCog):
@@ -47,8 +46,10 @@ class Userland(RouteCog):
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
     async def get_mods(self):
-        page = try_int(request.args.get("page"), 0)
-        limit = try_int(request.args.get("limit"), 50)
+        page = request.args.get("page")
+        limit = request.args.get("limit")
+        page = not page.isdigit() and 0 or int(page)
+        limit = not limit.isdigit() and 50 or int(limit)
 
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
@@ -120,8 +121,10 @@ class Userland(RouteCog):
     @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
     async def get_users(self):
-        page = try_int(request.args.get("page"), 0)
-        limit = try_int(request.args.get("limit"), 50)
+        page = request.args.get("page")
+        limit = request.args.get("limit")
+        page = not page.isdigit() and 0 or int(page)
+        limit = not limit.isdigit() and 50 or int(limit)
 
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
