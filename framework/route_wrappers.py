@@ -6,7 +6,7 @@ import json as _json
 from quart import Response, abort, request
 
 # Sayonika Internals
-from framework.objects import auth_service
+from framework.authentication import Authenticator
 
 __all__ = ("json", "requires_login", "requires_admin")
 
@@ -50,7 +50,7 @@ def json(func):
 def requires_login(func):
     @wraps(func)
     async def inner(*args, **kwargs):
-        if await auth_service.has_authorized_access(*args, **kwargs):
+        if await Authenticator.has_authorized_access(*args, **kwargs):
             return func(*args, **kwargs)
         return abort(403)
 
@@ -60,7 +60,7 @@ def requires_login(func):
 def requires_admin(func):
     @wraps(func)
     async def inner(*args, **kwargs):
-        if await auth_service.has_admin_access():
+        if await Authenticator.has_admin_access():
             return func(*args, **kwargs)
         return abort(403)
 
@@ -69,6 +69,6 @@ def requires_admin(func):
 def requires_supporter(func):
     @wraps(func)
     async def inner(*args, **kwargs):
-        if await auth_service.has_supporter_features():
+        if await Authenticator.has_supporter_features():
             return func(*args, **kwargs)
         return abort(403)

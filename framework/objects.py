@@ -8,11 +8,10 @@ from flask_limiter.util import get_remote_address
 from gino import Gino
 
 # Sayonika Internals
-from framework.authentication import Authenticator
 from framework.tokens import JWT
 from framework.sayonika import Sayonika
 
-__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "db", "SETTINGS")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "SETTINGS")
 
 sayonika_instance = Sayonika()
 
@@ -48,7 +47,7 @@ limiter = Limiter(
 logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
-auth_service = Authenticator(SETTINGS)
+# auth_service = Authenticator(SETTINGS)
 jwt_service = JWT(SETTINGS)
 
 db = Gino()
