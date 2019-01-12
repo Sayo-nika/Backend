@@ -10,13 +10,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-
-
-def try_int(num, fallback):
-    try:
-        return int(num)
-    except ValueError:
-        return fallback
+from framework.utils import try_int
 
 
 class Userland(RouteCog):
