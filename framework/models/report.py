@@ -1,6 +1,6 @@
 # Sayonika Internals
 from framework.objects import db
-from base import Base
+from .base import Base
 
 
 class Report(db.Model, Base):

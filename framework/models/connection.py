@@ -1,7 +1,7 @@
 # Sayonika Internals
 from framework.objects import db
-from base import Base
-from enums import ConnectionType
+from .base import Base
+from .enums import ConnectionType
 
 
 class Connection(db.Model, Base):

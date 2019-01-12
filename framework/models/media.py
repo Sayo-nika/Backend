@@ -1,7 +1,7 @@
 # Sayonika Internals
 from framework.objects import db
-from base import Base
-from enums import MediaType
+from .base import Base
+from .enums import MediaType
 
 
 class Media(db.Model, Base):
