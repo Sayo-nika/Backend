@@ -12,10 +12,10 @@ class Mod(db.Model, Base):
 
     title = db.Column(db.Unicode(64), unique=True)
     icon = db.Column(db.Unicode(), nullable=True)
-    tagline = db.Columnn(db.Unicode(100))
+    tagline = db.Column(db.Unicode(100))
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode())
-    category = db.Columnn(db.Enum(Category), default=Category.Unassigned)
+    category = db.Column(db.Enum(Category), default=Category.Unassigned)
     released_at = db.Column(db.Date(), nullable=True)
     last_updated = db.Column(db.DateTime(), default=datetime.now, onupdate=datetime.now)
     status = db.Column(db.Enum(ModStatus))

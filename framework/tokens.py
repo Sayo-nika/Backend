@@ -5,7 +5,8 @@ from datetime import datetime
 import jwt
 
 # Sayonika Internals
-from framework.models import User
+# from framework.models import framework.models.User
+import framework.models
 
 
 class JWT:
@@ -34,7 +35,7 @@ class JWT:
         if set(decoded.keys()) != set(["id", "lr", "iat"]):
             return False  # Keys should only be the ones we give
 
-        user = await User.get(decoded["id"])
+        user = await framework.models.User.get(decoded["id"])
 
         if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
             return False
