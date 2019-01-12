@@ -25,7 +25,7 @@ class JWT:
 
         return token
 
-    async def verify_token(self, token: str, return_parsed: bool=False):
+    async def verify_token(self, token: str, return_parsed: bool = False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
         except Exception:

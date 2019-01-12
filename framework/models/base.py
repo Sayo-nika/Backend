@@ -17,7 +17,7 @@ class Base:
         return await cls.query(exists().where(cls.id == id)).gino.scalar()
 
     @classmethod
-    def get_any(cls: db.Model, insensitive: Union[bool, List[str]]=False, **kwargs):
+    def get_any(cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs):
         if not len(kwargs):
             raise ValueError('No kwargs provided')
 
@@ -37,7 +37,7 @@ class Base:
         return cls.query.where(or_(*queries)).gino
 
     @classmethod
-    def paginate(cls: db.Model, page: int, limit: int=50):
+    def paginate(cls: db.Model, page: int, limit: int = 50):
         page = page - 1 if page > 0 else 0
 
         return cls.query.limit(limit).offset(page * limit)
