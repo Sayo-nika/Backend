@@ -30,9 +30,9 @@ class Base:
                 else:
                     queries.push(getattr(cls, k) == v)
         elif insensitive is True:
-            queries = [func.lower(getattr(cls, k)) == func.lower(v) for k, v in kwargs]
+            queries = [func.lower(getattr(cls, k)) == func.lower(v) for k, v in kwargs.items()]
         else:
-            queries = [getattr(cls, k) == v for k, v in kwargs]
+            queries = [getattr(cls, k) == v for k, v in kwargs.items()]
 
         return cls.query.where(or_(*queries)).gino
 
