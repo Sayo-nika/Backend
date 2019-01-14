@@ -3,6 +3,7 @@ import logging
 import os
 
 # External Libraries
+import quart.flask_patch  # noqa: F401
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -47,6 +48,4 @@ limiter = Limiter(
 logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
-# auth_service = Authenticator(SETTINGS)
 jwt_service = JWT(SETTINGS)
-

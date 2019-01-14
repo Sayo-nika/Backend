@@ -7,8 +7,7 @@ from sqlalchemy.engine.url import URL
 # Sayonika Internals
 from framework.objects import sayonika_instance, db, SETTINGS
 
-sayonika_instance.debug = (len(sys.argv) > 1 and
-                           sys.argv[1] == "--debug")
+sayonika_instance.debug = (len(sys.argv) > 1 and sys.argv[1] == "--debug")
 sayonika_instance.gather("routes")
 
 
