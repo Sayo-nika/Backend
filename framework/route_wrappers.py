@@ -17,14 +17,9 @@ def json(func):
     """
 
     @wraps(func)
-    def inner(*args, **kwargs):
-        response = func(*args, **kwargs)
-        text = response.response[0]
-
-        # Mitigate an issue where `response.response[0]` is a string on Windows, and a `bytes` on Linux.
-        # God know's why they're different.
-        if type(text) is bytes:
-            text = text.decode()
+    async def inner(*args, **kwargs):
+        response = await func(*args, **kwargs)
+        text = await response.get_data(False)
 
         try:
             data = _json.loads(text)
@@ -33,14 +28,14 @@ def json(func):
 
         result = _json.dumps({
             "result": data,
-            "status": response._status_code,  # flake8: noqa pylint: disable=protected-access
-            "success": True if 200 <= response._status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
+            "status": response.status_code,  # flake8: noqa pylint: disable=protected-access
+            "success": True if 200 <= response.status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
             response=result,
             headers=response.headers,
-            status=response.status,
+            status=response.status_code,
             content_type="application/json"
         )
 
