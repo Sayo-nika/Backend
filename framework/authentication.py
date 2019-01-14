@@ -85,7 +85,7 @@ class Authenticator:
         return True
 
     @classmethod
-    async def hash_password(cls, password: str) -> bytes:
+    def hash_password(cls, password: str) -> bytes:
         inst = cls.hash_class()
         inst.update(password.encode())
         return inst.digest()
