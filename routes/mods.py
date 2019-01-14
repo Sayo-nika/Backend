@@ -57,7 +57,7 @@ class Mods(RouteCog):
     async def post_mods(self):
         body = await request.json
 
-        for attr, type_ in mod_attrs:
+        for attr, type_ in mod_attrs.items():
             val = body.get(attr)
 
             if val is None:
@@ -86,7 +86,7 @@ class Mods(RouteCog):
         await mod.create()
         await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
 
-        print(mod)
+        print(mod.to_dict())
 
         return jsonify(mod.to_dict())
 
@@ -101,7 +101,7 @@ class Mods(RouteCog):
         mod = await Mod.get(mod_id)
         updates = mod.update()
 
-        for attr, type_ in mod_patch_attrs:
+        for attr, type_ in mod_patch_attrs.items():
             val = body.get(attr)
 
             if val is None:
@@ -138,7 +138,7 @@ class Mods(RouteCog):
 
         body = await request.json
 
-        for attr, type_ in review_attrs:
+        for attr, type_ in review_attrs.items():
             val = body.get(attr)
 
             if val is None:
@@ -152,7 +152,7 @@ class Mods(RouteCog):
         review = await Review.create(content=body["content"], rating=body["rating"],
                                      author_id=body["author"], mod_id=mod_id)
 
-        print(review)
+        print(review.to_dict())
 
         return jsonify(review.to_json())
 
@@ -162,7 +162,7 @@ class Mods(RouteCog):
         body = await request.json
         user = User()
 
-        for attr, type_ in user_attrs:
+        for attr, type_ in user_attrs.items():
             val = body.get(attr)
 
             if val is None:
@@ -172,7 +172,7 @@ class Mods(RouteCog):
 
             setattr(user, attr, val)
 
-        users = await User.get_any(True, username=user["username"], email=user["email"]).first()
+        users = await User.get_any(True, username=user.username, email=user.email).first()
 
         if users is not None:
             return abort(400, "Username and/or email already in use")
@@ -184,7 +184,7 @@ class Mods(RouteCog):
 
         await user.create()
 
-        print(user)
+        print(user.to_dict())
 
         return jsonify(user.to_dict())
 
@@ -199,7 +199,7 @@ class Mods(RouteCog):
         user = await User.get(user_id)
         updates = user.update()
 
-        for attr, type_ in user_patch_attrs:
+        for attr, type_ in user_patch_attrs.items():
             val = body.get(attr)
 
             if val is None:
