@@ -22,8 +22,9 @@ class Userland(RouteCog):
     @route("/api/v1/login", methods=["POST"])
     @json
     async def login(self):
-        username = request.json.get("username")
-        password = request.json.get("password")
+        body = await request.json
+        username = body.get("username")
+        password = body.get("password")
 
         if username is None or password is None:
             abort(400, "Needs `username` and `password`")
