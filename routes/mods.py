@@ -2,7 +2,7 @@
 from datetime import datetime
 
 # External Libraries
-from quart import abort, jsonify, request
+from quart import jsonify, request
 from sqlalchemy import and_
 
 # Sayonika Internals
@@ -12,6 +12,7 @@ from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import abort
 
 mod_attrs = {
     "title": str,

@@ -1,5 +1,5 @@
 # External Libraries
-from quart import abort, jsonify, request
+from quart import jsonify, request
 from sqlalchemy import and_
 
 # Sayonika Internals
@@ -10,6 +10,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import abort
 
 
 class Userland(RouteCog):

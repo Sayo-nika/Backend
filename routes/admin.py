@@ -1,5 +1,5 @@
 # External Libraries
-from quart import abort, jsonify, request
+from quart import jsonify, request
 
 # Sayonika Internals
 from framework.models import Mod
@@ -7,6 +7,7 @@ from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import abort
 
 
 class Admin(RouteCog):
