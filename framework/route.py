@@ -55,12 +55,8 @@ class Route:
         self.parent = None
 
     def register(self, core: Sayonika):
-        # Hack around making dynamic routes for quart
-        _route = core.route(self.path, **self.kwargs)
-        func = functools.wraps(self.func)(
-            functools.partial(self.func, self.parent)
-        )
-        _route(func)
+        func = functools.partial(self.func, self.parent)
+        core.add_url_rule(self.path, self.func.__name__, func, **self.kwargs)
 
     def set_parent(self, parent):
         self.parent = parent
