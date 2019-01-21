@@ -62,14 +62,14 @@ class Mods(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                abort(400, f"Missing value '{attr}'")
+                return abort(400, f"Missing value '{attr}'")
             elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         mods = await Mod.get_any(True, title=body["title"]).first()
 
         if mods is not None:
-            abort(400, "A mod with that title already exists")
+            return abort(400, "A mod with that title already exists")
 
         mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
                   website=body["website"])
@@ -78,7 +78,7 @@ class Mods(RouteCog):
         status = body.get("status")
 
         if status not in ModStatus.__members__:
-            abort(400, f"Unknown mod status '{status}'")
+            return abort(400, f"Unknown mod status '{status}'")
 
         mod.status = ModStatus[status]
 
@@ -96,7 +96,7 @@ class Mods(RouteCog):
     @json
     async def patch_mod(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
 
         body = await request.json
         mod = await Mod.get(mod_id)
@@ -108,7 +108,7 @@ class Mods(RouteCog):
             if val is None:
                 continue
             elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "authors":
                 updates = updates.update(**{attr: val})
 
@@ -121,7 +121,7 @@ class Mods(RouteCog):
         status = body.get("status")
 
         if status is not None and status not in ModStatus.__members__:
-            abort(400, f"Unknown mod status '{status}'")
+            return abort(400, f"Unknown mod status '{status}'")
         elif status is not None:
             updates = updates.update(status=ModStatus[status])
 
@@ -135,7 +135,7 @@ class Mods(RouteCog):
     @json
     async def post_review(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
 
         body = await request.json
 
@@ -143,12 +143,12 @@ class Mods(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                abort(400, f"Missing value '{attr}'")
+                return abort(400, f"Missing value '{attr}'")
             elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         if not await User.exists(body["author"]):
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         review = await Review.create(content=body["content"], rating=body["rating"],
                                      author_id=body["author"], mod_id=mod_id)
@@ -167,9 +167,9 @@ class Mods(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                abort(400, f"Missing value '{attr}'")
+                return abort(400, f"Missing value '{attr}'")
             elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
             setattr(user, attr, val)
 
@@ -194,7 +194,7 @@ class Mods(RouteCog):
     @json
     async def patch_user(self, user_id: str):
         if not await User.exists(user_id):
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         body = await request.json
         user = await User.get(user_id)
@@ -206,7 +206,7 @@ class Mods(RouteCog):
             if val is None:
                 continue
             elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "password":
                 updates = updates.update(**{attr: val})
 

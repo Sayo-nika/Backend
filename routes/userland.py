@@ -28,18 +28,18 @@ class Userland(RouteCog):
         password = body.get("password")
 
         if username is None or password is None:
-            abort(400, "Needs `username` and `password`")
+            return abort(400, "Needs `username` and `password`")
 
         user = await User.get_any(True, username=username, email=username).first()
 
         if not user:
-            abort(400, "Invalid username or email")
+            return abort(400, "Invalid username or email")
 
         if Authenticator.hash_password(password) != user.password:
-            abort(400, "Invalid password")
+            return abort(400, "Invalid password")
 
         if not user.email_verified:
-            abort(401, "Email needs to be verified")
+            return abort(401, "Email needs to be verified")
 
         token = jwt_service.make_token(user.id, user.last_pass_reset)
 
@@ -81,7 +81,7 @@ class Userland(RouteCog):
         mod = await Mod.get(mod_id)
 
         if mod is None:
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
 
         return jsonify(mod.to_dict())
 
@@ -91,9 +91,9 @@ class Userland(RouteCog):
         mod = await Mod.get(mod_id)
 
         if mod is None:
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
         elif not mod.zip_url:
-            abort(404, "Mod has no download")
+            return abort(404, "Mod has no download")
 
         # We're using a URL on Upload class. await URL only and let client handle DLs
         return jsonify(url=mod.zip_url)
@@ -102,7 +102,7 @@ class Userland(RouteCog):
     @json
     async def get_mod_reviews(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
 
         reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
 
@@ -112,7 +112,7 @@ class Userland(RouteCog):
     @json
     async def get_mod_authors(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
+            return abort(404, "Unknown mod")
 
         authors = await User.query.outerjoin(UserMods, UserMods.mod_id == mod_id).gino.all()
 
@@ -141,14 +141,14 @@ class Userland(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                abort(401, "Login required")
+                return abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         user = await User.get(user_id)
 
         if user is None:
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         return jsonify(user.to_dict())
 
@@ -159,12 +159,12 @@ class Userland(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                abort(401, "Login required")
+                return abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         favorites = await Mod.query.outerjoin(UserFavorites, UserFavorites.user_id == user_id).gino.all()
 
@@ -177,12 +177,12 @@ class Userland(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                abort(401, "Login required")
+                return abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         mods = await Mod.query.outerjoin(UserMods, UserMods.user_id == user_id).gino.all()
 
@@ -195,12 +195,12 @@ class Userland(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get["token"])
 
             if token is None:
-                abort(401, "Login required")
+                return abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            abort(404, "Unknown user")
+            return abort(404, "Unknown user")
 
         reviews = await Review.query.where(Review.author_id == user_id).gino.all()
 
