@@ -25,7 +25,7 @@ class User(db.Model, Base):
         self._favorites = set()
 
     def to_dict(self):
-        return {k: v for k, v in super().to_dict().items() if k not in ['password', 'email']}
+        return {k: v for k, v in super().to_dict().items() if k not in ['password', 'email', 'last_pass_reset']}
 
     @property
     def mods(self):
