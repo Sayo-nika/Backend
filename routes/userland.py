@@ -138,7 +138,7 @@ class Userland(RouteCog):
     @json
     async def get_user(self, user_id: str):  # pylint: disable=no-self-use
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get["token"])
+            token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
                 return abort(401, "Login required")
@@ -156,7 +156,7 @@ class Userland(RouteCog):
     @json
     async def get_favorites(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get["token"])
+            token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
                 return abort(401, "Login required")
@@ -174,7 +174,7 @@ class Userland(RouteCog):
     @json
     async def get_user_mods(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get["token"])
+            token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
                 return abort(401, "Login required")
@@ -192,7 +192,7 @@ class Userland(RouteCog):
     @json
     async def get_user_reviews(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get["token"])
+            token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
                 return abort(401, "Login required")
