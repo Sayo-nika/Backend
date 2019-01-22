@@ -1,4 +1,5 @@
 # Stdlib
+from datetime import datetime
 from enum import Enum
 
 # External Libraries
@@ -10,4 +11,16 @@ class EnumJsonEncoder(JSONEncoder):
         if isinstance(o, Enum):
             return o.value
 
-        return JSONEncoder.default(self, o)
+        return super().default(o)
+
+
+class DateTimeJsonEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+
+        return super().default(o)
+
+
+class CombinedEncoder(EnumJsonEncoder, DateTimeJsonEncoder):
+    pass

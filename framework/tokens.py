@@ -7,6 +7,7 @@ import jwt
 # Sayonika Internals
 # from framework.models import framework.models.User
 import framework.models
+from framework.jsonutils import CombinedEncoder
 
 
 class JWT:
@@ -16,15 +17,15 @@ class JWT:
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
         self.secret = settings["JWT_SECRET"]
 
-    def make_token(self, id: str, password_reset: int):
+    def make_token(self, id: str, password_reset: datetime):
         payload = {
             "id": id,
             "lr": password_reset,
             "iat": datetime.utcnow()
         }
-        token = jwt.encode(payload, self.secret, algorithm=self.algorithm)
+        token = jwt.encode(payload, self.secret, algorithm=self.algorithm, json_encoder=CombinedEncoder)
 
-        return token
+        return token.decode()
 
     async def verify_token(self, token: str, return_parsed: bool = False):
         try:
@@ -37,7 +38,7 @@ class JWT:
 
         user = await framework.models.User.get(decoded["id"])
 
-        if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
+        if user is None or datetime.fromisoformat(decoded["lr"]) != user.last_pass_reset:
             return False
 
         return decoded if return_parsed else True
