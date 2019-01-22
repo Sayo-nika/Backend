@@ -3,7 +3,7 @@ from typing import List, Union
 
 # External Libraries
 from simpleflake import simpleflake
-from sqlalchemy import or_, func, exists
+from sqlalchemy import or_, func
 
 # Sayonika Internals
 from framework.objects import db

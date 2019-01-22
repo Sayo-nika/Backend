@@ -42,7 +42,7 @@ const mailer = require("nodemailer").createTransport({
 /**
  * Checks if a specific object is empty
  * @param {Object} obj Object to analyze.
- * @returns {Boolean} True if non-empty, False if not. 
+ * @returns {Boolean} True if non-empty, False if not.
  */
 function isEmpty(obj) {
     for (let key in obj) {
@@ -60,12 +60,12 @@ const server = micro(async (req, res) => {
     // generate a token, add it to redis
     const id = idGen.nextId();
     const token = bcrypt.hashSync(`${data.email}:${id}`);
-    
+
     try {
         // check if this person has already sent a verification mail.
         client.exists(`${data.email}:email_verify`, async reply => {
             // if this is reply 1, we throw an error
-            if (reply !== 1) { 
+            if (reply !== 1) {
                 await client.set(`${data.email}:email_verify`, token, "EX", 60 * 60 * 24);
                 // While we have this on urlencoded, the Redis entry serves as a verification point.
                 // We want to confirm if this is created by us or maliciously created by someone.
@@ -80,7 +80,7 @@ const server = micro(async (req, res) => {
                          <style>
                             p {
                              text-align: center;
-                            } 
+                            }
                             a {
                              text-align: center;
                             }
