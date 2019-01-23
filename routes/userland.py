@@ -114,7 +114,9 @@ class Userland(RouteCog):
         if not await Mod.exists(mod_id):
             return abort(404, "Unknown mod")
 
-        authors = await User.query.outerjoin(UserMods, UserMods.mod_id == mod_id).gino.all()
+        author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
+        author_pairs = [x.mod_id for x in author_pairs]
+        authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
 
         return jsonify(self.dict_all(authors))
 
@@ -166,7 +168,9 @@ class Userland(RouteCog):
         if not await User.exists(user_id):
             return abort(404, "Unknown user")
 
-        favorites = await Mod.query.outerjoin(UserFavorites, UserFavorites.user_id == user_id).gino.all()
+        favorite_pairs = await UserFavorites.query.where(UserFavorites.user_id == user_id).gino.all()
+        favorite_pairs = [x.mod_id for x in favorite_pairs]
+        favorites = await Mod.query.where(Mod.id.in_(favorite_pairs)).gino.all()
 
         return jsonify(self.dict_all(favorites))
 
@@ -184,7 +188,9 @@ class Userland(RouteCog):
         if not await User.exists(user_id):
             return abort(404, "Unknown user")
 
-        mods = await Mod.query.outerjoin(UserMods, UserMods.user_id == user_id).gino.all()
+        mod_pairs = await UserMods.query.where(UserMods.user_id == user_id).gino.all()
+        mod_pairs = [x.mod_id for x in mod_pairs]
+        mods = await Mod.query.where(Mod.id.in_(mod_pairs)).gino.all()
 
         return jsonify(self.dict_all(mods))
 
