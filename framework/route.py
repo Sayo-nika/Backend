@@ -53,6 +53,7 @@ class Route:
         self.path = path
         self.kwargs = kwargs
         self.parent = None
+        self.kwargs['strict_slashes'] = False  # Don't care about dangling / on routes.
 
     def register(self, core: Sayonika):
         func = functools.partial(self.func, self.parent)
