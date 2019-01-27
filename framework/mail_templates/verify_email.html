@@ -2,8 +2,9 @@
 <html>
     <head>
         <style>
+        @import url('https://fonts.googleapis.com/css?family=Open+Sans');
         p, h1, h2, h3, h4 {
-            font-family: 'Open Sans';
+            font-family: 'Open Sans', sans-serif;
         }
         </style>
     </head>
@@ -14,6 +15,11 @@
         <br>
         <p>To verify your account - click on the link below. If you didn't, safely ignore this email, we will delete the registration within 24 hours.</p>
         <br>
-        <p><a href="${BASE_URL}/api/v1/verify?token=${TOKEN}"></a></p>
+        <p><a href="${BASE_URL}/api/v1/verify?token=${TOKEN}">Verify account</a></p>
+        <br>
+        <br>
+        <p>If you have any questions let us know at <a href="mailto:hello@sayonika.moe">hello@sayonika.moe</a></p>
+        <br>
+        <p>Happy Modding!</p>
     </body>
 </html>
