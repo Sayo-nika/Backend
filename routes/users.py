@@ -3,6 +3,7 @@ from datetime import datetime
 
 # External Libraries
 from quart import jsonify, request
+from flask_mail import Message
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -13,6 +14,9 @@ from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 from framework.utils import abort
+
+mail = Mail()
+smtp = mail.init_app(Sayonika)
 
 user_attrs = {
     "username": str,
@@ -26,6 +30,12 @@ user_patch_attrs = {
     "avatar": str
 }
 
+# Required for mail template.
+def getFileContent(path):
+    with open(path, 'r') as file:
+
+        data = file.read()
+        return data
 
 class Users(RouteCog):
     @staticmethod
@@ -133,7 +143,7 @@ class Users(RouteCog):
 
             if val is None:
                 return abort(400, f"Missing value '{attr}'")
-            elif type(val) is not type_:
+            elif isinstance(val) is not type_:
                 return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
             setattr(user, attr, val)
@@ -148,6 +158,13 @@ class Users(RouteCog):
         user.password = Authenticator.hash_password(user.password)
         user.last_pass_reset = datetime.now()
 
+        # TODO: replace placeholders in template.
+        template = getFileContent('./framework/mail_templates/verify_email.html')
+
+        msg = Message(sender="noreply@sayonika.moe", recipients=body.email)
+        msg.html = template
+
+        smtp.send(msg)
         await user.create()
 
         print(user.to_dict())
@@ -170,7 +187,7 @@ class Users(RouteCog):
 
             if val is None:
                 continue
-            elif type(val) is not type_:
+            elif isinstance(val) is not type_:
                 return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "password":
                 updates = updates.update(**{attr: val})

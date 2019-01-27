@@ -1,9 +1,10 @@
 quart
 flask-limiter
-owo
+flask-mail
 python-keycloak
 psycopg2-binary
 gino
 SQLAlchemy
 simpleflake
 pyjwt
+redis
