@@ -7,6 +7,7 @@ class ModStatus(Enum):
     InDevelop = 2
     PlayTesting = 3
     Released = 4
+    Archived = 5
 
 
 class ConnectionType(Enum):
@@ -22,3 +23,9 @@ class MediaType(Enum):
 
 class Category(Enum):
     Unassigned = 0
+    Tools = 1
+    DatingSim = 2
+    SliceOfLife = 3
+    Romance = 4
+    Drama = 5
+    Horror = 6
