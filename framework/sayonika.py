@@ -8,7 +8,7 @@ from quart import Quart
 
 # Sayonika Internals
 from framework.error_handlers.error_4xx import all_4xx
-from framework.jsonutils import EnumJsonEncoder
+from framework.jsonutils import CombinedEncoder
 
 __all__ = ("Sayonika",)
 
@@ -24,7 +24,7 @@ class Sayonika(Quart):
         self.route_dir = ""
         super().__init__("Sayonika")
 
-        self.json_encoder = EnumJsonEncoder
+        self.json_encoder = CombinedEncoder
 
         for code, func in all_4xx.items():
             self.register_error_handler(code, func)

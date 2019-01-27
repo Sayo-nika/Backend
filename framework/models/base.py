@@ -3,7 +3,7 @@ from typing import List, Union
 
 # External Libraries
 from simpleflake import simpleflake
-from sqlalchemy import or_, func, exists
+from sqlalchemy import or_, func
 
 # Sayonika Internals
 from framework.objects import db
@@ -14,7 +14,7 @@ class Base:
 
     @classmethod
     async def exists(cls: db.Model, id: str):
-        return await cls.query(exists().where(cls.id == id)).gino.scalar()
+        return not not (await cls.select('id').where(cls.id == id).gino.scalar())
 
     @classmethod
     def get_any(cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs):
