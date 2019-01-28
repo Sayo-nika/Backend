@@ -1,10 +1,10 @@
-quart
-flask-limiter
-flask-mail
-python-keycloak
-psycopg2-binary
-gino
-SQLAlchemy
-simpleflake
-pyjwt
-redis
+# quart>=0.7.1
+-e git+https://gitlab.com/pgjones/quart.git#egg=quart
+flask-limiter>=1.0.1
+flask-mail>=0.9.1
+gino>=0.8.1
+sqlalchemy>=1.2.17
+simpleflake>=0.1.5
+pyjwt>=1.7.1
+hiredis>=1.0.0
+aioredis>=1.2.0
