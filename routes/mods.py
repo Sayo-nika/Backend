@@ -1,5 +1,5 @@
 # External Libraries
-from quart import jsonify, request
+from quart import jsonify, request, abort
 from sqlalchemy import and_
 
 # Sayonika Internals
@@ -8,7 +8,6 @@ from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils.abort import abort
 
 mod_attrs = {
     "title": str,
@@ -71,7 +70,7 @@ class Mods(RouteCog):
         mod = await Mod.get(mod_id)
 
         if mod is None:
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         return jsonify(mod.to_dict())
 
@@ -81,9 +80,9 @@ class Mods(RouteCog):
         mod = await Mod.get(mod_id)
 
         if mod is None:
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
         elif not mod.zip_url:
-            return abort(404, "Mod has no download")
+            abort(404, "Mod has no download")
 
         # We're using a URL on Upload class. await URL only and let client handle DLs
         return jsonify(url=mod.zip_url)
@@ -92,7 +91,7 @@ class Mods(RouteCog):
     @json
     async def get_mod_reviews(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
 
@@ -102,7 +101,7 @@ class Mods(RouteCog):
     @json
     async def get_mod_authors(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
         author_pairs = [x.mod_id for x in author_pairs]
@@ -120,14 +119,14 @@ class Mods(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                return abort(400, f"Missing value '{attr}'")
+                abort(400, f"Missing value '{attr}'")
             elif isinstance(val) is not type_:
-                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         mods = await Mod.get_any(True, title=body["title"]).first()
 
         if mods is not None:
-            return abort(400, "A mod with that title already exists")
+            abort(400, "A mod with that title already exists")
 
         mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
                   website=body["website"])
@@ -136,7 +135,7 @@ class Mods(RouteCog):
         status = body.get("status")
 
         if status not in ModStatus.__members__:
-            return abort(400, f"Unknown mod status '{status}'")
+            abort(400, f"Unknown mod status '{status}'")
 
         mod.status = ModStatus[status]
 
@@ -154,7 +153,7 @@ class Mods(RouteCog):
     @json
     async def patch_mod(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         body = await request.json
         mod = await Mod.get(mod_id)
@@ -166,7 +165,7 @@ class Mods(RouteCog):
             if val is None:
                 continue
             elif type(val) is not type_:
-                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "authors":
                 updates = updates.update(**{attr: val})
 
@@ -179,7 +178,7 @@ class Mods(RouteCog):
         status = body.get("status")
 
         if status is not None and status not in ModStatus.__members__:
-            return abort(400, f"Unknown mod status '{status}'")
+            abort(400, f"Unknown mod status '{status}'")
         elif status is not None:
             updates = updates.update(status=ModStatus[status])
 
@@ -193,7 +192,7 @@ class Mods(RouteCog):
     @json
     async def post_review(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         body = await request.json
 
@@ -201,12 +200,12 @@ class Mods(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                return abort(400, f"Missing value '{attr}'")
+                abort(400, f"Missing value '{attr}'")
             elif isinstance(val) is not type_:
-                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         if not await User.exists(body["author"]):
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         review = await Review.create(content=body["content"], rating=body["rating"],
                                      author_id=body["author"], mod_id=mod_id)
@@ -224,9 +223,9 @@ class Mods(RouteCog):
     @requires_login
     async def upload(self, mod_id: str):
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
-        return abort(501, "Coming soon")
+        abort(501, "Coming soon")
 
 
 def setup(core: Sayonika):

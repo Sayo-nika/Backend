@@ -1,5 +1,5 @@
 # External Libraries
-from quart import jsonify, request
+from quart import jsonify, request, abort
 
 # Sayonika Internals
 from framework.models import Mod
@@ -7,7 +7,6 @@ from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils.abort import abort
 
 
 class Admin(RouteCog):
@@ -38,7 +37,7 @@ class Admin(RouteCog):
     @json
     async def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         await Mod.update.values(verified=True).where(Mod.id == mod_id).gino.status()
 
@@ -49,7 +48,7 @@ class Admin(RouteCog):
     @json
     async def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
         if not await Mod.exists(mod_id):
-            return abort(404, "Unknown mod")
+            abort(404, "Unknown mod")
 
         await Mod.delete.where(Mod.id == mod_id).gino.status()
 

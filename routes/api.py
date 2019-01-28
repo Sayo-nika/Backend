@@ -1,5 +1,5 @@
 # External Libraries
-from quart import jsonify, request
+from quart import jsonify, request, abort
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -9,7 +9,6 @@ from framework.route import route
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils.abort import abort
 
 
 class Userland(RouteCog):
@@ -27,18 +26,18 @@ class Userland(RouteCog):
         password = body.get("password")
 
         if username is None or password is None:
-            return abort(400, "Needs `username` and `password`")
+            abort(400, "Needs `username` and `password`")
 
         user = await User.get_any(True, username=username, email=username).first()
 
         if not user:
-            return abort(400, "Invalid username or email")
+            abort(400, "Invalid username or email")
 
         if Authenticator.hash_password(password) != user.password:
-            return abort(400, "Invalid password")
+            abort(400, "Invalid password")
 
         if not user.email_verified:
-            return abort(401, "Email needs to be verified")
+            abort(401, "Email needs to be verified")
 
         token = jwt_service.make_token(user.id, user.last_pass_reset)
 

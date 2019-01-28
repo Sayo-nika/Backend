@@ -23,7 +23,6 @@ class Authenticator:
         if token is None:
             abort(401, "No token")
 
-        # I blame py's abhorrent handling of circular dependencies for this
         parsed_token = await jwt_service.verify_token(token, True)
 
         if parsed_token is False:

@@ -2,7 +2,7 @@
 from datetime import datetime
 
 # External Libraries
-from quart import jsonify, request
+from quart import jsonify, request, abort
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -12,7 +12,6 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils.abort import abort
 from framework.utils.send_mail import send_mail
 
 user_attrs = {
@@ -26,6 +25,7 @@ user_patch_attrs = {
     "bio": str,
     "avatar": str
 }
+
 
 class Users(RouteCog):
     @staticmethod
@@ -53,14 +53,14 @@ class Users(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
-                return abort(401, "Login required")
+                abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         user = await User.get(user_id)
 
         if user is None:
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         return jsonify(user.to_dict())
 
@@ -71,12 +71,12 @@ class Users(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
-                return abort(401, "Login required")
+                abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         favorite_pairs = await UserFavorites.query.where(UserFavorites.user_id == user_id).gino.all()
         favorite_pairs = [x.mod_id for x in favorite_pairs]
@@ -91,12 +91,12 @@ class Users(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
-                return abort(401, "Login required")
+                abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         mod_pairs = await UserMods.query.where(UserMods.user_id == user_id).gino.all()
         mod_pairs = [x.mod_id for x in mod_pairs]
@@ -111,12 +111,12 @@ class Users(RouteCog):
             token = request.headers.get("Authorization", request.cookies.get("token"))
 
             if token is None:
-                return abort(401, "Login required")
+                abort(401, "Login required")
 
             user_id = (await jwt_service.verify_token(token, True))["id"]
 
         if not await User.exists(user_id):
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         reviews = await Review.query.where(Review.author_id == user_id).gino.all()
 
@@ -132,23 +132,23 @@ class Users(RouteCog):
             val = body.get(attr)
 
             if val is None:
-                return abort(400, f"Missing value '{attr}'")
+                abort(400, f"Missing value '{attr}'")
             elif isinstance(val) is not type_:
-                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
             setattr(user, attr, val)
 
         users = await User.get_any(True, username=user.username, email=user.email).first()
 
         if users is not None:
-            return abort(400, "Username and/or email already in use")
+            abort(400, "Username and/or email already in use")
 
         user.avatar = body.get("avatar")
         user.bio = body.get("bio")
         user.password = Authenticator.hash_password(user.password)
         user.last_pass_reset = datetime.now()
 
-        #TODO: Generate a one-time expiring JWT just for email verification
+        # TODO: Generate a one-time expiring JWT just for email verification
         send_mail("verify_email", body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username, "token"])
         await user.create()
 
@@ -161,7 +161,7 @@ class Users(RouteCog):
     @json
     async def patch_user(self, user_id: str):
         if not await User.exists(user_id):
-            return abort(404, "Unknown user")
+            abort(404, "Unknown user")
 
         body = await request.json
         user = await User.get(user_id)
@@ -173,7 +173,7 @@ class Users(RouteCog):
             if val is None:
                 continue
             elif isinstance(val) is not type_:
-                return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "password":
                 updates = updates.update(**{attr: val})
 
