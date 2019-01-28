@@ -6,6 +6,7 @@ from .mod import Mod
 from .report import Report
 from .review import Review, ReviewDownvoters, ReviewHelpfuls, ReviewUpvoters
 from .user import User, UserFavorites, UserMods
+from .editors_choice import EditorsChoice
 
 __all__ = ("Base", "Connection", "ModStatus", "Category", "ConnectionType", "MediaType", "Media", "Mod", "Report",
-           "Review", "ReviewDownvoters", "ReviewHelpfuls", "ReviewUpvoters", "User", "UserFavorites", "UserMods")
+           "Review", "ReviewDownvoters", "ReviewHelpfuls", "ReviewUpvoters", "User", "UserFavorites", "UserMods", "EditorsChoice")
