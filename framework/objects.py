@@ -9,10 +9,11 @@ from flask_limiter.util import get_remote_address
 
 # Sayonika Internals
 from framework.db import db
+from framework.mailer import Mailer
 from framework.sayonika import Sayonika
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "SETTINGS")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS")
 
 sayonika_instance = Sayonika()
 
@@ -49,3 +50,6 @@ logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
 jwt_service = JWT(SETTINGS)
+
+mailer = Mailer()
+mailer.init_app(sayonika_instance)
