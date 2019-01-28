@@ -5,8 +5,6 @@ from datetime import datetime
 from framework.objects import db
 from .base import Base
 from .enums import Category, ModStatus
-from .editors_choice import EditorsChoice
-
 
 class Mod(db.Model, Base):
     __tablename__ = "mods"
@@ -19,7 +17,6 @@ class Mod(db.Model, Base):
     category = db.Column(db.Enum(Category), default=Category.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
     released_at = db.Column(db.Date(), nullable=True)
-    editors_choice = db.Column(EditorsChoice)
     last_updated = db.Column(db.DateTime(), default=datetime.now, onupdate=datetime.now)
     status = db.Column(db.Enum(ModStatus))
     downloads = db.Column(db.BigInteger(), default=0)
