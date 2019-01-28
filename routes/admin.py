@@ -7,7 +7,7 @@ from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import abort
+from framework.utils.abort import abort
 
 
 class Admin(RouteCog):

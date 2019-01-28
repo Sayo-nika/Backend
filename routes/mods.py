@@ -8,7 +8,7 @@ from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import abort
+from framework.utils.abort import abort
 
 mod_attrs = {
     "title": str,
@@ -121,7 +121,7 @@ class Mods(RouteCog):
 
             if val is None:
                 return abort(400, f"Missing value '{attr}'")
-            elif type(val) is not type_:
+            elif isinstance(val) is not type_:
                 return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         mods = await Mod.get_any(True, title=body["title"]).first()
@@ -202,7 +202,7 @@ class Mods(RouteCog):
 
             if val is None:
                 return abort(400, f"Missing value '{attr}'")
-            elif type(val) is not type_:
+            elif isinstance(val) is not type_:
                 return abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         if not await User.exists(body["author"]):

@@ -3,7 +3,6 @@ from datetime import datetime
 
 # External Libraries
 from quart import jsonify, request
-from flask_mail import Message
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -13,10 +12,8 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import abort
-
-mail = Mail()
-smtp = mail.init_app(Sayonika)
+from framework.utils.abort import abort
+from framework.utils.send_mail import send_mail
 
 user_attrs = {
     "username": str,
@@ -29,13 +26,6 @@ user_patch_attrs = {
     "bio": str,
     "avatar": str
 }
-
-# Required for mail template.
-def getFileContent(path):
-    with open(path, 'r') as file:
-
-        data = file.read()
-        return data
 
 class Users(RouteCog):
     @staticmethod
@@ -158,13 +148,8 @@ class Users(RouteCog):
         user.password = Authenticator.hash_password(user.password)
         user.last_pass_reset = datetime.now()
 
-        # TODO: replace placeholders in template.
-        template = getFileContent('./framework/mail_templates/verify_email.html')
-
-        msg = Message(sender="noreply@sayonika.moe", recipients=body.email)
-        msg.html = template
-
-        smtp.send(msg)
+        #TODO: Generate a one-time expiring JWT just for email verification
+        send_mail("verify_email", body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username, "token"])
         await user.create()
 
         print(user.to_dict())
