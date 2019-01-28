@@ -1,6 +1,7 @@
 .idea/
 *.py[cod]
 venv/
+.vscode/
 
 *.zip
 node_modules/
