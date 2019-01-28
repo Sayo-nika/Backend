@@ -133,7 +133,7 @@ class Users(RouteCog):
 
             if val is None:
                 abort(400, f"Missing value '{attr}'")
-            elif isinstance(val) is not type_:
+            elif not isinstance(val, type_):
                 abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
             setattr(user, attr, val)
@@ -172,7 +172,7 @@ class Users(RouteCog):
 
             if val is None:
                 continue
-            elif isinstance(val) is not type_:
+            elif not isinstance(val, type_):
                 abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
             elif attr != "password":
                 updates = updates.update(**{attr: val})
