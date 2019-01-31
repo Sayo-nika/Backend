@@ -36,7 +36,7 @@ class Mailer(Mail):
     # XXX: switch to redis soon
     cached_templates = {}
 
-    def __init_(self):
+    def __init__(self):
         super().__init__()
         self.loop = asyncio.get_running_loop()
         self.executor = ThreadPoolExecutor(4)
@@ -73,7 +73,7 @@ class Mailer(Mail):
         for (replace_string, replace_value) in zip(to_replace, replacers):
             template = template.replace(replace_string, replace_value)
 
-        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects[mail_type.value],
+        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects.get(mail_type.value),
                       recipients=[recipient], html=template, charset='utf-8')
 
         # Send the email in another thread as flask-mail is sync
