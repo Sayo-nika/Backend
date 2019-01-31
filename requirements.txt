@@ -1,5 +1,4 @@
-# quart>=0.7.1
--e git+https://gitlab.com/pgjones/quart.git#egg=quart
+quart>=0.8.0
 flask-limiter>=1.0.1
 flask-mail>=0.9.1
 gino>=0.8.1
