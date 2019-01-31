@@ -1,13 +1,8 @@
 # External Libraries
-# Stdlib
-from typing import Iterator
-
-from flask import abort, jsonify
-from pony.orm import delete, db_session
+from quart import jsonify, request, abort
 
 # Sayonika Internals
-from framework.models import Mod, Base
-from framework.objects import database_handle
+from framework.models import Mod
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
@@ -18,43 +13,46 @@ class Admin(RouteCog):
     # === Verify ===
 
     @staticmethod
-    def unverified():
-        return [mod for mod in database_handle.mods if not mod.verified]
-
-    @staticmethod
-    def as_json(data: Iterator[Base]):
-        return [item.json for item in data]
+    def dict_all(models):
+        return [m.to_dict() for m in models]
 
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
-    @db_session
-    def get_queue(self):
-        return jsonify(self.as_json(self.unverified()))
+    async def get_queue(self):
+        page = request.args.get("page")
+        limit = request.args.get("limit")
+        page = not page.isdigit() and 0 or int(page)
+        limit = not limit.isdigit() and 50 or int(limit)
+
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        mods = await Mod.paginate(page, limit).where(~Mod.verified).gino.all()
+
+        return jsonify(self.to_dict(mods))
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
-    @db_session
-    def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
-        if not Mod.exists(mod_id):
-            return abort(404, f"Mod '{mod_id}' not found on the server.")
+    async def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        database_handle.edit_mod(mod_id, verified=True)
+        await Mod.update.values(verified=True).where(Mod.id == mod_id).gino.status()
 
-        return jsonify(f"Mod '{mod_id}' was succesfully verified.")
+        return jsonify(True)
 
     @route("/api/v1/<mod_id>/reject", methods=["POST"])
     @requires_admin
     @json
-    @db_session
-    def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
-        if not Mod.exists(mod_id):
-            return abort(404, f"Mod '{mod_id}' not found on the server.")
+    async def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        delete(mod for mod in Mod if mod_id == mod.id)
+        await Mod.delete.where(Mod.id == mod_id).gino.status()
 
-        return jsonify(f"Mod '{mod_id}' was succesfully rejected.")
+        return jsonify(True)
 
 
 def setup(core: Sayonika):

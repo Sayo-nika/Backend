@@ -2,7 +2,7 @@
 import functools
 
 # External Libraries
-from flask import request
+from quart import request
 
 # Sayonika Internals
 from framework.sayonika import Sayonika
@@ -53,14 +53,11 @@ class Route:
         self.path = path
         self.kwargs = kwargs
         self.parent = None
+        self.kwargs['strict_slashes'] = False  # Don't care about dangling / on routes.
 
     def register(self, core: Sayonika):
-        # Hack around making dynamic routes for flask
-        _route = core.route(self.path, **self.kwargs)
-        func = functools.wraps(self.func)(
-            functools.partial(self.func, self.parent)
-        )
-        _route(func)
+        func = functools.partial(self.func, self.parent)
+        core.add_url_rule(self.path, self.func.__name__, func, **self.kwargs)
 
     def set_parent(self, parent):
         self.parent = parent

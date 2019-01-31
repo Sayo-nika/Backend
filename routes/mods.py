@@ -1,236 +1,232 @@
-# Stdlib
-from datetime import datetime
-import os
-from secrets import token_hex
-from typing import Iterator
-
 # External Libraries
-from flask import abort, jsonify, request
-from pony.orm import db_session
-from simpleflake import simpleflake
+from quart import jsonify, request, abort
+from sqlalchemy import and_
 
 # Sayonika Internals
-from framework.authentication import Authenticator
-from framework.models import Mod, User, ModStatus, Base
-from framework.objects import database_handle
+from framework.models import Mod, User, ModStatus, UserMods, Review
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
+mod_attrs = {
+    "title": str,
+    "tagline": str,
+    "description": str,
+    "website": str,
+    "authors": list
+}
+
+mod_patch_attrs = {
+    **mod_attrs,
+    "icon": str
+}
+
+review_attrs = {
+    "rating": int,
+    "content": str,
+    "author": str
+}
+
 
 class Mods(RouteCog):
-
     @staticmethod
-    @db_session
-    def new_path() -> str:
-        used = [mod.path for mod in database_handle.mods]  # flake8: noqa pylint: disable=not-an-iterable
-        path = token_hex(8)
-        while path in used:
-            path = token_hex(8)
+    def dict_all(models):
+        return [m.to_dict() for m in models]
 
-        return path
+    @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
+    @json
+    async def get_mods(self):
+        page = request.args.get("page", "")
+        limit = request.args.get("limit", "")
+        page = int(page) if page.isdigit() else 0
+        limit = int(limit) if limit.isdigit() else 50
 
-    @staticmethod
-    def new_id() -> str:
-        return str(simpleflake())  # easier than converting ID passed to route to int every time
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-    @staticmethod
-    def as_json(data: Iterator[Base]):
-        return [item.json for item in data]
+        results = await Mod.paginate(page, limit).where(Mod.verified).gino.all()
+        return jsonify(self.dict_all(results))
 
-    # === Mods ===
+    @route("/api/v1/mods/recent_releases")
+    @json
+    async def get_recent_releases(self):
+        mods = await Mod.query.where(Mod.verified).order_by(Mod.released_at.desc()).limit(10).gino.all()
+        return jsonify(self.dict_all(mods))
+
+    @route("/api/v1/mods/popular")
+    @json
+    async def get_popular(self):
+        mods = await Mod.query.where(and_(
+            Mod.verified,
+            Mod.released_at is not None
+        )).order_by(Mod.downloads.desc()).limit(10).gino.all()
+
+        return jsonify(self.dict_all(mods))
+
+    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
+    @json
+    async def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
+        mod = await Mod.get(mod_id)
+
+        if mod is None:
+            abort(404, "Unknown mod")
+
+        return jsonify(mod.to_dict())
+
+    @route("/api/v1/mods/<mod_id>/download")
+    @json
+    async def get_download(self, mod_id: str):  # pylint: disable=no-self-use
+        mod = await Mod.get(mod_id)
+
+        if mod is None:
+            abort(404, "Unknown mod")
+        elif not mod.zip_url:
+            abort(404, "Mod has no download")
+
+        # We're using a URL on Upload class. await URL only and let client handle DLs
+        return jsonify(url=mod.zip_url)
+
+    @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
+    @json
+    async def get_mod_reviews(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
+
+        reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
+
+        return jsonify(self.dict_all(reviews))
+
+    @route("/api/v1/mods/<mod_id>/authors")
+    @json
+    async def get_mod_authors(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
+
+        author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
+        author_pairs = [x.mod_id for x in author_pairs]
+        authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
+
+        return jsonify(self.dict_all(authors))
+
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_login
     @json
-    @db_session
-    def post_mods(self):
-        file = request.files.get('file')
+    async def post_mods(self):
+        body = await request.json
 
-        if file is None or not file.filename.endswith(".zip"):
-            return abort(400, "Expecting 'file' zipfile multipart.")
-
-        mod = {
-            "verified": False,
-            "last_updated": round(datetime.utcnow().timestamp()),
-            "downloads": 0,
-            "path": self.new_path(),
-            "id": self.new_id(),
-            "reviews": [],
-            "favorite_by": [],
-        }
-
-        for attribute in ("title", "authors", "tagline", "description", "website"):
-            val = request.form.get(attribute)
+        for attr, type_ in mod_attrs.items():
+            val = body.get(attr)
 
             if val is None:
-                return abort(400, f"Missing POST parameter: '{attribute}'.")
+                abort(400, f"Missing value '{attr}'")
+            elif isinstance(val) is not type_:
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
-            mod[attribute] = val
+        mods = await Mod.get_any(True, title=body["title"]).first()
 
-        mods = Mod.get_any(True, title=mod["title"])
+        if mods is not None:
+            abort(400, "A mod with that title already exists")
 
-        if mods:
-            return abort(400, "A mod with that title already exists")
+        mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
+                  website=body["website"])
 
-        mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",") if User.exists(id_)]
+        mod.icon = body.get("icon")
+        status = body.get("status")
 
-        mod["icon"] = request.form.get("icon")
-        attr = request.form.get("status", "Planning")
-        mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
+        if status not in ModStatus.__members__:
+            abort(400, f"Unknown mod status '{status}'")
 
-        mod["released_at"] = mod["last_updated"]
+        mod.status = ModStatus[status]
 
-        file.save(f"mods/{mod['path']}.zip")
+        authors = [uid for uid in body["authors"] if await User.exists(uid)]
 
-        print(mod)
+        await mod.create()
+        await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
 
-        db_mod = database_handle.new_mod(**mod)
-        db_mod.authors.add(mod["authors"])
+        print(mod.to_dict())
 
-        return jsonify(db_mod.json)
+        return jsonify(mod.to_dict())
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET"])
     @requires_login
     @json
-    @db_session
-    def patch_mod(self, mod_id: str):
-        file = request.files.get('file')
+    async def patch_mod(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        if file is None or not file.filename.endswith(".zip"):
-            return abort(400, "Expecting 'file' zipfile multipart.")
+        body = await request.json
+        mod = await Mod.get(mod_id)
+        updates = mod.update()
 
-        mod = {}
+        for attr, type_ in mod_patch_attrs.items():
+            val = body.get(attr)
 
-        for attribute in ("title", "authors", "tagline", "description", "website", "icon"):
-            val = request.form.get(attribute)
+            if val is None:
+                continue
+            elif type(val) is not type_:
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+            elif attr != "authors":
+                updates = updates.update(**{attr: val})
 
-            if val is not None:
-                mod[attribute] = val
+        if body.get("authors"):
+            authors = [uid for uid in body["authors"] if await User.exists(uid)]
+            authors = [uid for uid in authors if not await UserMods.query.where(
+                           and_(UserMods.user_id == uid, UserMods.mod_id == mod_id)
+                       ).gino.first()]
 
-        if not Mod.exists(mod_id):
-            return abort(400, f"The mod '{mod_id}' does not exist.")
+        status = body.get("status")
 
-        if "authors" in mod:
-            mod["authors"] = [User.get_s(id_) for id_ in mod["authors"].split(",")
-                              if User.exists(id_)]
+        if status is not None and status not in ModStatus.__members__:
+            abort(400, f"Unknown mod status '{status}'")
+        elif status is not None:
+            updates = updates.update(status=ModStatus[status])
 
-        old_mod = Mod.get_s(mod_id)
+        await updates.apply()
+        await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
 
-        attr = request.form.get("status", None)
-        if attr is None:
-            mod["status"] = old_mod.status
-        else:
-            mod["status"] = getattr(ModStatus, attr) if hasattr(ModStatus, attr) else int(attr)
-
-        mod["path"] = self.new_path()
-
-        os.remove(f"mods/{old_mod.path}.zip")
-        file.save(f"mods/{mod['path']}.zip")
-
-        database_handle.edit_mod(old_mod.id, **mod)
-
-        return jsonify(old_mod.json)
+        return jsonify(mod.to_dict())
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
     @requires_login
     @json
-    def post_review(self, mod_id: str):
+    async def post_review(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
 
-        if not Mod.exists(mod_id):
-            return abort(400, f"The mod '{mod_id}' does not exist.")
+        body = await request.json
 
-        review = {"mod": mod_id}
-
-        for attribute in ("author", "content", "rating"):
-            val = request.json.get(attribute)
-            if val is None:
-                return abort(400, f"Missing POST parameter: '{attribute}'.")
-            review[attribute] = val
-
-        if not User.exists(review["author"]):
-            return abort(400, f"A user with ID '{review['author']}' does not exist.")
-
-        review["id"] = self.new_id()
-        return jsonify(database_handle.new_review(**review).json)
-
-    @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
-    @json
-    @db_session
-    def post_users(self):
-        user = {
-            "mods": [],
-            "favorites": [],
-            "reviews": [],
-            "upvoted": [],
-            "downvoted": [],
-            "helpful": [],
-            "id": self.new_id(),
-            "developer": False,
-            "moderator": False,
-            "donator": False,
-            "editor": False
-        }
-
-        for attribute in ("username", "password", "email"):
-            val = request.json.get(attribute)
+        for attr, type_ in review_attrs.items():
+            val = body.get(attr)
 
             if val is None:
-                return abort(400, f"Missing POST parameter: '{attribute}'.")
+                abort(400, f"Missing value '{attr}'")
+            elif isinstance(val) is not type_:
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
-            user[attribute] = val
+        if not await User.exists(body["author"]):
+            abort(404, "Unknown user")
 
-        users = User.get_any(True, username=user["username"], email=user["email"])
+        review = await Review.create(content=body["content"], rating=body["rating"],
+                                     author_id=body["author"], mod_id=mod_id)
 
-        if users:
-            return abort(400, "Username and/or email already in use")
+        print(review.to_dict())
 
-        user["avatar"] = request.json.get("avatar")
-        user["bio"] = request.json.get("bio")
-        user["password"] = Authenticator.hash_password(user["password"])
+        return jsonify(review.to_json())
 
-        return jsonify(database_handle.new_user(**user).json)
-
-    @multiroute("/api/v1/users/<user_id>", methods=["PATCH"], other_methods=["GET"])
-    @requires_login
-    @json
-    @db_session
-    def patch_user(self, user_id: str):  # pylint: disable=no-self-use
-        user = {}
-
-        # Masks password behind new_password, as "password" in the JSON is the password to auth
-        # which means we can't just use it to PATCH with.
-        for attribute in ("username", "bio", "new_password", "avatar", "email"):
-            val = request.json.get(attribute)
-
-            if val is not None:
-                if attribute == "new_password":
-                    user["password"] = Authenticator.hash_password(val)
-                    user["last_pass_reset"] = int(datetime.utcnow().timestamp())
-                else:
-                    user[attribute] = val
-
-        if not User.exists(user_id):
-            return abort(400, f"A user with ID '{user_id}' does not exist.")
-
-        old_user = User.get_s(user_id)
-
-        database_handle.edit_user(user_id, **user)
-
-        return jsonify(old_user.json)
-
-    # This handles PATCH requests to add a mod_content URL.
+    # This handles POST requests to add zip_url.
     # Usually this would be done via a whole entry but this
     # is designed for existing content.
-    @route("/api/v1/mods/<mod_id>/upload_content", methods=["PATCH"])
+    @route("/api/v1/mods/<mod_id>/upload_content", methods=["POST"])
     @json
     @requires_supporter
     @requires_login
-    def upload(self, mod_id: str): #pylint: disable=no-self-use
-        if not Mod.exists(mod_id):
-            return abort(404, f"Mod '{mod_id} not found on this server'")
-        
-        return abort(501, "Not implemented. Work In Progress. I blame Mart")
+    async def upload(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
+
+        abort(501, "Coming soon")
+
 
 def setup(core: Sayonika):
     Mods(core).register()

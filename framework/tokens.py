@@ -3,10 +3,12 @@ from datetime import datetime
 
 # External Libraries
 import jwt
-from pony.orm import db_session
 
 # Sayonika Internals
-from framework.models import User
+# from framework.models import framework.models.User
+import framework.models
+from framework.jsonutils import CombinedEncoder
+
 
 class JWT:
     algorithm = 'HS256'
@@ -15,29 +17,28 @@ class JWT:
         # `settings` is the dict of all ENV vars starting with SAYONIKA_
         self.secret = settings["JWT_SECRET"]
 
-    def make_token(self, id, password_reset):
+    def make_token(self, id: str, password_reset: datetime):
         payload = {
             "id": id,
             "lr": password_reset,
             "iat": datetime.utcnow()
         }
-        token = jwt.encode(payload, self.secret, algorithm=self.algorithm)
+        token = jwt.encode(payload, self.secret, algorithm=self.algorithm, json_encoder=CombinedEncoder)
 
-        return token
+        return token.decode()
 
-    @db_session
-    def verify_token(self, token, return_parsed=False):
+    async def verify_token(self, token: str, return_parsed: bool = False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=self.algorithm)
-        except:
-            return False # Any errors thrown during decoding probably indicate bad token in some way
+        except Exception:
+            return False  # Any errors thrown during decoding probably indicate bad token in some way
 
         if set(decoded.keys()) != set(["id", "lr", "iat"]):
-            return False # Keys should only be the ones we give
+            return False  # Keys should only be the ones we give
 
-        user = User.get_s(decoded["id"])
+        user = await framework.models.User.get(decoded["id"])
 
-        if user is None or decoded["lr"] != user.last_pass_reset or decoded["iat"] < datetime.utcnow():
+        if user is None or datetime.fromisoformat(decoded["lr"]) != user.last_pass_reset:
             return False
 
         return decoded if return_parsed else True

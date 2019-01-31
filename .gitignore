@@ -1,8 +1,8 @@
 .idea/
 *.py[cod]
 venv/
+.vscode/
 
 *.zip
-.vscode/
 node_modules/
 package-lock.json

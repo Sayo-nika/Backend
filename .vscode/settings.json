@@ -1,4 +1,4 @@
 {
-    "python.pythonPath": "/usr/bin/python3",
-    "python.linting.enabled": false
+    "python.formatting.provider": "yapf",
+    "python.linting.flake8Args": ["--config", ".snekrc"]
 }

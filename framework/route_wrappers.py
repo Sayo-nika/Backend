@@ -3,10 +3,10 @@ from functools import wraps
 import json as _json
 
 # External Libraries
-from flask import Response, abort, request
+from quart import Response, abort, request
 
 # Sayonika Internals
-from framework.objects import auth_service
+from framework.authentication import Authenticator
 
 __all__ = ("json", "requires_login", "requires_admin")
 
@@ -17,14 +17,9 @@ def json(func):
     """
 
     @wraps(func)
-    def inner(*args, **kwargs):
-        response = func(*args, **kwargs)
-        text = response.response[0]
-
-        # Mitigate an issue where `response.response[0]` is a string on Windows, and a `bytes` on Linux.
-        # God know's why they're different.
-        if type(text) is bytes:
-            text = text.decode()
+    async def inner(*args, **kwargs):
+        response = await func(*args, **kwargs)
+        text = await response.get_data(False)
 
         try:
             data = _json.loads(text)
@@ -33,14 +28,14 @@ def json(func):
 
         result = _json.dumps({
             "result": data,
-            "status": response._status_code,  # flake8: noqa pylint: disable=protected-access
-            "success": True if 200 <= response._status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
+            "status": response.status_code,  # flake8: noqa pylint: disable=protected-access
+            "success": True if 200 <= response.status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
             response=result,
             headers=response.headers,
-            status=response.status,
+            status=response.status_code,
             content_type="application/json"
         )
 
@@ -49,8 +44,8 @@ def json(func):
 
 def requires_login(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_authorized_access(*args, **kwargs):
+    async def inner(*args, **kwargs):
+        if await Authenticator.has_authorized_access(*args, **kwargs):
             return func(*args, **kwargs)
         return abort(403)
 
@@ -59,8 +54,8 @@ def requires_login(func):
 
 def requires_admin(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_admin_access():
+    async def inner(*args, **kwargs):
+        if await Authenticator.has_admin_access():
             return func(*args, **kwargs)
         return abort(403)
 
@@ -68,7 +63,7 @@ def requires_admin(func):
 
 def requires_supporter(func):
     @wraps(func)
-    def inner(*args, **kwargs):
-        if auth_service.has_supporter_features():
+    async def inner(*args, **kwargs):
+        if await Authenticator.has_supporter_features():
             return func(*args, **kwargs)
         return abort(403)

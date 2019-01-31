@@ -3,16 +3,17 @@ import logging
 import os
 
 # External Libraries
+import quart.flask_patch  # noqa: F401
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # Sayonika Internals
-from framework.authentication import Authenticator
-from framework.database import DBHandler
-from framework.tokens import JWT
+from framework.db import db
+from framework.mailer import Mailer
 from framework.sayonika import Sayonika
+from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "auth_service", "jwt_service", "database_handle", "SETTINGS")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS")
 
 sayonika_instance = Sayonika()
 
@@ -48,9 +49,7 @@ limiter = Limiter(
 logger = logging.getLogger("Sayonika")
 logger.setLevel(logging.INFO)
 
-auth_service = Authenticator(SETTINGS)
 jwt_service = JWT(SETTINGS)
 
-database_handle = DBHandler(user=SETTINGS["DB_USER"], password=SETTINGS["DB_PASS"],
-                            database=SETTINGS["DB_NAME"], host=SETTINGS["DB_HOST"],
-                            port=SETTINGS["DB_PORT"])
+mailer = Mailer()
+mailer.init_app(sayonika_instance)

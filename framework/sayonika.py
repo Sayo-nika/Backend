@@ -4,16 +4,16 @@ import importlib
 from os.path import sep
 
 # External Libraries
-from flask import Flask
+from quart import Quart
 
 # Sayonika Internals
 from framework.error_handlers.error_4xx import all_4xx
-from framework.jsonutils import EnumJsonEncoder
+from framework.jsonutils import CombinedEncoder
 
 __all__ = ("Sayonika",)
 
 
-class Sayonika(Flask):
+class Sayonika(Quart):
     """
     Core application. Wraps Flask to use `super.run` with some default arguments,
     while the user only has to run `run` without providing additional arguments.
@@ -24,7 +24,7 @@ class Sayonika(Flask):
         self.route_dir = ""
         super().__init__("Sayonika")
 
-        self.json_encoder = EnumJsonEncoder
+        self.json_encoder = CombinedEncoder
 
         for code, func in all_4xx.items():
             self.register_error_handler(code, func)
@@ -41,6 +41,5 @@ class Sayonika(Flask):
             module.setup(self)
             del module
 
-    def run(self, host: str = "localhost", port: int = 4444, *args,
-            **kwargs):  # flake8: noqa pylint: disable=arguments-differ,keyword-arg-before-vararg
+    def run(self, host: str = "localhost", port: int = 4444, *args, **kwargs):
         super().run(host, port, *args, **kwargs)

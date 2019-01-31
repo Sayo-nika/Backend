@@ -3,12 +3,12 @@
 linters = flake8, pylint, isort, vulture
 
 [flake8]
-max-line-length=100
+max-line-length=120
 exclude=.git,tests
 ignore=B311,S311,E731,B006,E126
 
 [isort]
-line_length=100
+line_length=120
 indent='    '
 multi_line_output=0
 length_sort=1
