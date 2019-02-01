@@ -6,13 +6,13 @@ from quart import jsonify, request, abort, Response
 
 # Sayonika Internals
 from framework.authentication import Authenticator
+from framework.mailer import MailTemplates
 from framework.models import Mod, User, Review, UserMods, UserFavorites
-from framework.objects import jwt_service
+from framework.objects import jwt_service, mailer
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils.send_mail import send_mail
 
 user_attrs = {
     "username": str,
@@ -149,7 +149,8 @@ class Users(RouteCog):
         user.last_pass_reset = datetime.now()
 
         # TODO: Generate a one-time expiring JWT just for email verification
-        send_mail("verify_email", body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username, "token"])
+        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username,
+                               "token"])
         await user.create()
 
         print(user.to_dict())
