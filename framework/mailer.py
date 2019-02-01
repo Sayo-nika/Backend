@@ -38,7 +38,6 @@ class Mailer(Mail):
 
     def __init__(self):
         super().__init__()
-        self.loop = asyncio.get_running_loop()
         self.executor = ThreadPoolExecutor(4)
 
     async def _get_template(self, template: MailTemplates) -> str:
@@ -75,6 +74,7 @@ class Mailer(Mail):
 
         msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects.get(mail_type.value),
                       recipients=[recipient], html=template, charset='utf-8')
+        loop = asyncio.get_running_loop()
 
         # Send the email in another thread as flask-mail is sync
-        await self.loop.run_in_executor(self.executor, self.send, msg)
+        await loop.run_in_executor(self.executor, self.send, msg)
