@@ -36,10 +36,6 @@ class User(db.Model, Base):
     def favourites(self):
         return self._favorites
 
-    # reports = Set(lambda: Report, reverse="author")
-    # connections = Set(Connection, reverse="user")
-    # reviews = Set(lambda: Review, reverse="author")
-
 
 class UserMods(db.Model):
     __tablename__ = "user_mods"

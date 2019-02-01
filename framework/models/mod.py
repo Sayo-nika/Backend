@@ -6,6 +6,7 @@ from framework.objects import db
 from .base import Base
 from .enums import Category, ModStatus
 
+
 class Mod(db.Model, Base):
     __tablename__ = "mods"
 
@@ -34,8 +35,3 @@ class Mod(db.Model, Base):
     @authors.setter
     def add_author(self, author):
         self._authors.add(author)
-
-    # authors = Set(lambda: User, reverse='mods')
-    # favorited_by = Set(lambda: User, reverse='favorites')
-    # reviews = Set(lambda: Review, reverse="mod")
-    # reports = Set(lambda: Report, reverse="mod")
