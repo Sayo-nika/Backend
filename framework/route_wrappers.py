@@ -28,8 +28,8 @@ def json(func):
 
         result = _json.dumps({
             "result": data,
-            "status": response.status_code,  # flake8: noqa pylint: disable=protected-access
-            "success": True if 200 <= response.status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
+            "status": response.status_code,
+            "success": True if 200 <= response.status_code < 300 else False
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(

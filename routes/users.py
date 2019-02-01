@@ -55,7 +55,7 @@ class Users(RouteCog):
             if token is None:
                 abort(401, "Login required")
 
-            user_id = (await jwt_service.verify_token(token, True))["id"]
+            user_id = (await jwt_service.verify_login_token(token, True))["id"]
 
         user = await User.get(user_id)
 
@@ -73,7 +73,7 @@ class Users(RouteCog):
             if token is None:
                 abort(401, "Login required")
 
-            user_id = (await jwt_service.verify_token(token, True))["id"]
+            user_id = (await jwt_service.verify_login_token(token, True))["id"]
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")
@@ -93,7 +93,7 @@ class Users(RouteCog):
             if token is None:
                 abort(401, "Login required")
 
-            user_id = (await jwt_service.verify_token(token, True))["id"]
+            user_id = (await jwt_service.verify_login_token(token, True))["id"]
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")
@@ -113,7 +113,7 @@ class Users(RouteCog):
             if token is None:
                 abort(401, "Login required")
 
-            user_id = (await jwt_service.verify_token(token, True))["id"]
+            user_id = (await jwt_service.verify_login_token(token, True))["id"]
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")

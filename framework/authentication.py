@@ -23,7 +23,7 @@ class Authenticator:
         if token is None:
             abort(401, "No token")
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
             abort(400, "Invalid token")
@@ -52,10 +52,10 @@ class Authenticator:
         if token is None:
             abort(401)
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
-            abort(400, "Invalid Token")
+            abort(400, "Invalid token")
 
         user = await User.get(parsed_token.id)
 
@@ -71,10 +71,10 @@ class Authenticator:
         if token is None:
             abort(401)
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
-            abort(400, "Invalid token.")
+            abort(400, "Invalid token")
 
         user = await User.get(parsed_token.id)
 
