@@ -186,7 +186,7 @@ class Users(RouteCog):
         return jsonify(user.to_dict())
 
     @route("/api/v1/verify", methods=["POST"])
-    def verify_email():
+    async def verify_email():
         token = request.args.get("token")
 
         if token is None:
