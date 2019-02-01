@@ -24,8 +24,13 @@ class MediaType(Enum):
 class Category(Enum):
     Unassigned = 0
     Tools = 1
-    DatingSim = 2
-    SliceOfLife = 3
-    Romance = 4
-    Drama = 5
-    Horror = 6
+    Comedy = 2
+    TragicComedy = 3
+    Drama = 4
+    RomCom = 5
+    Romance = 6
+    Horror = 7
+    Mystery = 8
+    Satire = 9 # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
+    Thriller = 10  # compressed Suspense/Thriller into this since they're almost the same.
+    SciFi = 11
