@@ -2,7 +2,7 @@
 from datetime import datetime
 
 # External Libraries
-from quart import jsonify, request, abort, Response
+from quart import jsonify, request, abort
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -186,26 +186,6 @@ class Users(RouteCog):
 
         return jsonify(user.to_dict())
 
-    @route("/api/v1/verify", methods=["POST"])
-    async def verify_email():
-        token = request.args.get("token")
-
-        if token is None:
-            abort(400, "missing required parameter 'token'.")
-
-        parsed_token = jwt_service.verify_token(token, True)
-
-        if parsed_token is False:
-            abort(403, "Incorrect token.")
-
-        user = User.get(parsed_token.id)
-
-        if user is None:
-            abort(410, "Valid token, but user to validate does not exist.")
-
-        await user.update(email_verified=True).apply()
-
-        return Response(response="OK.", status=200, content_type="text/plain")
 
 def setup(core: Sayonika):
     Users(core).register()
