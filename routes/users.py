@@ -46,6 +46,41 @@ class Users(RouteCog):
         results = await User.paginate(page, limit).gino.all()
         return jsonify(self.dict_all(results))
 
+    @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
+    @json
+    async def post_users(self):
+        body = await request.json
+        user = User()
+
+        for attr, type_ in user_attrs.items():
+            val = body.get(attr)
+
+            if val is None:
+                abort(400, f"Missing value '{attr}'")
+            elif not isinstance(val, type_):
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+
+            setattr(user, attr, val)
+
+        users = await User.get_any(True, username=user.username, email=user.email).first()
+
+        if users is not None:
+            abort(400, "Username and/or email already in use")
+
+        user.avatar = body.get("avatar")
+        user.bio = body.get("bio")
+        user.password = Authenticator.hash_password(user.password)
+        user.last_pass_reset = datetime.now()
+
+        # TODO: Generate a one-time expiring JWT just for email verification
+        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username,
+                               "token"])
+        await user.create()
+
+        print(user.to_dict())
+
+        return jsonify(user.to_dict())
+
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["PATCH"])
     @json
     async def get_user(self, user_id: str):  # pylint: disable=no-self-use
@@ -61,6 +96,36 @@ class Users(RouteCog):
 
         if user is None:
             abort(404, "Unknown user")
+
+        return jsonify(user.to_dict())
+
+    @route("/api/v1/users/@me", methods=["PATCH"])
+    @requires_login
+    @json
+    async def patch_user(self):
+        token = request.headers.get("Authorization", request.cookies.get('token'))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
+
+        body = await request.json
+        user = await User.get(user_id)
+        updates = user.update()
+
+        for attr, type_ in user_patch_attrs.items():
+            val = body.get(attr)
+
+            if val is None:
+                continue
+            elif not isinstance(val, type_):
+                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
+            elif attr != "password":
+                updates = updates.update(**{attr: val})
+
+        if body.get("password"):
+            password = Authenticator.hash_password(body["password"])
+            updates = updates.update(password=password, last_pass_reset=datetime.now())
+
+        await updates.apply()
 
         return jsonify(user.to_dict())
 
@@ -121,70 +186,6 @@ class Users(RouteCog):
         reviews = await Review.query.where(Review.author_id == user_id).gino.all()
 
         return jsonify(self.dict_all(reviews))
-
-    @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
-    @json
-    async def post_users(self):
-        body = await request.json
-        user = User()
-
-        for attr, type_ in user_attrs.items():
-            val = body.get(attr)
-
-            if val is None:
-                abort(400, f"Missing value '{attr}'")
-            elif not isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-
-            setattr(user, attr, val)
-
-        users = await User.get_any(True, username=user.username, email=user.email).first()
-
-        if users is not None:
-            abort(400, "Username and/or email already in use")
-
-        user.avatar = body.get("avatar")
-        user.bio = body.get("bio")
-        user.password = Authenticator.hash_password(user.password)
-        user.last_pass_reset = datetime.now()
-
-        # TODO: Generate a one-time expiring JWT just for email verification
-        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username,
-                               "token"])
-        await user.create()
-
-        print(user.to_dict())
-
-        return jsonify(user.to_dict())
-
-    @multiroute("/api/v1/users/<user_id>", methods=["PATCH"], other_methods=["GET"])
-    @requires_login
-    @json
-    async def patch_user(self, user_id: str):
-        if not await User.exists(user_id):
-            abort(404, "Unknown user")
-
-        body = await request.json
-        user = await User.get(user_id)
-        updates = user.update()
-
-        for attr, type_ in user_patch_attrs.items():
-            val = body.get(attr)
-
-            if val is None:
-                continue
-            elif not isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-            elif attr != "password":
-                updates = updates.update(**{attr: val})
-
-        if body.get("password"):
-            password = Authenticator.hash_password(body["password"])
-            updates = updates.update(password=password, last_pass_reset=datetime.now())
-
-        await updates.apply()
-
-        return jsonify(user.to_dict())
 
 
 def setup(core: Sayonika):
