@@ -8,7 +8,7 @@ from quart import jsonify, request, abort
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
 from framework.models import Mod, User, Review, UserMods, UserFavorites
-from framework.objects import jwt_service, mailer
+from framework.objects import jwt_service, mailer, db
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
@@ -44,7 +44,9 @@ class Users(RouteCog):
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         results = await User.paginate(page, limit).gino.all()
-        return jsonify(self.dict_all(results))
+        total = await db.func.count(User.id).gino.scalar()
+
+        return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 
     @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
     @json
@@ -74,7 +76,7 @@ class Users(RouteCog):
 
         await user.create()
 
-        token = await jwt_service.make_email_token(user.id, user.email)
+        token = jwt_service.make_email_token(user.id, user.email)
 
         await mailer.send_mail(MailTemplates.VerifyEmail, body.email, {
             "USER_NAME": user.username,

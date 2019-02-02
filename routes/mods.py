@@ -4,6 +4,7 @@ from sqlalchemy import and_
 
 # Sayonika Internals
 from framework.models import Mod, User, ModStatus, UserMods, Review
+from framework.objects import db
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
@@ -46,8 +47,9 @@ class Mods(RouteCog):
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         results = await Mod.paginate(page, limit).where(Mod.verified).gino.all()
-        return jsonify(self.dict_all(results))
+        total = await db.func.count(Mod.id).gino.scalar()
 
+        return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_login
