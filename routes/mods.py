@@ -3,7 +3,7 @@ from quart import jsonify, request, abort
 from sqlalchemy import and_
 
 # Sayonika Internals
-from framework.models import Mod, User, ModStatus, UserMods, Review
+from framework.models import Mod, User, ModStatus, UserMods, Review, Category
 from framework.objects import db
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -38,6 +38,7 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
     async def get_mods(self):
+        # Get page and limit from qs, or set defaults.
         page = request.args.get("page", "")
         limit = request.args.get("limit", "")
         page = int(page) if page.isdigit() else 0
@@ -46,7 +47,42 @@ class Mods(RouteCog):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-        results = await Mod.paginate(page, limit).where(Mod.verified).gino.all()
+        filters = []
+        sort = None
+
+        if request.args.get("category"):
+            category = request.args["category"].lower()
+            valid_categories = [x.name.lower() for x in Category]
+
+            if category not in valid_categories:
+                abort(400, f"Invalid category. Must be one of: '{', '.join(valid_categories)}'")
+            else:
+                category = [x for x in Category][valid_categories.index(category)]
+                filters.append(Mod.status == category)
+
+        if request.args.get("rating"):
+            rating = request.args["rating"]
+            valid_ratings = [str(x) for x in range(1, 6)]
+
+            if rating not in valid_ratings:
+                abort(400, "Invalid rating. Must be between 1 and 5 inclusive")
+            else:
+                abort(999, "TODO")
+
+        if request.args.get("status"):
+            status = request.args["status"].lower()
+            valid_statuses = [x.name.lower() for x in ModStatus]
+
+            if category not in valid_statuses:
+                abort(400, f"Invalid status. Must be one of: '{', '.join(valid_statuses)}'")
+            else:
+                status = [x for x in ModStatus][valid_statuses.index(status)]
+                filters.append(Mod.status == status)
+
+        results = await Mod.paginate(page, limit).where(and_(
+            Mod.verified,
+            *filters
+        )).gino.all()
         total = await db.func.count(Mod.id).gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))

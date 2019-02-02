@@ -4,7 +4,7 @@ from enum import Enum
 
 class ModStatus(Enum):
     Planning = 1
-    InDevelop = 2
+    InDevelopment = 2
     PlayTesting = 3
     Released = 4
     Archived = 5
@@ -31,6 +31,6 @@ class Category(Enum):
     Romance = 6
     Horror = 7
     Mystery = 8
-    Satire = 9 # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
+    Satire = 9  # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
     Thriller = 10  # compressed Suspense/Thriller into this since they're almost the same.
     SciFi = 11
