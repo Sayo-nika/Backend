@@ -48,66 +48,6 @@ class Mods(RouteCog):
         results = await Mod.paginate(page, limit).where(Mod.verified).gino.all()
         return jsonify(self.dict_all(results))
 
-    @route("/api/v1/mods/recent_releases")
-    @json
-    async def get_recent_releases(self):
-        mods = await Mod.query.where(Mod.verified).order_by(Mod.released_at.desc()).limit(10).gino.all()
-        return jsonify(self.dict_all(mods))
-
-    @route("/api/v1/mods/popular")
-    @json
-    async def get_popular(self):
-        mods = await Mod.query.where(and_(
-            Mod.verified,
-            Mod.released_at is not None
-        )).order_by(Mod.downloads.desc()).limit(10).gino.all()
-
-        return jsonify(self.dict_all(mods))
-
-    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
-    @json
-    async def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
-        mod = await Mod.get(mod_id)
-
-        if mod is None:
-            abort(404, "Unknown mod")
-
-        return jsonify(mod.to_dict())
-
-    @route("/api/v1/mods/<mod_id>/download")
-    @json
-    async def get_download(self, mod_id: str):  # pylint: disable=no-self-use
-        mod = await Mod.get(mod_id)
-
-        if mod is None:
-            abort(404, "Unknown mod")
-        elif not mod.zip_url:
-            abort(404, "Mod has no download")
-
-        # We're using a URL on Upload class. await URL only and let client handle DLs
-        return jsonify(url=mod.zip_url)
-
-    @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
-    @json
-    async def get_mod_reviews(self, mod_id: str):
-        if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
-
-        reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
-
-        return jsonify(self.dict_all(reviews))
-
-    @route("/api/v1/mods/<mod_id>/authors")
-    @json
-    async def get_mod_authors(self, mod_id: str):
-        if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
-
-        author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
-        author_pairs = [x.mod_id for x in author_pairs]
-        authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
-
-        return jsonify(self.dict_all(authors))
 
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_login
@@ -145,6 +85,32 @@ class Mods(RouteCog):
         await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
 
         print(mod.to_dict())
+
+        return jsonify(mod.to_dict())
+
+    @route("/api/v1/mods/recent_releases")
+    @json
+    async def get_recent_releases(self):
+        mods = await Mod.query.where(Mod.verified).order_by(Mod.released_at.desc()).limit(10).gino.all()
+        return jsonify(self.dict_all(mods))
+
+    @route("/api/v1/mods/popular")
+    @json
+    async def get_popular(self):
+        mods = await Mod.query.where(and_(
+            Mod.verified,
+            Mod.released_at is not None
+        )).order_by(Mod.downloads.desc()).limit(10).gino.all()
+
+        return jsonify(self.dict_all(mods))
+
+    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
+    @json
+    async def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
+        mod = await Mod.get(mod_id)
+
+        if mod is None:
+            abort(404, "Unknown mod")
 
         return jsonify(mod.to_dict())
 
@@ -187,6 +153,29 @@ class Mods(RouteCog):
 
         return jsonify(mod.to_dict())
 
+    @route("/api/v1/mods/<mod_id>/download")
+    @json
+    async def get_download(self, mod_id: str):  # pylint: disable=no-self-use
+        mod = await Mod.get(mod_id)
+
+        if mod is None:
+            abort(404, "Unknown mod")
+        elif not mod.zip_url:
+            abort(404, "Mod has no download")
+
+        # We're using a URL on Upload class. await URL only and let client handle DLs
+        return jsonify(url=mod.zip_url)
+
+    @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
+    @json
+    async def get_reviews(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
+
+        reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
+
+        return jsonify(self.dict_all(reviews))
+
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
     @requires_login
     @json
@@ -213,6 +202,18 @@ class Mods(RouteCog):
         print(review.to_dict())
 
         return jsonify(review.to_json())
+
+    @route("/api/v1/mods/<mod_id>/authors")
+    @json
+    async def get_authors(self, mod_id: str):
+        if not await Mod.exists(mod_id):
+            abort(404, "Unknown mod")
+
+        author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
+        author_pairs = [x.mod_id for x in author_pairs]
+        authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
+
+        return jsonify(self.dict_all(authors))
 
     # This handles POST requests to add zip_url.
     # Usually this would be done via a whole entry but this
