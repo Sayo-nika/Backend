@@ -28,7 +28,7 @@ class Authenticator:
         if parsed_token is False:
             abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.email_verified:
             abort(401, "User email needs to be verified")
@@ -57,7 +57,7 @@ class Authenticator:
         if parsed_token is False:
             abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.supporter:
             abort(403, "User does not have the required permissions to fulfill the request.")
@@ -76,7 +76,7 @@ class Authenticator:
         if parsed_token is False:
             abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.moderator or not user.developer:
             abort(403, "User does not have the required permissions to fulfill the request.")
