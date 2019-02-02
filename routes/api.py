@@ -44,7 +44,7 @@ class Userland(RouteCog):
         return jsonify(token=token)
 
     @route("/api/v1/verify", methods=["POST"])
-    async def verify_email():
+    async def verify_email(self):
         token = request.args.get("token")
 
         if token is None:
