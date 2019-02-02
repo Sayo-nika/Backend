@@ -98,7 +98,7 @@ class Mods(RouteCog):
 
             if val is None:
                 abort(400, f"Missing value '{attr}'")
-            elif isinstance(val) is not type_:
+            elif not isinstance(val, type_):
                 abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         mods = await Mod.get_any(True, title=body["title"]).first()
@@ -228,7 +228,7 @@ class Mods(RouteCog):
 
             if val is None:
                 abort(400, f"Missing value '{attr}'")
-            elif isinstance(val) is not type_:
+            elif isinstance(val, type_):
                 abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
 
         if not await User.exists(body["author"]):
