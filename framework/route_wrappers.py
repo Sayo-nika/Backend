@@ -46,7 +46,7 @@ def requires_login(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_authorized_access(*args, **kwargs):
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
 
     return inner
@@ -56,7 +56,7 @@ def requires_admin(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_admin_access():
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
 
     return inner
@@ -66,5 +66,5 @@ def requires_supporter(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_supporter_features():
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
