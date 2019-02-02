@@ -61,6 +61,7 @@ def requires_admin(func):
 
     return inner
 
+
 def requires_supporter(func):
     @wraps(func)
     async def inner(*args, **kwargs):

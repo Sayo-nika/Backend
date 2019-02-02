@@ -72,10 +72,14 @@ class Users(RouteCog):
         user.password = Authenticator.hash_password(user.password)
         user.last_pass_reset = datetime.now()
 
-        # TODO: Generate a one-time expiring JWT just for email verification
-        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [body.username,
-                               "token"])
         await user.create()
+
+        token = await jwt_service.make_email_token(user.id, user.email)
+
+        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [
+            user.username,
+            token
+        ])
 
         print(user.to_dict())
 
