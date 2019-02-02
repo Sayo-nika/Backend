@@ -76,10 +76,10 @@ class Users(RouteCog):
 
         token = await jwt_service.make_email_token(user.id, user.email)
 
-        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, ["{{USER_NAME}}", "{{TOKEN}}"], [
-            user.username,
-            token
-        ])
+        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, {
+            "USER_NAME": user.username,
+            "TOKEN": token
+        })
 
         print(user.to_dict())
 

@@ -3,7 +3,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 import os.path as osp
-from typing import List
+from typing import Dict
 
 # External Libraries
 import aiofiles
@@ -58,8 +58,7 @@ class Mailer(Mail):
 
         return data
 
-    async def send_mail(self, mail_type: MailTemplates, recipient: str,
-                        to_replace: List[str] = [], replacers: List[str] = []) -> None:
+    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str]) -> None:
         """
         Send mail using a template, along with optionally replacing some values.
         Templates can be found in `framework/mail_templates`.
@@ -69,8 +68,10 @@ class Mailer(Mail):
 
         template = await self._get_template(mail_type)
 
-        for (replace_string, replace_value) in zip(to_replace, replacers):
-            template = template.replace(replace_string, replace_value)
+        for (replace_string, replace_value) in replacers.items():
+            # Five pairs of braces are needed, as `{{}}` escapes into `{}`, so we need to double that up and then also
+            # interpolate our variable into them
+            template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
         msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects.get(mail_type.value),
                       recipients=[recipient], html=template, charset='utf-8')
