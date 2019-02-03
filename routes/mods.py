@@ -144,7 +144,8 @@ class Mods(RouteCog):
         authors = [x for x in body["authors"] if await User.exists(x["id"])]
 
         await mod.create()
-        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors])
+        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
+                                             in authors])
 
         print(mod.to_dict())
 

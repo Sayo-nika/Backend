@@ -15,6 +15,11 @@ def error_handler(func):
         response = await func(*args, **kwargs)
         text = await response.get_data(False)
 
+        try:
+            text = json.loads(text)
+        except Exception:
+            pass
+
         result = json.dumps({
             "error": text,
             "status": response.status_code,
