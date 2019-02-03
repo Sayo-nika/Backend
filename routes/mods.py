@@ -3,7 +3,7 @@ from quart import abort, jsonify, request
 from sqlalchemy import and_, func
 
 # Sayonika Internals
-from framework.models import (AuthorRoles, Mod, ModAuthors, ModCategory,
+from framework.models import (AuthorRole, Mod, ModAuthors, ModCategory,
                               ModStatus, Review, User)
 from framework.objects import db, jwt_service
 from framework.route import multiroute, route
@@ -115,7 +115,7 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        lowered_roles = [x.name.lower() for x in AuthorRoles]
+        lowered_roles = [x.name.lower() for x in AuthorRole]
 
         for author in body["authors"]:
             if not isinstance(author, dict) or list(author.keys()) != ['id', 'role']:
@@ -126,10 +126,10 @@ class Mods(RouteCog):
                 abort(400, f"Unknown role '{author['role']}'")
 
         authors = body["authors"]
-        authors = [{**author, "role": [x for x in AuthorRoles][lowered_roles.index(author["role"].lower())]} for author
+        authors = [{**author, "role": [x for x in AuthorRole][lowered_roles.index(author["role"].lower())]} for author
                    in authors]
 
-        authors.append({"id": user_id, "role": AuthorRoles.Owner})
+        authors.append({"id": user_id, "role": AuthorRole.Owner})
 
         mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
                   website=body["website"])

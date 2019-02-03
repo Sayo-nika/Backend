@@ -7,7 +7,7 @@ from quart import abort, jsonify, request
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, Review, User, UserFavorites, UserMods
+from framework.models import Mod, Review, User, UserFavorites, ModAuthors
 from framework.objects import db, jwt_service, mailer
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login
@@ -169,7 +169,7 @@ class Users(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        mod_pairs = await UserMods.query.where(UserMods.user_id == user_id).gino.all()
+        mod_pairs = await ModAuthors.query.where(ModAuthors.user_id == user_id).gino.all()
         mod_pairs = [x.mod_id for x in mod_pairs]
         mods = await Mod.query.where(Mod.id.in_(mod_pairs)).gino.all()
 
