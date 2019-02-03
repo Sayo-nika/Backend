@@ -1,6 +1,6 @@
 # External Libraries
 from quart import jsonify, request, abort
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 # Sayonika Internals
 from framework.models import Mod, User, ModStatus, UserMods, Review, ModCategory
@@ -49,6 +49,7 @@ class Mods(RouteCog):
 
         filters = []
         sort = None
+        query = Mod.paginate(page, limit)
 
         if request.args.get("category"):
             category = request.args["category"].lower()
@@ -67,7 +68,11 @@ class Mods(RouteCog):
             if rating not in valid_ratings:
                 abort(400, "Invalid rating. Must be between 1 and 5 inclusive")
             else:
-                abort(999, "TODO")
+                int_rating = int(rating)
+
+                filters.append(int_rating + 1 > db.select([
+                    func.avg(Review.select('rating').where(Review.mod_id == Mod.id))
+                ]) >= int_rating)
 
         if request.args.get("status"):
             status = request.args["status"].lower()
@@ -79,7 +84,7 @@ class Mods(RouteCog):
                 status = [x for x in ModStatus][valid_statuses.index(status)]
                 filters.append(Mod.status == status)
 
-        results = await Mod.paginate(page, limit).where(and_(
+        results = await query.where(and_(
             Mod.verified,
             *filters
         )).gino.all()
@@ -112,7 +117,7 @@ class Mods(RouteCog):
         mod.icon = body.get("icon")
         status = body.get("status")
 
-        if status not in ModStatus.__members__:
+        if status not in ModStatus.__members__ and status:
             abort(400, f"Unknown mod status '{status}'")
 
         mod.status = ModStatus[status]
