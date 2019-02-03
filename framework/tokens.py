@@ -7,8 +7,8 @@ import jwt
 
 # Sayonika Internals
 # from framework.models import User
-import framework.models
 from framework.jsonutils import CombinedEncoder
+import framework.models
 
 
 class JWT:

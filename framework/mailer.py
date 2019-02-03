@@ -1,8 +1,8 @@
 # Stdlib
 import asyncio
-import os.path as osp
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
+import os.path as osp
 from typing import Dict
 
 # External Libraries

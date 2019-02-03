@@ -7,9 +7,9 @@ from quart import abort, jsonify, request
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, Review, User, UserFavorites, ModAuthors
-from framework.objects import db, jwt_service, mailer
-from framework.route import multiroute, route
+from framework.models import Mod, User, Review, ModAuthors, UserFavorites
+from framework.objects import db, mailer, jwt_service
+from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika

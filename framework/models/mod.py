@@ -5,7 +5,7 @@ from datetime import datetime
 from framework.objects import db
 
 from .base import Base
-from .enums import AuthorRole, ModCategory, ModStatus
+from .enums import ModStatus, AuthorRole, ModCategory
 
 
 class Mod(db.Model, Base):

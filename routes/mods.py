@@ -3,10 +3,9 @@ from quart import abort, jsonify, request
 from sqlalchemy import and_, func
 
 # Sayonika Internals
-from framework.models import (AuthorRole, Mod, ModAuthors, ModCategory,
-                              ModStatus, Review, User)
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory
 from framework.objects import db, jwt_service
-from framework.route import multiroute, route
+from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
