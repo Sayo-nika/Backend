@@ -4,7 +4,7 @@ from datetime import datetime
 # Sayonika Internals
 from framework.objects import db
 from .base import Base
-from .enums import ModCategory, ModStatus
+from .enums import AuthorRole, ModCategory, ModStatus
 
 
 class Mod(db.Model, Base):
@@ -15,7 +15,7 @@ class Mod(db.Model, Base):
     tagline = db.Column(db.Unicode(100))
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode())
-    category = db.Column(db.Enum(ModCategory), default=Category.Unassigned)
+    category = db.Column(db.Enum(ModCategory), default=ModCategory.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
     released_at = db.Column(db.Date(), nullable=True)
     last_updated = db.Column(db.DateTime(), default=datetime.now, onupdate=datetime.now)
@@ -24,3 +24,10 @@ class Mod(db.Model, Base):
     download_url = db.Column(db.Unicode(), nullable=True)
     verified = db.Column(db.Boolean(), default=False)
 
+
+class ModAuthors(db.Model):
+    __tablename__ = "user_mods"
+
+    role = db.Column(db.Enum(AuthorRole), default=AuthorRole.Unassigned)
+    user_id = db.Column(None, db.ForeignKey("users.id"))
+    mod_id = db.Column(None, db.ForeignKey("mods.id"))

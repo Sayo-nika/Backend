@@ -34,3 +34,14 @@ class ModCategory(Enum):
     Satire = 9  # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
     Thriller = 10  # compressed Suspense/Thriller into this since they're almost the same.
     SciFi = 11
+
+
+class AuthorRole(Enum):
+    Unassigned = 0
+    Owner = 1
+    CoOwner = 2
+    Programmer = 3
+    Artist = 4
+    Writer = 5
+    Musician = 6
+    PublicRelations = 7

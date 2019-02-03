@@ -37,13 +37,6 @@ class User(db.Model, Base):
         return self._favorites
 
 
-class UserMods(db.Model):
-    __tablename__ = "user_mods"
-
-    user_id = db.Column(None, db.ForeignKey("users.id"))
-    mod_id = db.Column(None, db.ForeignKey("mods.id"))
-
-
 class UserFavorites(db.Model):
     __tablename__ = "user_favourites"
 
