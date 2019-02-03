@@ -3,8 +3,8 @@ from quart import jsonify, request, abort
 from sqlalchemy import and_, func
 
 # Sayonika Internals
-from framework.models import Mod, User, ModStatus, UserMods, Review, ModCategory
-from framework.objects import db
+from framework.models import Mod, User, ModStatus, ModAuthors, Review, ModCategory, AuthorRoles
+from framework.objects import db, jwt_service
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
@@ -97,6 +97,9 @@ class Mods(RouteCog):
     @json
     async def post_mods(self):
         body = await request.json
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
 
         for attr, type_ in mod_attrs.items():
             val = body.get(attr)
@@ -111,6 +114,22 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
+        lowered_roles = [x.name.lower() for x in AuthorRoles]
+
+        for author in body["authors"]:
+            if not isinstance(author, dict) or list(author.keys()) != ['id', 'role']:
+                abort(400, "`authors` should be a list of {'id', 'role'}")
+            elif not await User.exists(author["id"]):
+                abort(400, f"Author '{author['id']}' doesn't exist")
+            elif author["role"].lower() not in lowered_roles:
+                abort(400, f"Unknown role '{author['role']}'")
+
+        authors = body["authors"]
+        authors = [{**author, "role": [x for x in AuthorRoles][lowered_roles.index(author["role"].lower())]} for author
+                   in authors]
+
+        authors.append({"id": user_id, "role": AuthorRoles.Owner})
+
         mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
                   website=body["website"])
 
@@ -122,10 +141,10 @@ class Mods(RouteCog):
 
         mod.status = ModStatus[status]
 
-        authors = [uid for uid in body["authors"] if await User.exists(uid)]
+        authors = [x for x in body["authors"] if await User.exists(x["id"])]
 
         await mod.create()
-        await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
+        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors])
 
         print(mod.to_dict())
 
@@ -180,8 +199,8 @@ class Mods(RouteCog):
 
         if body.get("authors"):
             authors = [uid for uid in body["authors"] if await User.exists(uid)]
-            authors = [uid for uid in authors if not await UserMods.query.where(
-                           and_(UserMods.user_id == uid, UserMods.mod_id == mod_id)
+            authors = [uid for uid in authors if not await ModAuthors.query.where(
+                           and_(ModAuthors.user_id == uid, ModAuthors.mod_id == mod_id)
                        ).gino.first()]
 
         status = body.get("status")
@@ -192,7 +211,7 @@ class Mods(RouteCog):
             updates = updates.update(status=ModStatus[status])
 
         await updates.apply()
-        await UserMods.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
+        await ModAuthors.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
 
         return jsonify(mod.to_dict())
 
@@ -252,7 +271,7 @@ class Mods(RouteCog):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        author_pairs = await UserMods.query.where(UserMods.mod_id == mod_id).gino.all()
+        author_pairs = await ModAuthors.query.where(ModAuthors.mod_id == mod_id).gino.all()
         author_pairs = [x.mod_id for x in author_pairs]
         authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
 
