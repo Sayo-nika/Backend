@@ -3,7 +3,7 @@ from quart import jsonify, request, abort
 from sqlalchemy import and_
 
 # Sayonika Internals
-from framework.models import Mod, User, ModStatus, UserMods, Review, Category
+from framework.models import Mod, User, ModStatus, UserMods, Review, ModCategory
 from framework.objects import db
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -52,12 +52,12 @@ class Mods(RouteCog):
 
         if request.args.get("category"):
             category = request.args["category"].lower()
-            valid_categories = [x.name.lower() for x in Category]
+            valid_categories = [x.name.lower() for x in ModCategory]
 
             if category not in valid_categories:
                 abort(400, f"Invalid category. Must be one of: '{', '.join(valid_categories)}'")
             else:
-                category = [x for x in Category][valid_categories.index(category)]
+                category = [x for x in ModCategory][valid_categories.index(category)]
                 filters.append(Mod.status == category)
 
         if request.args.get("rating"):

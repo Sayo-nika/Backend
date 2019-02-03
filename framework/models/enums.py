@@ -21,7 +21,7 @@ class MediaType(Enum):
     Image = 2
 
 
-class Category(Enum):
+class ModCategory(Enum):
     Unassigned = 0
     Tools = 1
     Comedy = 2
