@@ -1,6 +1,8 @@
 # Sayonika Internals
 from framework.objects import db
+
 from .base import Base
+
 
 class EditorsChoice(db.Model, Base):
     __tablename__ = "editors_choice"

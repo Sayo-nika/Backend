@@ -3,6 +3,7 @@ from datetime import datetime
 
 # Sayonika Internals
 from framework.objects import db
+
 from .base import Base
 from .enums import AuthorRole, ModCategory, ModStatus
 

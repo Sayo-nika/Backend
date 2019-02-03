@@ -1,9 +1,10 @@
 # External Libraries
-from quart import jsonify, request, abort
+from quart import abort, jsonify, request
 from sqlalchemy import and_, func
 
 # Sayonika Internals
-from framework.models import Mod, User, ModStatus, ModAuthors, Review, ModCategory, AuthorRoles
+from framework.models import (AuthorRoles, Mod, ModAuthors, ModCategory,
+                              ModStatus, Review, User)
 from framework.objects import db, jwt_service
 from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login, requires_supporter

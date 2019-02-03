@@ -4,7 +4,7 @@ from typing import List, Union
 # External Libraries
 from gino import Gino
 from simpleflake import simpleflake
-from sqlalchemy import or_, func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Query
 
 # Sayonika Internals

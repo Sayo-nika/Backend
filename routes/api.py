@@ -1,5 +1,5 @@
 # External Libraries
-from quart import jsonify, request, abort
+from quart import abort, jsonify, request
 
 # Sayonika Internals
 from framework.authentication import Authenticator

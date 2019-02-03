@@ -2,14 +2,14 @@
 from datetime import datetime
 
 # External Libraries
-from quart import jsonify, request, abort
+from quart import abort, jsonify, request
 
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, UserMods, UserFavorites
-from framework.objects import jwt_service, mailer, db
-from framework.route import route, multiroute
+from framework.models import Mod, Review, User, UserFavorites, UserMods
+from framework.objects import db, jwt_service, mailer
+from framework.route import multiroute, route
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
