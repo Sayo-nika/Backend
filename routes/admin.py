@@ -10,8 +10,6 @@ from framework.sayonika import Sayonika
 
 
 class Admin(RouteCog):
-    # === Verify ===
-
     @staticmethod
     def dict_all(models):
         return [m.to_dict() for m in models]
@@ -35,7 +33,7 @@ class Admin(RouteCog):
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
-    async def post_verify(self, mod_id: str):  # pylint: disable=no-self-use
+    async def post_verify(self, mod_id: str):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
@@ -46,7 +44,7 @@ class Admin(RouteCog):
     @route("/api/v1/<mod_id>/reject", methods=["POST"])
     @requires_admin
     @json
-    async def post_reject(self, mod_id: str):  # pylint: disable=no-self-use
+    async def post_reject(self, mod_id: str):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 

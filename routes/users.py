@@ -3,28 +3,18 @@ from datetime import datetime
 
 # External Libraries
 from quart import abort, jsonify, request
+from webargs import fields, validate
 
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
 from framework.models import Mod, User, Review, ModAuthors, UserFavorites
 from framework.objects import db, mailer, jwt_service
+from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-
-user_attrs = {
-    "username": str,
-    "password": str,
-    "email": str
-}
-
-user_patch_attrs = {
-    **user_attrs,
-    "bio": str,
-    "avatar": str
-}
 
 
 class Users(RouteCog):
@@ -34,12 +24,11 @@ class Users(RouteCog):
 
     @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
-    async def get_users(self):
-        page = request.args.get("page", "")
-        limit = request.args.get("limit", "")
-        page = int(page) if page.isdigit() else 0
-        limit = int(limit) if limit.isdigit() else 50
-
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50)
+    }, locations=("query",))
+    async def get_users(self, page: int, limit: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
@@ -50,27 +39,20 @@ class Users(RouteCog):
 
     @multiroute("/api/v1/users", methods=["POST"], other_methods=["GET"])
     @json
-    async def post_users(self):
-        body = await request.json
-        user = User()
-
-        for attr, type_ in user_attrs.items():
-            val = body.get(attr)
-
-            if val is None:
-                abort(400, f"Missing value '{attr}'")
-            elif not isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-
-            setattr(user, attr, val)
-
-        users = await User.get_any(True, username=user.username, email=user.email).first()
+    @use_kwargs({
+        "username": fields.Str(required=True, validate=validate.Length(max=25)),
+        "password": fields.Str(required=True),
+        "email": fields.Email(required=True),
+        "bio": fields.Str(validate=validate.Length(max=100))
+    }, locations=("json",))
+    async def post_users(self, username, password, email, bio=None):
+        users = await User.get_any(True, username=username, email=email).first()
 
         if users is not None:
             abort(400, "Username and/or email already in use")
 
-        user.avatar = body.get("avatar")
-        user.bio = body.get("bio")
+        user = User(username=username, email=email, bio=bio)
+
         user.password = Authenticator.hash_password(user.password)
         user.last_pass_reset = datetime.now()
 
@@ -78,12 +60,10 @@ class Users(RouteCog):
 
         token = jwt_service.make_email_token(user.id, user.email)
 
-        await mailer.send_mail(MailTemplates.VerifyEmail, body.email, {
+        await mailer.send_mail(MailTemplates.VerifyEmail, email, {
             "USER_NAME": user.username,
             "TOKEN": token
         })
-
-        print(user.to_dict())
 
         return jsonify(user.to_dict())
 
@@ -108,27 +88,28 @@ class Users(RouteCog):
     @route("/api/v1/users/@me", methods=["PATCH"])
     @requires_login
     @json
-    async def patch_user(self):
+    @use_kwargs({
+        "username": fields.Str(validate=validate.Length(max=25)),
+        "password": fields.Str(),
+        "email": fields.Email(),
+        "bio": fields.Str(validate=validate.Length(max=100)),
+        "avatar": None
+    }, locations=("json",))
+    async def patch_user(self, **kwargs):
         token = request.headers.get("Authorization", request.cookies.get('token'))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
-        body = await request.json
         user = await User.get(user_id)
         updates = user.update()
 
-        for attr, type_ in user_patch_attrs.items():
-            val = body.get(attr)
+        password = kwargs.pop('password') if 'password' in kwargs else None
 
-            if val is None:
-                continue
-            elif not isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-            elif attr != "password":
-                updates = updates.update(**{attr: val})
+        for attr, item in kwargs.items():
+            updates = updates.update(**{attr: item})
 
-        if body.get("password"):
-            password = Authenticator.hash_password(body["password"])
+        if password is not None:
+            password = Authenticator.hash_password(password)
             updates = updates.update(password=password, last_pass_reset=datetime.now())
 
         await updates.apply()

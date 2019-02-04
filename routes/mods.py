@@ -1,33 +1,25 @@
+from typing import List
+
 # External Libraries
+from marshmallow import Schema
+from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
 from sqlalchemy import and_, func
+from webargs import fields, validate
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory
 from framework.objects import db, jwt_service
+from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 
-mod_attrs = {
-    "title": str,
-    "tagline": str,
-    "description": str,
-    "website": str,
-    "authors": list
-}
 
-mod_patch_attrs = {
-    **mod_attrs,
-    "icon": str
-}
-
-review_attrs = {
-    "rating": int,
-    "content": str,
-    "author": str
-}
+class AuthorSchema(Schema):
+    id = fields.Str()
+    role = EnumField(AuthorRole)
 
 
 class Mods(RouteCog):
@@ -37,52 +29,33 @@ class Mods(RouteCog):
 
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
-    async def get_mods(self):
-        # Get page and limit from qs, or set defaults.
-        page = request.args.get("page", "")
-        limit = request.args.get("limit", "")
-        page = int(page) if page.isdigit() else 0
-        limit = int(limit) if limit.isdigit() else 50
-
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50),
+        "category": EnumField(ModCategory),
+        "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5])),
+        "status": EnumField(ModStatus),
+        # "sort": todo
+    }, locations=("query",))
+    async def get_mods(self, page: int, limit: int, category: ModCategory = None, rating: int = None,
+                       status: ModStatus = None):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         filters = []
-        sort = None
+        # sort = None
         query = Mod.paginate(page, limit)
 
-        if request.args.get("category"):
-            category = request.args["category"].lower()
-            valid_categories = [x.name.lower() for x in ModCategory]
+        if category is not None:
+            filters.append(Mod.status == category)
 
-            if category not in valid_categories:
-                abort(400, f"Invalid category. Must be one of: '{', '.join(valid_categories)}'")
-            else:
-                category = [x for x in ModCategory][valid_categories.index(category)]
-                filters.append(Mod.status == category)
+        if rating is not None:
+            filters.append(rating + 1 > db.select([
+                func.avg(Review.select('rating').where(Review.mod_id == Mod.id))
+            ]) >= rating)
 
-        if request.args.get("rating"):
-            rating = request.args["rating"]
-            valid_ratings = [str(x) for x in range(1, 6)]
-
-            if rating not in valid_ratings:
-                abort(400, "Invalid rating. Must be between 1 and 5 inclusive")
-            else:
-                int_rating = int(rating)
-
-                filters.append(int_rating + 1 > db.select([
-                    func.avg(Review.select('rating').where(Review.mod_id == Mod.id))
-                ]) >= int_rating)
-
-        if request.args.get("status"):
-            status = request.args["status"].lower()
-            valid_statuses = [x.name.lower() for x in ModStatus]
-
-            if category not in valid_statuses:
-                abort(400, f"Invalid status. Must be one of: '{', '.join(valid_statuses)}'")
-            else:
-                status = [x for x in ModStatus][valid_statuses.index(status)]
-                filters.append(Mod.status == status)
+        if status is not None:
+            filters.append(Mod.status == status)
 
         results = await query.where(and_(
             Mod.verified,
@@ -95,59 +68,41 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods", methods=["POST"], other_methods=["GET"])
     @requires_login
     @json
-    async def post_mods(self):
-        body = await request.json
+    @use_kwargs({
+        "title": fields.Str(required=True, validate=validate.Length(max=64)),
+        "tagline": fields.Str(required=True, validate=validate.Length(max=100)),
+        "description": fields.Str(required=True, validate=validate.Length(max=10000)),
+        "website": fields.Url(required=True),
+        "authors": fields.List(fields.Nested(AuthorSchema), required=True),
+        "status": EnumField(ModStatus, required=True),
+        "icon": None
+    }, locations=("json",))
+    async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
+                        status: str, icon: str):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
-        for attr, type_ in mod_attrs.items():
-            val = body.get(attr)
-
-            if val is None:
-                abort(400, f"Missing value '{attr}'")
-            elif not isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-
-        mods = await Mod.get_any(True, title=body["title"]).first()
+        # TODO: maybe strip out stuff like whitespace and punctuation so people can't be silly.
+        mods = await Mod.get_any(True, title=title).first()
 
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        lowered_roles = [x.name.lower() for x in AuthorRole]
+        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status)
 
-        for author in body["authors"]:
-            if not isinstance(author, dict) or list(author.keys()) != ['id', 'role']:
-                abort(400, "`authors` should be a list of {'id', 'role'}")
+        for i, author in enumerate(authors):
+            if author["id"] == user_id:
+                authors.pop(i)
+                continue
             elif not await User.exists(author["id"]):
-                abort(400, f"Author '{author['id']}' doesn't exist")
-            elif author["role"].lower() not in lowered_roles:
-                abort(400, f"Unknown role '{author['role']}'")
-
-        authors = body["authors"]
-        authors = [{**author, "role": [x for x in AuthorRole][lowered_roles.index(author["role"].lower())]} for author
-                   in authors]
+                abort(400, f"Unknown user '{author['id']}'")
 
         authors.append({"id": user_id, "role": AuthorRole.Owner})
-
-        mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
-                  website=body["website"])
-
-        mod.icon = body.get("icon")
-        status = body.get("status")
-
-        if status not in ModStatus.__members__ and status:
-            abort(400, f"Unknown mod status '{status}'")
-
-        mod.status = ModStatus[status]
-
-        authors = [x for x in body["authors"] if await User.exists(x["id"])]
 
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
-
-        print(mod.to_dict())
 
         return jsonify(mod.to_dict())
 
@@ -169,7 +124,7 @@ class Mods(RouteCog):
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
     @json
-    async def get_mod(self, mod_id: str):  # pylint: disable=no-self-use
+    async def get_mod(self, mod_id: str):
         mod = await Mod.get(mod_id)
 
         if mod is None:
@@ -180,45 +135,43 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET"])
     @requires_login
     @json
-    async def patch_mod(self, mod_id: str):
+    @use_kwargs({
+        "title": fields.Str(validate=validate.Length(max=64)),
+        "tagline": fields.Str(validate=validate.Length(max=100)),
+        "description": fields.Str(validate=validate.Length(max=10000)),
+        "website": fields.Url(),
+        "authors": fields.List(fields.Nested(AuthorSchema)),
+        "status": EnumField(ModStatus),
+        "icon": None
+    }, locations=("json",))
+    async def patch_mod(self, mod_id: str = None, **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        body = await request.json
         mod = await Mod.get(mod_id)
         updates = mod.update()
 
-        for attr, type_ in mod_patch_attrs.items():
-            val = body.get(attr)
+        authors = kwargs.pop('authors') if 'authors' in kwargs else None
 
-            if val is None:
-                continue
-            elif type(val) is not type_:
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-            elif attr != "authors":
-                updates = updates.update(**{attr: val})
+        for attr, item in kwargs.items():
+            updates = updates.update(**{attr: item})
 
-        if body.get("authors"):
-            authors = [uid for uid in body["authors"] if await User.exists(uid)]
-            authors = [uid for uid in authors if not await ModAuthors.query.where(
-                           and_(ModAuthors.user_id == uid, ModAuthors.mod_id == mod_id)
+        if authors is not None:
+            authors = [author for author in authors if await User.exists(author["id"])]
+            # TODO: if user is owner or co-owner, allow them to change the role of others to ones below them.
+            authors = [author for author in authors if not await ModAuthors.query.where(
+                           and_(ModAuthors.user_id == author["id"], ModAuthors.mod_id == mod_id)
                        ).gino.first()]
 
-        status = body.get("status")
-
-        if status is not None and status not in ModStatus.__members__:
-            abort(400, f"Unknown mod status '{status}'")
-        elif status is not None:
-            updates = updates.update(status=ModStatus[status])
-
         await updates.apply()
-        await ModAuthors.insert().gino.all(dict(user_id=uid, mod_id=mod.id) for uid in authors)
+        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"])
+                                           for author in authors])
 
         return jsonify(mod.to_dict())
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
-    async def get_download(self, mod_id: str):  # pylint: disable=no-self-use
+    async def get_download(self, mod_id: str):
         mod = await Mod.get(mod_id)
 
         if mod is None:
@@ -226,7 +179,6 @@ class Mods(RouteCog):
         elif not mod.zip_url:
             abort(404, "Mod has no download")
 
-        # We're using a URL on Upload class. await URL only and let client handle DLs
         return jsonify(url=mod.zip_url)
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
@@ -242,27 +194,22 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
     @requires_login
     @json
-    async def post_review(self, mod_id: str):
+    @use_kwargs({
+        "rating": fields.Int(required=True, validate=[
+            lambda x: 5 >= x >= 1,
+            lambda x: x % 0.5 == 0
+        ]),
+        "content": fields.Str(required=True, validate=validate.Length(max=2000))
+    })
+    async def post_review(self, mod_id: str, rating: int, content: str):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        body = await request.json
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
 
-        for attr, type_ in review_attrs.items():
-            val = body.get(attr)
-
-            if val is None:
-                abort(400, f"Missing value '{attr}'")
-            elif isinstance(val, type_):
-                abort(400, f"Bad type for '{attr}', should be '{type_.__name__}'")
-
-        if not await User.exists(body["author"]):
-            abort(404, "Unknown user")
-
-        review = await Review.create(content=body["content"], rating=body["rating"],
-                                     author_id=body["author"], mod_id=mod_id)
-
-        print(review.to_dict())
+        review = await Review.create(content=content, rating=rating, author_id=user_id, mod_id=mod_id)
 
         return jsonify(review.to_json())
 
@@ -273,7 +220,7 @@ class Mods(RouteCog):
             abort(404, "Unknown mod")
 
         author_pairs = await ModAuthors.query.where(ModAuthors.mod_id == mod_id).gino.all()
-        author_pairs = [x.mod_id for x in author_pairs]
+        author_pairs = [x.user_id for x in author_pairs]
         authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
 
         return jsonify(self.dict_all(authors))

@@ -1,5 +1,6 @@
 # External Libraries
 from quart import abort, jsonify, request
+from webargs import fields
 
 # Sayonika Internals
 from framework.authentication import Authenticator
@@ -9,6 +10,7 @@ from framework.route import route
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.quart_webargs import use_kwargs
 
 
 class Userland(RouteCog):
@@ -20,14 +22,11 @@ class Userland(RouteCog):
 
     @route("/api/v1/login", methods=["POST"])
     @json
-    async def login(self):
-        body = await request.json
-        username = body.get("username")
-        password = body.get("password")
-
-        if username is None or password is None:
-            abort(400, "Needs `username` and `password`")
-
+    @use_kwargs({
+        "username": fields.Str(required=True),
+        "password": fields.Str(required=True)
+    }, locations=("json",))
+    async def login(self, username: str, password: str):
         user = await User.get_any(True, username=username, email=username).first()
 
         if not user:
@@ -44,12 +43,11 @@ class Userland(RouteCog):
         return jsonify(token=token)
 
     @route("/api/v1/verify", methods=["POST"])
-    async def verify_email(self):
-        token = request.args.get("token")
-
-        if token is None:
-            abort(401, "No token provided")
-
+    @json
+    @use_kwargs({
+        "token": fields.Str(required=True)
+    }, locations=("query",))
+    async def verify_email(self, token):
         parsed_token = await jwt_service.verify_email_token(token, True)
 
         if parsed_token is False:
