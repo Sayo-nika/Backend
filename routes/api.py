@@ -4,7 +4,7 @@ from webargs import fields
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import User
+from framework.models import User, Mod
 from framework.objects import jwt_service
 from framework.route import route
 from framework.route_wrappers import json
@@ -61,6 +61,18 @@ class Userland(RouteCog):
         await user.update(email_verified=True).apply()
 
         return jsonify("Email verified")
+    
+    @route("/api/v1/search", methods=["GET"])
+    @json
+    @use_kwargs({
+        "type": fields.Str(required=True),
+        "query": fields.Str(required=True)
+    })
+    async def search(type, query):
+        if type not in ("mod", "user"):
+            abort(400)
+        class_ = Mod if type == "mod" else User
+        return jsonify(db.select(class_).where(class_.name.like(f"%{query}%")))
 
 
 def setup(core: Sayonika):
