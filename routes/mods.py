@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 
 # External Libraries
@@ -22,6 +23,23 @@ class AuthorSchema(Schema):
     role = EnumField(AuthorRole)
 
 
+class ModSorting(Enum):
+    title = 1
+    rating = 2
+    last_updated = 3
+    release_date = 4
+    downloads = 5
+
+
+sorters = {
+    ModSorting.title: Mod.title,
+    # ModSorting.rating: lambda ascending:
+    ModSorting.last_updated: Mod.last_updated,
+    ModSorting.release_date: Mod.released_at,
+    ModSorting.downloads: Mod.downloads
+}
+
+
 class Mods(RouteCog):
     @staticmethod
     def dict_all(models):
@@ -30,21 +48,26 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods", methods=["GET"], other_methods=["POST"])
     @json
     @use_kwargs({
+        "q": fields.Str(),
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50),
         "category": EnumField(ModCategory),
         "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5])),
         "status": EnumField(ModStatus),
-        # "sort": todo
+        "sort": EnumField(ModSorting, missing=ModSorting.title),
+        "ascending": fields.Bool(missing=False)
     }, locations=("query",))
-    async def get_mods(self, page: int, limit: int, category: ModCategory = None, rating: int = None,
-                       status: ModStatus = None):
+    async def get_mods(self, q: str = None, page: int = None, limit: int = None, category: ModCategory = None,
+                       rating: int = None, status: ModStatus = None, sort: ModSorting = None, ascending: bool = None):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         filters = []
-        # sort = None
         query = Mod.paginate(page, limit)
+
+        # TODO
+        # if q is not None:
+        #     filters.append()
 
         if category is not None:
             filters.append(Mod.status == category)
@@ -56,6 +79,10 @@ class Mods(RouteCog):
 
         if status is not None:
             filters.append(Mod.status == status)
+
+        if sort is not None:
+            sort_by = sorters[sort]
+            query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
 
         results = await query.where(and_(
             Mod.verified,
