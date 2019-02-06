@@ -65,9 +65,12 @@ class Mods(RouteCog):
         filters = []
         query = Mod.paginate(page, limit)
 
-        # TODO
-        # if q is not None:
-        #     filters.append()
+        if q is not None:
+            filters += [
+                Mod.title.match(q),
+                Mod.tagline.match(q),
+                Mod.description.match(q)
+            ]
 
         if category is not None:
             filters.append(Mod.status == category)

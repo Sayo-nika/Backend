@@ -1,5 +1,6 @@
 # External Libraries
-from quart import abort, jsonify, request
+from quart import abort, jsonify
+from sqlalchemy import or_
 from webargs import fields
 
 # Sayonika Internals
@@ -17,8 +18,6 @@ class Userland(RouteCog):
     @staticmethod
     def dict_all(models):
         return [m.to_dict() for m in models]
-
-    # === Mods ===
 
     @route("/api/v1/login", methods=["POST"])
     @json
@@ -61,18 +60,22 @@ class Userland(RouteCog):
         await user.update(email_verified=True).apply()
 
         return jsonify("Email verified")
-    
+
     @route("/api/v1/search", methods=["GET"])
     @json
     @use_kwargs({
-        "type": fields.Str(required=True),
-        "query": fields.Str(required=True)
-    })
-    async def search(type, query):
-        if type not in ("mod", "user"):
-            abort(400)
-        class_ = Mod if type == "mod" else User
-        return jsonify(db.select(class_).where(class_.name.like(f"%{query}%")))
+        "q": fields.Str(required=True)
+    }, locations=("query",))
+    async def search(self, q: str):
+        mod_q = Mod.query.where(or_(
+            Mod.title.match(q),
+            Mod.tagline.match(q),
+            Mod.description.match(q),
+        )).limit(5).alias()
+        user_q = User.query.where(User.username.match(q)).limit(5)
+
+        result = await user_q.join(mod_q).gino.all()
+        return jsonify(mods=self.dict_all(result.Mod), users=self.dict_all(result.User))
 
 
 def setup(core: Sayonika):

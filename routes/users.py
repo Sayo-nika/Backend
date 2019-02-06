@@ -3,6 +3,7 @@ from datetime import datetime
 
 # External Libraries
 from quart import abort, jsonify, request
+from sqlalchemy import and_
 from webargs import fields, validate
 
 # Sayonika Internals
@@ -25,14 +26,20 @@ class Users(RouteCog):
     @multiroute("/api/v1/users", methods=["GET"], other_methods=["POST"])
     @json
     @use_kwargs({
+        "q": fields.Str(),
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50)
     }, locations=("query",))
-    async def get_users(self, page: int, limit: int):
+    async def get_users(self, q: str = None, page: int = None, limit: int = None):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-        results = await User.paginate(page, limit).gino.all()
+        filters = []
+
+        if q is not None:
+            filters.append(User.username.match(q))
+
+        results = await User.paginate(page, limit).where(and_(*filters)).gino.all()
         total = await db.func.count(User.id).gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
