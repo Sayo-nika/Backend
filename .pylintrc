@@ -64,7 +64,12 @@ disable=missing-docstring,
         too-many-branches,
         too-many-statements,
         dangerous-default-value,
-        no-member
+        no-member,
+        too-many-arguments,
+        arguments-differ,
+        signature-differs,
+        method-hidden,
+        no-self-use
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

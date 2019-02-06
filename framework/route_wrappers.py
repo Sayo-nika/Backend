@@ -29,7 +29,7 @@ def json(func):
         result = _json.dumps({
             "result": data,
             "status": response.status_code,
-            "success": True if 200 <= response.status_code < 300 else False
+            "success": 200 <= response.status_code < 300
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
@@ -68,3 +68,5 @@ def requires_supporter(func):
         if await Authenticator.has_supporter_features():
             return await func(*args, **kwargs)
         return abort(403)
+
+    return inner

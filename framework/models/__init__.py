@@ -8,6 +8,6 @@ from .review import Review, ReviewDownvoters, ReviewHelpfuls, ReviewUpvoters
 from .user import User, UserFavorites
 from .editors_choice import EditorsChoice
 
-__all__ = ("AuthorRole", "Base", "Connection", "ModStatus", "ModCategory", "ConnectionType", "MediaType", "Media", "Mod",
-           "Report", "Review", "ReviewDownvoters", "ReviewHelpfuls", "ReviewUpvoters", "User", "UserFavorites",
+__all__ = ("AuthorRole", "Base", "Connection", "ModStatus", "ModCategory", "ConnectionType", "MediaType", "Media",
+           "Mod", "Report", "Review", "ReviewDownvoters", "ReviewHelpfuls", "ReviewUpvoters", "User", "UserFavorites",
            "ModAuthors", "EditorsChoice")

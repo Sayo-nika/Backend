@@ -190,12 +190,13 @@ class Mods(RouteCog):
             authors = [author for author in authors if await User.exists(author["id"])]
             # TODO: if user is owner or co-owner, allow them to change the role of others to ones below them.
             authors = [author for author in authors if not await ModAuthors.query.where(
-                           and_(ModAuthors.user_id == author["id"], ModAuthors.mod_id == mod_id)
-                       ).gino.first()]
+                and_(ModAuthors.user_id == author["id"], ModAuthors.mod_id == mod_id)
+            ).gino.first()]
 
         await updates.apply()
-        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"])
-                                           for author in authors])
+        await ModAuthors.insert().gino.all(*[
+            dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors
+        ])
 
         return jsonify(mod.to_dict())
 

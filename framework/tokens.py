@@ -23,17 +23,17 @@ class JWT:
 
         return jwt.encode(payload, self.secret, algorithm=self.algorithm, json_encoder=CombinedEncoder).decode()
 
-    def make_login_token(self, id: str, password_reset: datetime) -> str:
+    def make_login_token(self, id_: str, password_reset: datetime) -> str:
         payload = {
-            "id": id,
+            "id": id_,
             "lr": password_reset,
         }
 
         return self._make_token(payload)
 
-    def make_email_token(self, id: str, email: str) -> str:
+    def make_email_token(self, id_: str, email: str) -> str:
         payload = {
-            "id": id,
+            "id": id_,
             "email": email,
             "exp": datetime.utcnow() + timedelta(days=1)
         }
@@ -43,7 +43,7 @@ class JWT:
     async def verify_login_token(self, token: str, return_parsed: bool = False) -> Union[dict, bool]:
         try:
             decoded = jwt.decode(token, self.secret, algorithms=[self.algorithm])
-        except Exception:
+        except jwt.PyJWTError:
             return False  # Any errors thrown during decoding probably indicate bad token in some way
 
         if set(decoded.keys()) != set(["id", "lr", "iat"]):
@@ -59,7 +59,7 @@ class JWT:
     async def verify_email_token(self, token: str, return_parsed: bool = False):
         try:
             decoded = jwt.decode(token, self.secret, algorithms=[self.algorithm])
-        except Exception:
+        except jwt.PyJWTError:
             return False
 
         if set(decoded.keys()) != set(["id", "email", "exp", "iat"]):

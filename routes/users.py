@@ -52,7 +52,7 @@ class Users(RouteCog):
         "email": fields.Email(required=True),
         "bio": fields.Str(validate=validate.Length(max=100))
     }, locations=("json",))
-    async def post_users(self, username, password, email, bio=None):
+    async def post_users(self, username: str, password: str, email: str, bio: str = None):
         users = await User.get_any(True, username=username, email=email).first()
 
         if users is not None:
@@ -60,7 +60,7 @@ class Users(RouteCog):
 
         user = User(username=username, email=email, bio=bio)
 
-        user.password = Authenticator.hash_password(user.password)
+        user.password = Authenticator.hash_password(password)
         user.last_pass_reset = datetime.now()
 
         await user.create()
@@ -76,7 +76,7 @@ class Users(RouteCog):
 
     @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["PATCH"])
     @json
-    async def get_user(self, user_id: str):  # pylint: disable=no-self-use
+    async def get_user(self, user_id: str):
         if user_id == "@me":
             token = request.headers.get("Authorization", request.cookies.get("token"))
 

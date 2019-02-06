@@ -20,8 +20,8 @@ class Admin(RouteCog):
     async def get_queue(self):
         page = request.args.get("page")
         limit = request.args.get("limit")
-        page = not page.isdigit() and 0 or int(page)
-        limit = not limit.isdigit() and 50 or int(limit)
+        page = int(page) if page.isdigit() else 0
+        limit = int(limit) if limit.isdigit() else 50
 
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate

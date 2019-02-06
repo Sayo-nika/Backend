@@ -3,7 +3,7 @@ import logging
 import os
 
 # External Libraries
-import quart.flask_patch  # noqa: F401
+import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 

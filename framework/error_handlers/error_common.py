@@ -17,13 +17,13 @@ def error_handler(func):
 
         try:
             text = json.loads(text)
-        except Exception:
+        except json.JSONDecodeError:
             pass
 
         result = json.dumps({
             "error": text,
             "status": response.status_code,
-            "success": True if 200 <= response.status_code < 300 else False
+            "success": 200 <= response.status_code < 300
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(

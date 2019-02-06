@@ -48,8 +48,8 @@ class QuartParser(AsyncParser):
             except json.JSONDecodeError as err:
                 if err.doc == "":
                     return core.missing
-                else:
-                    return self.handle_invalid_json_error(err, req)
+
+                return self.handle_invalid_json_error(err, req)
 
         return core.get_value(data, name, field, allow_many_nested=True)
 
@@ -92,7 +92,7 @@ class QuartParser(AsyncParser):
             headers=error_headers,
         )
 
-    def handle_invalid_json_error(self, error, req, *args, **kwargs):
+    def handle_invalid_json_error(self, error, req, *args, **kwargs):  # pylint: disable=unused-argument
         abort(400, exc=error, messages={"json": ["Invalid JSON body."]})
 
     def get_default_request(self):

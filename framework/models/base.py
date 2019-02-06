@@ -15,17 +15,17 @@ class Base:
     id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
 
     @classmethod
-    async def exists(cls: db.Model, id: str) -> bool:
-        return bool(await cls.select('id').where(cls.id == id).gino.scalar())
+    async def exists(cls: db.Model, id_: str) -> bool:
+        return bool(await cls.select('id').where(cls.id == id_).gino.scalar())
 
     @classmethod
     def get_any(cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs) -> Gino:
-        if not len(kwargs):
+        if not kwargs:
             raise ValueError('No kwargs provided')
 
         queries = []
 
-        if type(insensitive) is list:
+        if isinstance(insensitive, list):
             for k, v in kwargs:
                 if k in insensitive:
                     queries.push(func.lower(getattr(cls, k)) == func.lower(v))
