@@ -5,13 +5,13 @@ from webargs import fields
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import User, Mod
+from framework.models import Mod, User
 from framework.objects import jwt_service
+from framework.quart_webargs import use_kwargs
 from framework.route import route
 from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.quart_webargs import use_kwargs
 
 
 class Userland(RouteCog):

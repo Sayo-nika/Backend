@@ -5,7 +5,6 @@ from typing import List, Union
 from gino import Gino
 from simpleflake import simpleflake
 from sqlalchemy import or_, func
-from sqlalchemy.orm import Query
 
 # Sayonika Internals
 from framework.objects import db
