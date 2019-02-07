@@ -16,6 +16,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import paginate
 
 
 class AuthorSchema(Schema):
@@ -62,36 +63,33 @@ class Mods(RouteCog):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-        filters = []
-        query = Mod.paginate(page, limit)
+        page = page - 1 if page > 0 else 0
+        query = Mod.query.where(Mod.verified)
 
         if q is not None:
-            filters += [
+            query = query.where(and_(
                 Mod.title.match(q),
                 Mod.tagline.match(q),
                 Mod.description.match(q)
-            ]
+            ))
 
         if category is not None:
-            filters.append(Mod.status == category)
+            query = query.where(Mod.status == category)
 
         if rating is not None:
-            filters.append(rating + 1 > db.select([
+            query = query.where(rating + 1 > db.select([
                 func.avg(Review.select('rating').where(Review.mod_id == Mod.id))
             ]) >= rating)
 
         if status is not None:
-            filters.append(Mod.status == status)
+            query = query.where(Mod.status == status)
 
         if sort is not None:
             sort_by = sorters[sort]
             query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
 
-        results = await query.where(and_(
-            Mod.verified,
-            *filters
-        )).gino.all()
-        total = await db.func.count(Mod.id).gino.scalar()
+        results = await paginate(query, page, limit).gino.all()
+        total = await db.func.count(query).gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 

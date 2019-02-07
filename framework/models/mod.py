@@ -19,7 +19,7 @@ class Mod(db.Model, Base):
     category = db.Column(db.Enum(ModCategory), default=ModCategory.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
     released_at = db.Column(db.Date(), nullable=True)
-    last_updated = db.Column(db.DateTime(), default=datetime.now, onupdate=datetime.now)
+    last_updated = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.Enum(ModStatus))
     downloads = db.Column(db.BigInteger(), default=0)
     download_url = db.Column(db.Unicode(), nullable=True)

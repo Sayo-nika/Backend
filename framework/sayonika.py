@@ -41,5 +41,5 @@ class Sayonika(Quart):
             module.setup(self)
             del module
 
-    def run(self, host: str = "localhost", port: int = 4444, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def run(self, host: str = "localhost", port: int = 4444, *args, **kwargs):
         super().run(host, port, *args, **kwargs)

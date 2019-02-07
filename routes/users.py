@@ -1,9 +1,10 @@
 # Stdlib
 from datetime import datetime
+from enum import Enum
 
 # External Libraries
+from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
-from sqlalchemy import and_
 from webargs import fields, validate
 
 # Sayonika Internals
@@ -16,6 +17,18 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import paginate
+
+
+class UserSorting(Enum):
+    name = 1
+    joined_at = 2
+
+
+sorters = {
+    UserSorting.name: User.username,
+    UserSorting.joined_at: User.joined_at
+}
 
 
 class Users(RouteCog):
@@ -28,19 +41,27 @@ class Users(RouteCog):
     @use_kwargs({
         "q": fields.Str(),
         "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50)
+        "limit": fields.Int(missing=50),
+        "sort": EnumField(UserSorting, missing=UserSorting.name),
+        "ascending": fields.Bool(missing=False)
     }, locations=("query",))
-    async def get_users(self, q: str = None, page: int = None, limit: int = None):
+    async def get_users(self, q: str = None, page: int = None, limit: int = None, sort: UserSorting = None,
+                        ascending: bool = False):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-        filters = []
+        page = page - 1 if page > 0 else 0
+        query = User.query
 
         if q is not None:
-            filters.append(User.username.match(q))
+            query = query.where(User.username.match(q))
 
-        results = await User.paginate(page, limit).where(and_(*filters)).gino.all()
-        total = await db.func.count(User.id).gino.scalar()
+        if sort is not None:
+            sort_by = sorters[sort]
+            query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
+
+        results = await paginate(query, page, limit).gino.all()
+        total = await db.func.count(query).gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 

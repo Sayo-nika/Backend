@@ -7,6 +7,7 @@ from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
+from framework.utils import paginate
 
 
 class Admin(RouteCog):
@@ -26,7 +27,8 @@ class Admin(RouteCog):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
-        mods = await Mod.paginate(page, limit).where(~Mod.verified).gino.all()
+        page = page - 1 if page > 0 else 0
+        mods = await paginate(Mod.query, page, limit).where(~Mod.verified).gino.all()
 
         return jsonify(self.to_dict(mods))
 
