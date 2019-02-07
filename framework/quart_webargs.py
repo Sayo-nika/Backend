@@ -1,3 +1,5 @@
+# pylint: disable=unused-argument
+
 # Stdlib
 import json
 
