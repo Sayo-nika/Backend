@@ -1,6 +1,4 @@
 # Stdlib
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 import os.path as osp
 from typing import Dict
@@ -36,10 +34,6 @@ class Mailer(Mail):
     # XXX: switch to redis soon
     cached_templates = {}
 
-    def __init__(self):
-        super().__init__()
-        self.executor = ThreadPoolExecutor(4)
-
     async def _get_template(self, template: MailTemplates) -> str:
         template_name = template.value
         template_path = TEMPLATES_PATH.replace("__", template_name)
@@ -73,9 +67,7 @@ class Mailer(Mail):
             # interpolate our variable into them
             template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
-        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects.get(mail_type.value),
+        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=getattr(MailSubjects, mail_type.value),
                       recipients=[recipient], html=template, charset='utf-8')
-        loop = asyncio.get_running_loop()
 
-        # Send the email in another thread as flask-mail is sync
-        await loop.run_in_executor(self.executor, self.send, msg)
+        self.send(msg)
