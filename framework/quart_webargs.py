@@ -30,6 +30,7 @@ class QuartParser(AsyncParser):
     """Quart request argument parser"""
 
     __location_map__ = dict(view_args="parse_view_args", **core.Parser.__location_map__)
+    DEFAULT_VALIDATION_STATUS = 400
 
     def parse_view_args(self, req: quart.Request, name: str, field: Field):
         """Pull a value from the request's ``view_args``."""
