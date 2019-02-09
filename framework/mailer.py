@@ -21,13 +21,13 @@ class MailTemplates(Enum):
 
 
 class MailSubjects:
-    account_suspended = ''
-    mod_approved = ''
-    mod_deleted = ''
-    mod_rejected = ''
-    mod_removed = ''
-    mod_submitted = ''
-    verify_email = ''
+    account_suspended = 'Your account has beeen suspended'
+    mod_approved = 'Your mod has been approved'
+    mod_deleted = 'Your mod has been deleted'
+    mod_rejected = 'Your mod has been rejected'
+    mod_removed = 'Your mod has been removed'
+    mod_submitted = 'Your mod has been submitted'
+    verify_email = 'Verify your email'
 
 
 class Mailer(Mail):
