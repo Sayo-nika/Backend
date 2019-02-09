@@ -11,7 +11,7 @@ from webargs import fields, validate
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
 from framework.models import Mod, User, Review, ModAuthors, UserFavorites
-from framework.objects import db, mailer, jwt_service
+from framework.objects import mailer, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
@@ -42,7 +42,7 @@ class Users(RouteCog):
         "q": fields.Str(),
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50),
-        "sort": EnumField(UserSorting, missing=UserSorting.name),
+        "sort": EnumField(UserSorting),
         "ascending": fields.Bool(missing=False)
     }, locations=("query",))
     async def get_users(self, q: str = None, page: int = None, limit: int = None, sort: UserSorting = None,
@@ -61,7 +61,7 @@ class Users(RouteCog):
             query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
 
         results = await paginate(query, page, limit).gino.all()
-        total = await db.func.count(query).gino.scalar()
+        total = await query.alias().count().gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 

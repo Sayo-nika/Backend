@@ -56,7 +56,7 @@ class Mods(RouteCog):
         "category": EnumField(ModCategory),
         "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5])),
         "status": EnumField(ModStatus),
-        "sort": EnumField(ModSorting, missing=ModSorting.title),
+        "sort": EnumField(ModSorting),
         "ascending": fields.Bool(missing=False)
     }, locations=("query",))
     async def get_mods(self, q: str = None, page: int = None, limit: int = None, category: ModCategory = None,
@@ -90,7 +90,7 @@ class Mods(RouteCog):
             query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
 
         results = await paginate(query, page, limit).gino.all()
-        total = await db.func.count(query).gino.scalar()
+        total = await query.alias().count().gino.scalar()
 
         return jsonify(total=total, page=page, limit=limit, results=self.dict_all(results))
 
