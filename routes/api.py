@@ -41,7 +41,7 @@ class Userland(RouteCog):
 
         return jsonify(token=token)
 
-    @route("/api/v1/verify", methods=["POST"])
+    @route("/api/v1/verify", methods=["GET"])
     @json
     @use_kwargs({
         "token": fields.Str(required=True)
@@ -67,15 +67,23 @@ class Userland(RouteCog):
         "q": fields.Str(required=True)
     }, locations=("query",))
     async def search(self, q: str):
-        mod_q = Mod.query.where(or_(
+        like = f"%{q}%"
+
+        mods = await Mod.query.where(or_(
             Mod.title.match(q),
             Mod.tagline.match(q),
             Mod.description.match(q),
-        )).limit(5).alias()
-        user_q = User.query.where(User.username.match(q)).limit(5)
 
-        result = await user_q.join(mod_q).gino.all()
-        return jsonify(mods=self.dict_all(result.Mod), users=self.dict_all(result.User))
+            Mod.title.ilike(like),
+            Mod.tagline.ilike(like),
+            Mod.description.ilike(like)
+        )).limit(5).gino.all()
+        users = await User.query.where(or_(
+            User.username.match(q),
+            User.username.ilike(like)
+        )).limit(5).gino.all()
+
+        return jsonify(mods=self.dict_all(mods), users=self.dict_all(users))
 
 
 def setup(core: Sayonika):
