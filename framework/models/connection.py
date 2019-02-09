@@ -1,5 +1,6 @@
 # Sayonika Internals
 from framework.objects import db
+
 from .base import Base
 from .enums import ConnectionType
 

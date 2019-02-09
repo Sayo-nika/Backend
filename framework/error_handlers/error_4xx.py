@@ -32,6 +32,11 @@ async def handle_405(err: HTTPException):
 
 
 @error_handler
+async def handle_422(err: HTTPException):
+    return Response(err.description, 422)
+
+
+@error_handler
 async def handle_429(err: HTTPException):
     return Response(f"Ratelimit for this endpoint: {err.description}", 429)
 
@@ -42,5 +47,6 @@ all_4xx = {
     403: handle_403,
     404: handle_404,
     405: handle_405,
+    422: handle_422,
     429: handle_429
 }
