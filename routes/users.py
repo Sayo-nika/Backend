@@ -90,7 +90,8 @@ class Users(RouteCog):
 
         await mailer.send_mail(MailTemplates.VerifyEmail, email, {
             "USER_NAME": user.username,
-            "TOKEN": token
+            "TOKEN": token,
+            "BASE_URL": "http://localhost"
         })
 
         return jsonify(user.to_dict())
