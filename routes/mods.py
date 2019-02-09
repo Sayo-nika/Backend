@@ -125,7 +125,7 @@ class Mods(RouteCog):
 
         mods = await Mod.get_any(True, title=body["title"]).first()
 
-        if mods is not None:
+        if mods is not None :
             abort(400, "A mod with that title already exists")
 
         mod = Mod(title=body["title"], tagline=body["tagline"], description=body["description"],
