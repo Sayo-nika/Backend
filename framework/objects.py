@@ -35,7 +35,7 @@ SETTINGS.update({
 })
 
 # Use env vars to update config
-sayonika_instance.config.update()
+sayonika_instance.config.update(SETTINGS)
 
 limiter = Limiter(
     sayonika_instance,
