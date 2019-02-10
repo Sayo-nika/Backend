@@ -1,80 +1,105 @@
 FORMAT: 1A
-HOST: http://polls.apiblueprint.org/
+HOST: https://sayonika.moe/api/v1
 
-# velvet
+# Velvet API
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+This is the official documentation for the Sayonika Project/Velvet.
 
-## Questions Collection [/questions]
+We worked very hard on the documentation, so if you find any errors, let us know in the [GitHub Repository](https://github.com/Sayo-nika/Backend).
 
-### List All Questions [GET]
+
+## Mods [/mods/{mod_id}]
+
+
+### GET
+
+Lists all mods - paginated into 100 entries per request.
 
 + Response 200 (application/json)
 
-        [
-            {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
-                    }
-                ]
-            }
-        ]
-
-### Create a New Question [POST]
-
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
-
-+ Request (application/json)
-
         {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
-            ]
+            "total": 420,
+            "page": 2,
+            "limit": 10,
+            "results": [Mod, Mod, ...]
         }
 
-+ Response 201 (application/json)
+### POST
 
+Adds a new entry in the database, requires authentication.
+
+
++ Request (application/json)
     + Headers
 
-            Location: /questions/2
-
+            Authorization: Token <Insert your token here>
     + Body
 
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
-                ]
+               "title": "",
+               "category": 2,
+               "download_url": "",
+               "..."
             }
+
++ Response 200 
+
++ Response 400 (text/plain)
+
+        Illegal input. It may be the title was taken or you have a badly formatted resquest.
+
++ Response 403 (text/plain)
+
+        Unauthorized.
+        
+### PATCH [/mods/{mod_id}]
+
++ Parameters
+    + mod_id (Snowflake<Number>) - ID of the Mod in the form of a number. Leave it empty if you don't have a specific mod to search.
+
+
+Updates the entry in the database. Keep in mind `mod_id` is important for this request to be acknowledged.
+
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <Insert your token here>
+    + Body
+
+            {
+               "title": "",
+               "category": 2,
+               "download_url": "",
+               "..."
+            }
+
++ Response 200 
+
++ Response 400 (text/plain)
+
+        Illegal input. It may be you didn't specify a Mod ID or your request format is badly done.
+
++ Response 403 (text/plain)
+
+        Unauthorized.
+        
+
+    
+
+
+## Users [/users]
+
+
+### GET
+
+Lists all user - paginated into 100 entries per request.
+
++ Response 200 (application/json)
+
+        {
+            "total": 420,
+            "page": 2,
+            "limit": 10,
+            "results": [User, User, ...]
+        }
