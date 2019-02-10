@@ -47,6 +47,10 @@ Gets info from the mod.
                "download_url": "",
                "..."
             }
+
++ Response 404 (text/plain)
+
+        Entry does not exist.
         
 
 ## Users [/users]
@@ -64,6 +68,7 @@ Lists all user - paginated into 100 entries per request.
             "limit": 10,
             "results": [User, User, ...]
         }
+
 
 ## User Specific [/user/{user_id}]
 
@@ -83,3 +88,7 @@ Gets info of user.
                "connections": [Connection, Connection, ...],
                ...
             }
+
++ Response 404 (text/plain)
+
+        Entry does not exist/ wrong ID.
