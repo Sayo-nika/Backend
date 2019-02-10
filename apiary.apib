@@ -8,7 +8,7 @@ This is the official documentation for the Sayonika Project/Velvet.
 We worked very hard on the documentation, so if you find any errors, let us know in the [GitHub Repository](https://github.com/Sayo-nika/Backend).
 
 
-## Mods [/mods/{mod_id}]
+## Mods [/mods]
 
 
 ### GET
@@ -51,14 +51,32 @@ Adds a new entry in the database, requires authentication.
 + Response 403 (text/plain)
 
         Unauthorized.
-        
-### PATCH [/mods/{mod_id}]
+
+
+
+## Mod Specific [/mods/{mod_id}]
 
 + Parameters
     + mod_id (Snowflake<Number>) - ID of the Mod in the form of a number. Leave it empty if you don't have a specific mod to search.
 
 
-Updates the entry in the database. Keep in mind `mod_id` is important for this request to be acknowledged.
+### GET
+
+Gets info from the mod.
+
++ Response 200 (application/json)
+
+            {
+               "title": "",
+               "category": 2,
+               "download_url": "",
+               "..."
+            }
+        
+### PATCH
+
+
+Updates the entry in the database. 
 
 
 + Request (application/json)
@@ -71,7 +89,7 @@ Updates the entry in the database. Keep in mind `mod_id` is important for this r
                "title": "",
                "category": 2,
                "download_url": "",
-               "..."
+               ...
             }
 
 + Response 200 
@@ -84,8 +102,6 @@ Updates the entry in the database. Keep in mind `mod_id` is important for this r
 
         Unauthorized.
         
-
-    
 
 
 ## Users [/users]
@@ -103,3 +119,50 @@ Lists all user - paginated into 100 entries per request.
             "limit": 10,
             "results": [User, User, ...]
         }
+
+## User Specific [/user/{user_id}]
+
++ Parameters
+    + user_id (Snowflake<Number>) - ID of the Mod in the form of a number. Leave it empty if you don't have a specific mod to search.
+
+
+### GET
+
+Gets info of user.
+
++ Response 200 (application/json)
+
+            {
+               "username": "",
+               "bio": 2,
+               "connections": [Connection, Connection, ...],
+               ...
+            }
+        
+### PATCH
+
+
+Updates the user. 
+
+
++ Request (application/json)
+    + Headers
+
+            Authorization: Token <Insert your token here>
+    + Body
+
+            {
+               "username": "",
+               "bio": "",
+               "..."
+            }
+
++ Response 200 
+
++ Response 400 (text/plain)
+
+        Illegal input. It may be you didn't specify a User ID or your request format is badly done.
+
++ Response 403 (text/plain)
+
+        Unauthorized.
