@@ -26,7 +26,8 @@ SETTINGS = {
     "DB_USER": "mart",
     "DB_PASS": "Nya",
     "DB_NAME": "sayonika",
-    "JWT_SECRET": "testing123"
+    "JWT_SECRET": "testing123",
+    "EMAIL_BASE": "http://localhost:4444"
 }
 
 SETTINGS.update({
