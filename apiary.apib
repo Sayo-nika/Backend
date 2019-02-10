@@ -24,33 +24,6 @@ Lists all mods - paginated into 100 entries per request.
             "results": [Mod, Mod, ...]
         }
 
-### POST
-
-Adds a new entry in the database, requires authentication.
-
-
-+ Request (application/json)
-    + Headers
-
-            Authorization: Token <Insert your token here>
-    + Body
-
-            {
-               "title": "",
-               "category": 2,
-               "download_url": "",
-               "..."
-            }
-
-+ Response 200 
-
-+ Response 400 (text/plain)
-
-        Illegal input. It may be the title was taken or you have a badly formatted resquest.
-
-+ Response 403 (text/plain)
-
-        Unauthorized.
 
 
 
@@ -73,36 +46,6 @@ Gets info from the mod.
                "..."
             }
         
-### PATCH
-
-
-Updates the entry in the database. 
-
-
-+ Request (application/json)
-    + Headers
-
-            Authorization: Token <Insert your token here>
-    + Body
-
-            {
-               "title": "",
-               "category": 2,
-               "download_url": "",
-               ...
-            }
-
-+ Response 200 
-
-+ Response 400 (text/plain)
-
-        Illegal input. It may be you didn't specify a Mod ID or your request format is badly done.
-
-+ Response 403 (text/plain)
-
-        Unauthorized.
-        
-
 
 ## Users [/users]
 
@@ -138,31 +81,3 @@ Gets info of user.
                "connections": [Connection, Connection, ...],
                ...
             }
-        
-### PATCH
-
-
-Updates the user. 
-
-
-+ Request (application/json)
-    + Headers
-
-            Authorization: Token <Insert your token here>
-    + Body
-
-            {
-               "username": "",
-               "bio": "",
-               "..."
-            }
-
-+ Response 200 
-
-+ Response 400 (text/plain)
-
-        Illegal input. It may be you didn't specify a User ID or your request format is badly done.
-
-+ Response 403 (text/plain)
-
-        Unauthorized.
