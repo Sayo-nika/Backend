@@ -28,8 +28,8 @@ def json(func):
 
         result = _json.dumps({
             "result": data,
-            "status": response.status_code,  # flake8: noqa pylint: disable=protected-access
-            "success": True if 200 <= response.status_code < 300 else False  # flake8: noqa pylint: disable=protected-access
+            "status": response.status_code,
+            "success": 200 <= response.status_code < 300
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
@@ -46,7 +46,7 @@ def requires_login(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_authorized_access(*args, **kwargs):
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
 
     return inner
@@ -56,14 +56,17 @@ def requires_admin(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_admin_access():
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
 
     return inner
+
 
 def requires_supporter(func):
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_supporter_features():
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         return abort(403)
+
+    return inner

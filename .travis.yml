@@ -35,7 +35,8 @@ matrix:
        dist: xenial
        script:
          - docker build -t sayonika/server-core:latest .
-         - cd services && docker build -t sayonika/server-internal:latest .
+        # No longer needed - I'm deprecating the services soon.
+        # - cd services && docker build -t sayonika/server-internal:latest .
 
 notifications:
   email: false

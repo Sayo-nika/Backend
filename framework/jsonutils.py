@@ -1,12 +1,12 @@
 # Stdlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 # External Libraries
 from quart.json import JSONEncoder
 
 
-class EnumJsonEncoder(JSONEncoder):
+class EnumJSONEncoder(JSONEncoder):
     def default(self, o):  # pylint: disable=method-hidden
         if isinstance(o, Enum):
             return o.value
@@ -14,7 +14,7 @@ class EnumJsonEncoder(JSONEncoder):
         return super().default(o)
 
 
-class DateTimeJsonEncoder(JSONEncoder):
+class DatetimeJSONEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime):
             return o.isoformat()
@@ -22,5 +22,13 @@ class DateTimeJsonEncoder(JSONEncoder):
         return super().default(o)
 
 
-class CombinedEncoder(EnumJsonEncoder, DateTimeJsonEncoder):
+class TimedletaJSONEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, timedelta):
+            return round(o.total_seconds() * 1000)
+
+        return super().default(o)
+
+
+class CombinedEncoder(EnumJSONEncoder, DatetimeJSONEncoder, TimedletaJSONEncoder):
     pass

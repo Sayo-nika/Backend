@@ -3,7 +3,7 @@ import logging
 import os
 
 # External Libraries
-import quart.flask_patch  # noqa: F401
+import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
@@ -26,7 +26,8 @@ SETTINGS = {
     "DB_USER": "mart",
     "DB_PASS": "Nya",
     "DB_NAME": "sayonika",
-    "JWT_SECRET": "testing123"
+    "JWT_SECRET": "testing123",
+    "EMAIL_BASE": "http://localhost:4444"
 }
 
 SETTINGS.update({
@@ -35,7 +36,7 @@ SETTINGS.update({
 })
 
 # Use env vars to update config
-sayonika_instance.config.update()
+sayonika_instance.config.update(SETTINGS)
 
 limiter = Limiter(
     sayonika_instance,

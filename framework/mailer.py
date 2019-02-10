@@ -1,9 +1,7 @@
 # Stdlib
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 import os.path as osp
-from typing import List
+from typing import Dict
 
 # External Libraries
 import aiofiles
@@ -23,23 +21,18 @@ class MailTemplates(Enum):
 
 
 class MailSubjects:
-    account_suspended = ''
-    mod_approved = ''
-    mod_deleted = ''
-    mod_rejected = ''
-    mod_removed = ''
-    mod_submitted = ''
-    verify_email = ''
+    account_suspended = 'Your account has beeen suspended'
+    mod_approved = 'Your mod has been approved'
+    mod_deleted = 'Your mod has been deleted'
+    mod_rejected = 'Your mod has been rejected'
+    mod_removed = 'Your mod has been removed'
+    mod_submitted = 'Your mod has been submitted'
+    verify_email = 'Verify your email'
 
 
 class Mailer(Mail):
     # XXX: switch to redis soon
     cached_templates = {}
-
-    def __init__(self):
-        super().__init__()
-        self.loop = asyncio.get_running_loop()
-        self.executor = ThreadPoolExecutor(4)
 
     async def _get_template(self, template: MailTemplates) -> str:
         template_name = template.value
@@ -59,8 +52,7 @@ class Mailer(Mail):
 
         return data
 
-    async def send_mail(self, mail_type: MailTemplates, recipient: str,
-                        to_replace: List[str] = [], replacers: List[str] = []) -> None:
+    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str]) -> None:
         """
         Send mail using a template, along with optionally replacing some values.
         Templates can be found in `framework/mail_templates`.
@@ -70,11 +62,12 @@ class Mailer(Mail):
 
         template = await self._get_template(mail_type)
 
-        for (replace_string, replace_value) in zip(to_replace, replacers):
-            template = template.replace(replace_string, replace_value)
+        for (replace_string, replace_value) in replacers.items():
+            # Five pairs of braces are needed, as `{{}}` escapes into `{}`, so we need to double that up and then also
+            # interpolate our variable into them
+            template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
-        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=MailSubjects.get(mail_type.value),
+        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=getattr(MailSubjects, mail_type.value),
                       recipients=[recipient], html=template, charset='utf-8')
 
-        # Send the email in another thread as flask-mail is sync
-        await self.loop.run_in_executor(self.executor, self.send, msg)
+        self.send(msg)

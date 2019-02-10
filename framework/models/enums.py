@@ -4,7 +4,7 @@ from enum import Enum
 
 class ModStatus(Enum):
     Planning = 1
-    InDevelop = 2
+    InDevelopment = 2
     PlayTesting = 3
     Released = 4
     Archived = 5
@@ -21,11 +21,27 @@ class MediaType(Enum):
     Image = 2
 
 
-class Category(Enum):
+class ModCategory(Enum):
     Unassigned = 0
     Tools = 1
-    DatingSim = 2
-    SliceOfLife = 3
-    Romance = 4
-    Drama = 5
-    Horror = 6
+    Comedy = 2
+    TragicComedy = 3
+    Drama = 4
+    RomCom = 5
+    Romance = 6
+    Horror = 7
+    Mystery = 8
+    Satire = 9  # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
+    Thriller = 10  # compressed Suspense/Thriller into this since they're almost the same.
+    SciFi = 11
+
+
+class AuthorRole(Enum):
+    Unassigned = 0
+    Owner = 1
+    CoOwner = 2
+    Programmer = 3
+    Artist = 4
+    Writer = 5
+    Musician = 6
+    PublicRelations = 7

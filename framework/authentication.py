@@ -23,12 +23,12 @@ class Authenticator:
         if token is None:
             abort(401, "No token")
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
             abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.email_verified:
             abort(401, "User email needs to be verified")
@@ -52,12 +52,12 @@ class Authenticator:
         if token is None:
             abort(401)
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
-            abort(400, "Invalid Token")
+            abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.supporter:
             abort(403, "User does not have the required permissions to fulfill the request.")
@@ -71,12 +71,12 @@ class Authenticator:
         if token is None:
             abort(401)
 
-        parsed_token = await jwt_service.verify_token(token, True)
+        parsed_token = await jwt_service.verify_login_token(token, True)
 
         if parsed_token is False:
-            abort(400, "Invalid token.")
+            abort(400, "Invalid token")
 
-        user = await User.get(parsed_token.id)
+        user = await User.get(parsed_token["id"])
 
         if not user.moderator or not user.developer:
             abort(403, "User does not have the required permissions to fulfill the request.")
