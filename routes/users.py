@@ -96,7 +96,7 @@ class Users(RouteCog):
 
         return jsonify(user.to_dict())
 
-    @multiroute("/api/v1/users/<user_id>", methods=["GET"], other_methods=["PATCH"])
+    @route("/api/v1/users/<user_id>", methods=["GET"])
     @json
     async def get_user(self, user_id: str):
         if user_id == "@me":
@@ -105,7 +105,12 @@ class Users(RouteCog):
             if token is None:
                 abort(401, "Login required")
 
-            user_id = (await jwt_service.verify_login_token(token, True))["id"]
+            parsed = await jwt_service.verify_login_token(token, True)
+
+            if parsed is False:
+                abort(401, "Invalid token")
+
+            user_id = parsed["id"]
 
         user = await User.get(user_id)
 
