@@ -99,6 +99,8 @@ class Users(RouteCog):
     @route("/api/v1/users/<user_id>", methods=["GET"])
     @json
     async def get_user(self, user_id: str):
+        is_through_atme = False
+
         if user_id == "@me":
             token = request.headers.get("Authorization", request.cookies.get("token"))
 
@@ -111,13 +113,14 @@ class Users(RouteCog):
                 abort(401, "Invalid token")
 
             user_id = parsed["id"]
+            is_through_atme = True
 
         user = await User.get(user_id)
 
         if user is None:
             abort(404, "Unknown user")
 
-        return jsonify(user.to_dict())
+        return jsonify(user.to_dict() if not is_through_atme else user.to_self_dict())
 
     @route("/api/v1/users/@me", methods=["PATCH"])
     @requires_login

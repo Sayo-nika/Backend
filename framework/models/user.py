@@ -5,6 +5,9 @@ from framework.objects import db
 
 from .base import Base
 
+COMMON_FILTERED = ("password", "last_pass_reset", "email_verified")
+DEFAULT_FILTERED = (*COMMON_FILTERED, "email")
+
 
 class User(db.Model, Base):
     __tablename__ = "users"
@@ -24,12 +27,16 @@ class User(db.Model, Base):
 
     def to_dict(self):
         return {
-            k: v for k, v in super().to_dict().items() if k not in [
-                'password',
-                'email',
-                'last_pass_reset',
-                'email_verified'
-            ]
+            k: v for k, v in super().to_dict().items() if k not in DEFAULT_FILTERED
+        }
+
+    def to_self_dict(self):
+        """
+        Converts the model to a dict, but keeps `email` in.
+        Used for the `/users/@me` endpoint in particular.
+        """
+        return {
+            k: v for k, v in super().to_dict().items() if k not in COMMON_FILTERED
         }
 
 
