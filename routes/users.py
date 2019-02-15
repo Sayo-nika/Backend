@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 
 # External Libraries
+import aiohttp
 from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
 from webargs import fields, validate
@@ -71,15 +72,27 @@ class Users(RouteCog):
         "username": fields.Str(required=True, validate=validate.Length(max=25)),
         "password": fields.Str(required=True),
         "email": fields.Email(required=True),
-        "bio": fields.Str(validate=validate.Length(max=100))
+        "recaptcha": fields.Str(required=True)
     }, locations=("json",))
-    async def post_users(self, username: str, password: str, email: str, bio: str = None):
+    async def post_users(self, username: str, password: str, email: str, recaptcha: str):
+        async with aiohttp.ClientSession(raise_for_status=True) as sess:
+            params = {
+                "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
+                "response": recaptcha
+            }
+
+            async with sess.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
+                data = await resp.json()
+
+                if data["success"] is False:
+                    abort(400, "Invalid captcha")
+
         users = await User.get_any(True, username=username, email=email).first()
 
         if users is not None:
             abort(400, "Username and/or email already in use")
 
-        user = User(username=username, email=email, bio=bio)
+        user = User(username=username, email=email)
 
         user.password = Authenticator.hash_password(password)
         user.last_pass_reset = datetime.now()
