@@ -1,4 +1,5 @@
 # Stdlib
+import asyncio
 import logging
 import os
 
@@ -13,8 +14,9 @@ from framework.mailer import Mailer
 from framework.sayonika import Sayonika
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS", "loop")
 
+loop = asyncio.get_event_loop()
 SETTINGS = {
     # Default
     "SERVER_BIND": "localhost",
