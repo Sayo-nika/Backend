@@ -15,8 +15,6 @@ from framework.tokens import JWT
 
 __all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS")
 
-sayonika_instance = Sayonika()
-
 SETTINGS = {
     # Default
     "SERVER_BIND": "localhost",
@@ -35,11 +33,11 @@ SETTINGS.update({
     if k.startswith("SAYONIKA_")
 })
 
-# Use env vars to update config
-sayonika_instance.config.update(SETTINGS)
-
+logger = logging.getLogger("Sayonika")
+sayonika_instance = Sayonika()
+jwt_service = JWT(SETTINGS)
+mailer = Mailer()
 limiter = Limiter(
-    sayonika_instance,
     key_func=get_remote_address,
     default_limits=SETTINGS.get(
         "RATELIMITS",
@@ -47,10 +45,8 @@ limiter = Limiter(
     ).split(";")
 )
 
-logger = logging.getLogger("Sayonika")
-logger.setLevel(logging.INFO)
-
-jwt_service = JWT(SETTINGS)
-
-mailer = Mailer()
+# Use env vars to update config
+sayonika_instance.config.update(SETTINGS)
+limiter.init_app(sayonika_instance)
 mailer.init_app(sayonika_instance)
+logger.setLevel(logging.INFO)
