@@ -4,17 +4,19 @@ import logging
 import os
 
 # External Libraries
+from aioredis import ConnectionsPool
 import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 # Sayonika Internals
 from framework.db import db
+from framework.init_later_redis import InitLaterRedis
 from framework.mailer import Mailer
 from framework.sayonika import Sayonika
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS", "loop")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS", "loop", "redis")
 
 loop = asyncio.get_event_loop()
 SETTINGS = {
@@ -27,6 +29,7 @@ SETTINGS = {
     "DB_PASS": "Nya",
     "DB_NAME": "sayonika",
     "JWT_SECRET": "testing123",
+    "REDIS_URL": "redis://localhost:6379/0",
     "EMAIL_BASE": "http://localhost:4444"
 }
 
@@ -45,6 +48,9 @@ limiter = Limiter(
         "RATELIMITS",
         "1 per 2 seconds;20 per minute;1000 per hour"
     ).split(";")
+)
+redis = InitLaterRedis(
+    ConnectionsPool(SETTINGS["REDIS_URL"], minsize=5, maxsize=10, loop=loop)
 )
 
 # Use env vars to update config

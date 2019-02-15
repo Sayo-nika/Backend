@@ -5,7 +5,6 @@ gino>=0.8.1
 sqlalchemy>=1.2.17
 simpleflake>=0.1.5
 pyjwt>=1.7.1
-hiredis>=1.0.0
 aioredis>=1.2.0
 aiofiles>=0.4.0
 webargs>=5.1.1.post0
