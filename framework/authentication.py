@@ -1,7 +1,5 @@
-# Stdlib
-import hashlib
-
 # External Libraries
+import bcrypt
 from quart import abort, request
 
 # Sayonika Internals
@@ -13,8 +11,6 @@ class Authenticator:
     """
     Class for checking permissions of users, and hashing passwords.
     """
-    hash_class = hashlib.sha3_512
-
     @classmethod
     async def has_authorized_access(cls, _, **kwargs) -> bool:
         """Checks if a user has a valid token and has verified email."""
@@ -88,6 +84,4 @@ class Authenticator:
     @classmethod
     def hash_password(cls, password: str) -> bytes:
         """Hashes a password and returns the digest."""
-        inst = cls.hash_class()
-        inst.update(password.encode())
-        return inst.digest()
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt())

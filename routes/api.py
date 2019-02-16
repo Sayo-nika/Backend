@@ -1,11 +1,11 @@
 # External Libraries
 import aiohttp
+import bcrypt
 from quart import abort, jsonify
 from sqlalchemy import or_
 from webargs import fields
 
 # Sayonika Internals
-from framework.authentication import Authenticator
 from framework.models import Mod, User
 from framework.objects import jwt_service, SETTINGS
 from framework.quart_webargs import use_kwargs
@@ -25,10 +25,10 @@ class Userland(RouteCog):
     @use_kwargs({
         "username": fields.Str(required=True),
         "password": fields.Str(required=True),
-        "recaptcha": fields.Str(required=True)
+        # "recaptcha": fields.Str(required=True)
     }, locations=("json",))
-    async def login(self, username: str, password: str, recaptcha: str):
-        async with aiohttp.ClientSession(raise_for_status=True) as sess:
+    async def login(self, username: str, password: str, recaptcha: str=None):
+        """async with aiohttp.ClientSession(raise_for_status=True) as sess:
             params = {
                 # TODO: switch to invisible v3 captcha when vue-recaptcha-v3 gets fixed.
                 "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
@@ -46,14 +46,14 @@ class Userland(RouteCog):
 
                 # if data["score"] < 0.5:
                 #     # TODO: send verification email when score is too low
-                #     abort(400, "Possibly a bot")
+                #     abort(400, "Possibly a bot")"""
 
         user = await User.get_any(True, username=username, email=username).first()
 
         if not user:
             abort(400, "Invalid username or email")
 
-        if Authenticator.hash_password(password) != user.password:
+        if not bcrypt.checkpw(password.encode(), user.password):
             abort(400, "Invalid password")
 
         if not user.email_verified:
