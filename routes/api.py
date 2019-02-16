@@ -30,7 +30,8 @@ class Userland(RouteCog):
     async def login(self, username: str, password: str, recaptcha: str):
         async with aiohttp.ClientSession(raise_for_status=True) as sess:
             params = {
-                "secret": SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"],
+                # TODO: switch to invisible v3 captcha when vue-recaptcha-v3 gets fixed.
+                "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
                 "response": recaptcha
             }
 
@@ -43,9 +44,9 @@ class Userland(RouteCog):
                 if data["action"] != "login":
                     abort(400, "Invalid captcha action")
 
-                if data["score"] < 0.5:
-                    # TODO: send verification email when score is too low
-                    abort(400, "Possibly a bot")
+                # if data["score"] < 0.5:
+                #     # TODO: send verification email when score is too low
+                #     abort(400, "Possibly a bot")
 
         user = await User.get_any(True, username=username, email=username).first()
 
