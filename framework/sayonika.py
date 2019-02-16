@@ -7,7 +7,7 @@ from os.path import sep
 from quart import Quart
 
 # Sayonika Internals
-from framework.error_handlers.error_4xx import all_4xx
+from framework.error_handlers.error_handlers import exception_handlers
 from framework.jsonutils import CombinedEncoder
 
 __all__ = ("Sayonika",)
@@ -26,7 +26,7 @@ class Sayonika(Quart):
 
         self.json_encoder = CombinedEncoder
 
-        for code, func in all_4xx.items():
+        for code, func in exception_handlers.items():
             self.register_error_handler(code, func)
 
     def gather(self, route_dir: str):
