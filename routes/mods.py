@@ -192,7 +192,7 @@ class Mods(RouteCog):
         "status": EnumField(ModStatus),
         "icon": None
     }, locations=("json",))
-    async def patch_mod(self, mod_id: str = None, **kwargs):
+    async def patch_mod(self, mod_id: str = None, is_private_beta: bool = None, playtesters: List[str] = None, **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
