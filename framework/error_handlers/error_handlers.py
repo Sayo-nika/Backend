@@ -27,4 +27,6 @@ exception_handlers = {
     for code in exception_codes
 }
 
-exception_handlers[429] = error_handler(lambda err: Response(f"Ratelimit for this endpoint: {err.description}", 429))
+exception_handlers[429] = error_handler(
+    lambda err: make_auto_future(Response(f"Ratelimit for this endpoint: {err.description}", 429))
+)
