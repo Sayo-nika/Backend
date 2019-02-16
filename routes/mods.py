@@ -108,7 +108,7 @@ class Mods(RouteCog):
         "icon": None
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
-                        status: str, icon: str):
+                        status: str, icon: str, is_private_beta: bool = None, playtesters: List[str] = None):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
@@ -129,9 +129,6 @@ class Mods(RouteCog):
                 abort(400, f"Unknown user '{author['id']}'")
 
         authors.append({"id": user_id, "role": AuthorRole.Owner})
-
-        playtesters: List[str] = None
-        is_private_beta: bool = None
 
         if is_private_beta is not None:
             mod.is_private_beta = is_private_beta
