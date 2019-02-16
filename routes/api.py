@@ -25,10 +25,10 @@ class Userland(RouteCog):
     @use_kwargs({
         "username": fields.Str(required=True),
         "password": fields.Str(required=True),
-        # "recaptcha": fields.Str(required=True)
+        "recaptcha": fields.Str(required=True)
     }, locations=("json",))
-    async def login(self, username: str, password: str, recaptcha: str=None):
-        """async with aiohttp.ClientSession(raise_for_status=True) as sess:
+    async def login(self, username: str, password: str, recaptcha: str):
+        async with aiohttp.ClientSession(raise_for_status=True) as sess:
             params = {
                 # TODO: switch to invisible v3 captcha when vue-recaptcha-v3 gets fixed.
                 "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
@@ -46,7 +46,7 @@ class Userland(RouteCog):
 
                 # if data["score"] < 0.5:
                 #     # TODO: send verification email when score is too low
-                #     abort(400, "Possibly a bot")"""
+                #     abort(400, "Possibly a bot")
 
         user = await User.get_any(True, username=username, email=username).first()
 
