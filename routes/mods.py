@@ -139,7 +139,6 @@ class Mods(RouteCog):
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
                 if playtester not in seen:
-                    unique_id.append(playtester)
                     seen.add(playtester)
 
 
