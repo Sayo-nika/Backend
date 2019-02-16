@@ -146,7 +146,7 @@ class Mods(RouteCog):
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
-        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in unique_id])
+        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in seen])
 
         return jsonify(mod.to_dict())
 
