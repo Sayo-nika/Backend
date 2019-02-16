@@ -16,7 +16,7 @@ class Mod(db.Model, Base):
     tagline = db.Column(db.Unicode(100))
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode())
-    is_private_beta = db.Column(db.Boolean())
+    is_private_beta = db.Column(db.Boolean(), default=False)
     category = db.Column(db.Enum(ModCategory), default=ModCategory.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
     released_at = db.Column(db.Date(), nullable=True)
