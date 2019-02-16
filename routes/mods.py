@@ -10,7 +10,7 @@ from sqlalchemy import and_, func
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters
 from framework.objects import db, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -23,9 +23,6 @@ from framework.utils import paginate
 class AuthorSchema(Schema):
     id = fields.Str()
     role = EnumField(AuthorRole)
-
-class PlaytesterSchema(Schema):
-    id = fields.Str()
 
 class ModSorting(Enum):
     title = 1
@@ -104,9 +101,9 @@ class Mods(RouteCog):
         "tagline": fields.Str(required=True, validate=validate.Length(max=100)),
         "description": fields.Str(required=True, validate=validate.Length(max=10000)),
         "website": fields.Url(required=True),
-        "is_private_beta": fields.Url(required=True),
+        "is_private_beta": fields.Bool(),
         "authors": fields.List(fields.Nested(AuthorSchema), required=True),
-        "playtesters": fields.list(fields.Nested(PlaytesterSchema), required=True),
+        "playtesters": fields.List(fields.Str()),
         "status": EnumField(ModStatus, required=True),
         "icon": None
     }, locations=("json",))
@@ -122,7 +119,7 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status)
+        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status, is_private_beta=is_private_beta)
 
         for i, author in enumerate(authors):
             if author["id"] == user_id:
@@ -133,9 +130,21 @@ class Mods(RouteCog):
 
         authors.append({"id": user_id, "role": AuthorRole.Owner})
 
+        playtesters: List[str] = None
+        is_private_beta: bool = None
+
+        if is_private_beta is not None:
+            mod.is_private_beta = is_private_beta
+
+        if playtesters is not None:
+            for playtester in playtesters:
+                if not await User.exists(playtester):
+                    abort(400, f"Unknown user '{playtester}'")
+
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
+        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
 
         return jsonify(mod.to_dict())
 
@@ -173,7 +182,9 @@ class Mods(RouteCog):
         "tagline": fields.Str(validate=validate.Length(max=100)),
         "description": fields.Str(validate=validate.Length(max=10000)),
         "website": fields.Url(),
-        "authors": fields.List(fields.Nested(AuthorSchema)),
+        "is_private_beta": fields.Bool(),
+        "authors": fields.List(fields.Nested(AuthorSchema), required=True),
+        "playtesters": fields.List(fields.Str()),
         "status": EnumField(ModStatus),
         "icon": None
     }, locations=("json",))
@@ -183,6 +194,7 @@ class Mods(RouteCog):
 
         mod = await Mod.get(mod_id)
         updates = mod.update()
+        playtesters = await Playtesters.get(mod_id)
 
         authors = kwargs.pop('authors') if 'authors' in kwargs else None
 
@@ -196,20 +208,35 @@ class Mods(RouteCog):
                 and_(ModAuthors.user_id == author["id"], ModAuthors.mod_id == mod_id)
             ).gino.first()]
 
+        if playtesters is not None:
+            for playtester in playtesters:
+                if not await User.exists(playtester):
+                    abort(400, f"Unknown user '{playtester}'")
+
         await updates.apply()
         await ModAuthors.insert().gino.all(*[
             dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors
         ])
+        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
 
         return jsonify(mod.to_dict())
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
     async def get_download(self, mod_id: str):
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
+
         mod = await Mod.get(mod_id)
 
         if mod is None:
             abort(404, "Unknown mod")
+        if user_id is None and mod.is_private_beta:
+            abort(403, "Private beta mods requires authentication.")
+        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id,
+                     Playtesters.mod_id == mod.id)).gino.all():
+            abort(403, "You are not enrolled to the private beta.")
         elif not mod.zip_url:
             abort(404, "Mod has no download")
 
