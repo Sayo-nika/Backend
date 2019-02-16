@@ -136,8 +136,6 @@ class Mods(RouteCog):
         if playtesters is not None:
             for playtester in playtesters:
                 seen = set()
-                unique_id = []
-
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
                 if playtester not in seen:
@@ -198,7 +196,6 @@ class Mods(RouteCog):
 
         mod = await Mod.get(mod_id)
         updates = mod.update()
-        playtesters = await Playtesters.get(mod_id)
 
         authors = kwargs.pop('authors') if 'authors' in kwargs else None
 
