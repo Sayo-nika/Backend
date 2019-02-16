@@ -1,7 +1,6 @@
 # Stdlib
 from enum import Enum
 from typing import List
-from collections import set
 
 # External Libraries
 from marshmallow import Schema
