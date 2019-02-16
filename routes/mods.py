@@ -119,7 +119,7 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status, is_private_beta=is_private_beta)
+        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status)
 
         for i, author in enumerate(authors):
             if author["id"] == user_id:
@@ -183,7 +183,7 @@ class Mods(RouteCog):
         "description": fields.Str(validate=validate.Length(max=10000)),
         "website": fields.Url(),
         "is_private_beta": fields.Bool(),
-        "authors": fields.List(fields.Nested(AuthorSchema), required=True),
+        "authors": fields.List(fields.Nested(AuthorSchema)),
         "playtesters": fields.List(fields.Str()),
         "status": EnumField(ModStatus),
         "icon": None
