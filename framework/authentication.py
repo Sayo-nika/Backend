@@ -10,14 +10,14 @@ from framework.objects import jwt_service
 
 
 class Authenticator:
+    """
+    Class for checking permissions of users, and hashing passwords.
+    """
     hash_class = hashlib.sha3_512
-
-    # def __init__(self, settings: dict):
-    #     # `settings` is the dict of all ENV vars starting with SAYONIKA_
-    #     pass
 
     @classmethod
     async def has_authorized_access(cls, _, **kwargs) -> bool:
+        """Checks if a user has a valid token and has verified email."""
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -47,6 +47,7 @@ class Authenticator:
 
     @classmethod
     async def has_supporter_features(cls) -> bool:
+        """Check if a user is a supporter."""
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -66,6 +67,7 @@ class Authenticator:
 
     @classmethod
     async def has_admin_access(cls) -> bool:
+        """Check if a user is an admin."""
         token = request.headers.get("Authorization", request.cookies.get('token'))
 
         if token is None:
@@ -85,6 +87,7 @@ class Authenticator:
 
     @classmethod
     def hash_password(cls, password: str) -> bytes:
+        """Hashes a password and returns the digest."""
         inst = cls.hash_class()
         inst.update(password.encode())
         return inst.digest()

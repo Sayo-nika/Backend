@@ -30,6 +30,7 @@ class Sayonika(Quart):
             self.register_error_handler(code, func)
 
     def gather(self, route_dir: str):
+        """Gathers and registers all routes in a specified directory."""
         for path in glob.glob(f"{route_dir}/**.py"):
             module = importlib.import_module(path.replace(sep, '.')[:-3])
 

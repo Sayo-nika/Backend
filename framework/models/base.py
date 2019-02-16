@@ -11,14 +11,17 @@ from framework.objects import db
 
 
 class Base:
+    """Base utility class for models to inherit from."""
     id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
 
     @classmethod
     async def exists(cls: db.Model, id_: str) -> bool:
+        """Check if a model exists with the given id."""
         return bool(await cls.select('id').where(cls.id == id_).gino.scalar())
 
     @classmethod
     def get_any(cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs) -> Gino:
+        """Get models that match any of the given kwargs, with them optionally being case insensitive."""
         if not kwargs:
             raise ValueError('No kwargs provided')
 

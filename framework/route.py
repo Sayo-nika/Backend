@@ -11,9 +11,7 @@ __all__ = ("route", "Route", "multiroute")
 
 
 def route(path, **kwargs):
-    """
-    Wraps a function to turn it into a `Route`.
-    """
+    """Wraps a function into a route."""
 
     def decorator(func):
         return Route(func, path, **kwargs)
@@ -25,6 +23,7 @@ routes = {}
 
 
 def multiroute(path, methods=["GET"], other_methods=[]):
+    """Wraps a function into a route that can have different handlers for different methods."""
     if path not in routes:
         routes[path] = {"methods": methods + other_methods}
 
@@ -44,9 +43,7 @@ def multiroute(path, methods=["GET"], other_methods=[]):
 
 
 class Route:
-    """
-    Route class wrapper to register them on the application
-    """
+    """Wrapper for detatched routes that get registered at a later time."""
 
     def __init__(self, func, path: str, **kwargs):
         self.func = func
@@ -56,6 +53,7 @@ class Route:
         self.kwargs['strict_slashes'] = False  # Don't care about dangling / on routes.
 
     def register(self, core: Sayonika):
+        """Registers the route under a Sayonika instance."""
         func = functools.partial(self.func, self.parent)
         core.add_url_rule(self.path, self.func.__name__, func, **self.kwargs)
 

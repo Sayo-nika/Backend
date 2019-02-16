@@ -31,6 +31,7 @@ class MailSubjects:
 
 
 class Mailer(Mail):
+    """Extension of flask_mail's Mail to provide functionality for sending templates."""
     # XXX: switch to redis soon
     cached_templates = {}
 

@@ -7,7 +7,8 @@ from quart.json import JSONEncoder
 
 
 class EnumJSONEncoder(JSONEncoder):
-    def default(self, o):  # pylint: disable=method-hidden
+    """JSON encoder for encoding enum values."""
+    def default(self, o):
         if isinstance(o, Enum):
             return o.value
 
@@ -15,6 +16,7 @@ class EnumJSONEncoder(JSONEncoder):
 
 
 class DatetimeJSONEncoder(JSONEncoder):
+    """JSON encoder for encoding datetime objects."""
     def default(self, o):
         if isinstance(o, datetime):
             return o.isoformat()
@@ -23,6 +25,7 @@ class DatetimeJSONEncoder(JSONEncoder):
 
 
 class TimedletaJSONEncoder(JSONEncoder):
+    """JSON encoder for encoding timedelta objects."""
     def default(self, o):
         if isinstance(o, timedelta):
             return round(o.total_seconds() * 1000)
@@ -31,4 +34,5 @@ class TimedletaJSONEncoder(JSONEncoder):
 
 
 class CombinedEncoder(EnumJSONEncoder, DatetimeJSONEncoder, TimedletaJSONEncoder):
+    """JSON encoder that inherits functionality of other custom encoders."""
     pass

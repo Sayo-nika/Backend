@@ -12,9 +12,7 @@ __all__ = ("json", "requires_login", "requires_admin")
 
 
 def json(func):
-    """
-    Wraps a function to return a unified JSON format
-    """
+    """Wraps a route to return a preformatted JSON format with other response details."""
 
     @wraps(func)
     async def inner(*args, **kwargs):
@@ -29,7 +27,7 @@ def json(func):
         result = _json.dumps({
             "result": data,
             "status": response.status_code,
-            "success": 200 <= response.status_code < 300
+            "success": response.status_code < 400
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
@@ -43,6 +41,8 @@ def json(func):
 
 
 def requires_login(func):
+    """Makes a route require login to access."""
+
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_authorized_access(*args, **kwargs):
@@ -53,6 +53,8 @@ def requires_login(func):
 
 
 def requires_admin(func):
+    """Makes a route require a user to be an admin to access."""
+
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_admin_access():
@@ -63,6 +65,8 @@ def requires_admin(func):
 
 
 def requires_supporter(func):
+    """Makes a route require a user to be a supporter to access."""
+
     @wraps(func)
     async def inner(*args, **kwargs):
         if await Authenticator.has_supporter_features():

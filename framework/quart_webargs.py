@@ -33,7 +33,7 @@ class QuartParser(AsyncParser):
     DEFAULT_VALIDATION_STATUS = 400
 
     def parse_view_args(self, req: quart.Request, name: str, field: Field):
-        """Pull a value from the request's ``view_args``."""
+        """Pull a value from the request's view_args`."""
         return core.get_value(req.view_args, name, field)
 
     async def parse_json(self, req: quart.Request, name: str, field: Field):
@@ -99,7 +99,7 @@ class QuartParser(AsyncParser):
         abort(400, exc=error, messages={"json": ["Invalid JSON body."]})
 
     def get_default_request(self):
-        """Override to use Flask's thread-local request objec by default"""
+        """Override to use Quart's thread-local request object by default"""
         return quart.request
 
 

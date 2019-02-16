@@ -7,9 +7,7 @@ from quart import Response, request
 
 # Moved out of response_wrappers.py due to circular imports
 def error_handler(func):
-    """
-    Similar to `json`, but a different format
-    """
+    """Wrapper for error handlers that returns a similar format as `route_wrappers.json`."""
 
     async def inner(*args, **kwargs):
         response = await func(*args, **kwargs)
@@ -23,7 +21,7 @@ def error_handler(func):
         result = json.dumps({
             "error": text,
             "status": response.status_code,
-            "success": 200 <= response.status_code < 300
+            "success": response.status_code < 400
         }, indent=4 if request.args.get("pretty") == "true" else None)
 
         return Response(
