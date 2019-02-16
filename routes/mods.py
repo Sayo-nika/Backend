@@ -24,6 +24,8 @@ class AuthorSchema(Schema):
     id = fields.Str()
     role = EnumField(AuthorRole)
 
+class PlaytesterSchema(Schema):
+    id = fields.Str()
 
 class ModSorting(Enum):
     title = 1
@@ -102,7 +104,9 @@ class Mods(RouteCog):
         "tagline": fields.Str(required=True, validate=validate.Length(max=100)),
         "description": fields.Str(required=True, validate=validate.Length(max=10000)),
         "website": fields.Url(required=True),
+        "is_private_beta": fields.Url(required=True),
         "authors": fields.List(fields.Nested(AuthorSchema), required=True),
+        "playtesters": fields.list(fields.Nested(PlaytesterSchema), required=True),
         "status": EnumField(ModStatus, required=True),
         "icon": None
     }, locations=("json",))

@@ -16,6 +16,7 @@ class Mod(db.Model, Base):
     tagline = db.Column(db.Unicode(100))
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode())
+    is_private_beta = db.Column(db.Boolean())
     category = db.Column(db.Enum(ModCategory), default=ModCategory.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
     released_at = db.Column(db.Date(), nullable=True)
@@ -30,5 +31,11 @@ class ModAuthors(db.Model):
     __tablename__ = "user_mods"
 
     role = db.Column(db.Enum(AuthorRole), default=AuthorRole.Unassigned)
+    user_id = db.Column(None, db.ForeignKey("users.id"))
+    mod_id = db.Column(None, db.ForeignKey("mods.id"))
+
+class Playtesters(db.Model):
+    __tablename__ = "mod_playtesters"
+
     user_id = db.Column(None, db.ForeignKey("users.id"))
     mod_id = db.Column(None, db.ForeignKey("mods.id"))
