@@ -1,6 +1,7 @@
 # Stdlib
 from enum import Enum
 from typing import List
+from collections import set
 
 # External Libraries
 from marshmallow import Schema
@@ -138,13 +139,20 @@ class Mods(RouteCog):
 
         if playtesters is not None:
             for playtester in playtesters:
+                seen = set()
+                unique_id = []
+
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
+                if playtester not in seen:
+                    unique_id.append(playtester)
+                    seen.add(playtester)
+
 
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
-        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
+        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in unique_id])
 
         return jsonify(mod.to_dict())
 
@@ -212,6 +220,8 @@ class Mods(RouteCog):
             for playtester in playtesters:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
+                elif await Playtesters.query.where(and_(Playtesters.user_id == playtester, Playtesters.mod_id == mod.id)).gino.all():
+                    abort(400, f"{playtester} is already enrolled.")
 
         await updates.apply()
         await ModAuthors.insert().gino.all(*[
@@ -234,8 +244,7 @@ class Mods(RouteCog):
             abort(404, "Unknown mod")
         if user_id is None and mod.is_private_beta:
             abort(403, "Private beta mods requires authentication.")
-        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id,
-                     Playtesters.mod_id == mod.id)).gino.all():
+        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id, Playtesters.mod_id == mod.id)).gino.all():
             abort(403, "You are not enrolled to the private beta.")
         elif not mod.zip_url:
             abort(404, "Mod has no download")
