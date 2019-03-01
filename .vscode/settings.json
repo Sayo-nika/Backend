@@ -1,4 +1,3 @@
 {
-    "python.formatting.provider": "yapf",
-    "python.linting.flake8Args": ["--config", ".snekrc"]
+    "python.formatting.provider": "yapf"
 }
