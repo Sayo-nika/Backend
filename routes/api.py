@@ -7,7 +7,7 @@ from webargs import fields
 
 # Sayonika Internals
 from framework.models import Mod, User
-from framework.objects import jwt_service, SETTINGS
+from framework.objects import SETTINGS, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route
 from framework.route_wrappers import json

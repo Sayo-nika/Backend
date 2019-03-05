@@ -4,8 +4,8 @@ import logging
 import os
 
 # External Libraries
-from aioredis import ConnectionsPool
 import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
+from aioredis import ConnectionsPool
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from owo import Client as OWOClient

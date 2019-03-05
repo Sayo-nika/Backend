@@ -2,11 +2,10 @@
 import sys
 
 # External Libraries
-from aioredis.commands import Redis
 from sqlalchemy.engine.url import URL
 
 # Sayonika Internals
-from framework.objects import SETTINGS, db, sayonika_instance, loop, redis
+from framework.objects import SETTINGS, db, loop, redis, sayonika_instance
 
 
 async def setup_db():

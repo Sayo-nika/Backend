@@ -12,7 +12,7 @@ from webargs import fields, validate
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
 from framework.models import Mod, User, Review, ModAuthors, UserFavorites
-from framework.objects import mailer, jwt_service, SETTINGS
+from framework.objects import SETTINGS, mailer, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login

@@ -14,7 +14,7 @@ from webargs import fields, validate
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters
-from framework.objects import db, jwt_service, owo
+from framework.objects import db, owo, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -159,7 +159,8 @@ class Mods(RouteCog):
         if icon_mimetype not in ACCEPTED_MIMETYPES:
             abort(400, "`icon` mimetype should either be 'image/png' or 'image/jpeg'")
 
-        icon_sample = base64.b64decode(icon_data[:44])  # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        icon_sample = base64.b64decode(icon_data[:44])
         icon_type = data_is_acceptable_img(icon_sample)
 
         if icon_type is None:
@@ -175,7 +176,8 @@ class Mods(RouteCog):
         # Pre-requirements for mod banner (determine proper type and size).
         banner_mimetype, banner_data = DATA_URI_RE.match(banner)
 
-        banner_sample = base64.b64decode(banner_data[:44])  # Get first 33 bytes of banner data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        # Get first 33 bytes of banner data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        banner_sample = base64.b64decode(banner_data[:44])
         banner_type = data_is_acceptable_img(banner_sample)
 
         if banner_type is None:
@@ -260,7 +262,8 @@ class Mods(RouteCog):
         "status": EnumField(ModStatus),
         "icon": None
     }, locations=("json",))
-    async def patch_mod(self, mod_id: str = None, is_private_beta: bool = None, playtesters: List[str] = None, **kwargs):
+    async def patch_mod(self, mod_id: str = None, is_private_beta: bool = None, playtesters: List[str] = None,
+                        **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
@@ -283,7 +286,10 @@ class Mods(RouteCog):
             for playtester in playtesters:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
-                elif await Playtesters.query.where(and_(Playtesters.user_id == playtester, Playtesters.mod_id == mod.id)).gino.all():
+                elif await Playtesters.query.where(and_(
+                    Playtesters.user_id == playtester,
+                    Playtesters.mod_id == mod.id)
+                ).gino.all():
                     abort(400, f"{playtester} is already enrolled.")
 
         await updates.apply()
@@ -307,7 +313,8 @@ class Mods(RouteCog):
             abort(404, "Unknown mod")
         if user_id is None and mod.is_private_beta:
             abort(403, "Private beta mods requires authentication.")
-        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id, Playtesters.mod_id == mod.id)).gino.all():
+        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id, Playtesters.mod_id == mod.id))\
+                .gino.all():
             abort(403, "You are not enrolled to the private beta.")
         elif not mod.zip_url:
             abort(404, "Mod has no download")
