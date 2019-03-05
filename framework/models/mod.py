@@ -12,7 +12,8 @@ class Mod(db.Model, Base):
     __tablename__ = "mods"
 
     title = db.Column(db.Unicode(64), unique=True)
-    icon = db.Column(db.Unicode(), nullable=True)
+    icon = db.Column(db.Unicode())
+    banner = db.Column(db.Unicode())
     tagline = db.Column(db.Unicode(100))
     description = db.Column(db.Unicode(10000))
     website = db.Column(db.Unicode())
@@ -33,6 +34,7 @@ class ModAuthors(db.Model):
     role = db.Column(db.Enum(AuthorRole), default=AuthorRole.Unassigned)
     user_id = db.Column(None, db.ForeignKey("users.id"))
     mod_id = db.Column(None, db.ForeignKey("mods.id"))
+
 
 class Playtesters(db.Model):
     __tablename__ = "mod_playtesters"

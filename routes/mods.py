@@ -1,5 +1,8 @@
 # Stdlib
+import base64
 from enum import Enum
+import imghdr
+import re
 from typing import List
 
 # External Libraries
@@ -11,7 +14,7 @@ from webargs import fields, validate
 
 # Sayonika Internals
 from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters
-from framework.objects import db, jwt_service
+from framework.objects import db, jwt_service, owo
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -24,6 +27,7 @@ class AuthorSchema(Schema):
     id = fields.Str()
     role = EnumField(AuthorRole)
 
+
 class ModSorting(Enum):
     title = 1
     rating = 2
@@ -32,6 +36,18 @@ class ModSorting(Enum):
     downloads = 5
 
 
+def data_is_acceptable_img(data: str) -> bool:
+    """Check if a given file data is a PNG or JPEG."""
+    return imghdr.test_png(data, None) or imghdr.test_jpeg(data, None)
+
+
+def get_b64_size(data: bytes):
+    """Get the size of data encoded in base64."""
+    return (len(data) * 3) / 4 - data.count(b"=", -2)
+
+
+ACCEPTED_MIMETYPES = ("image/png", "image/jpeg")
+DATA_URI_RE = re.compile(r"data:([a-z]/[a-z-.+]);base64,([a-zA-Z0-9/+]+)")
 sorters = {
     ModSorting.title: Mod.title,
     # ModSorting.rating: lambda ascending:
@@ -101,14 +117,30 @@ class Mods(RouteCog):
         "tagline": fields.Str(required=True, validate=validate.Length(max=100)),
         "description": fields.Str(required=True, validate=validate.Length(max=10000)),
         "website": fields.Url(required=True),
-        "is_private_beta": fields.Bool(),
-        "authors": fields.List(fields.Nested(AuthorSchema), required=True),
-        "playtesters": fields.List(fields.Str()),
         "status": EnumField(ModStatus, required=True),
-        "icon": None
+        "authors": fields.List(fields.Nested(AuthorSchema), required=True),
+        "icon": fields.Str(
+            validate=validate.Regexp(
+                DATA_URI_RE,
+                error=("`icon` should be a data uri like 'data:image/png;base64,<data>' or "
+                       "'data:image/jpeg;base64,<data>'")
+            ),
+            required=True
+        ),
+        "banner": fields.Str(
+            validate=validate.Regexp(
+                DATA_URI_RE,
+                error=("`banner` should be a data uri like 'data:image/png;base64,<data>' or "
+                       "'data:image/jpeg;base64,<data>'"),
+            ),
+            required=True
+        ),
+        "is_private_beta": fields.Bool(missing=False),
+        "playtesters": fields.List(fields.Str()),
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
-                        status: str, icon: str, is_private_beta: bool = None, playtesters: List[str] = None):
+                        status: str, icon: str, banner: str, is_private_beta: bool = None,
+                        playtesters: List[str] = None):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
@@ -119,7 +151,42 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        mod = Mod(title=title, tagline=tagline, description=description, website=website, icon=icon, status=status)
+        mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status)
+
+        # Pre-requirements for mod icon (determine proper type and size).
+        icon_mimetype, icon_data = DATA_URI_RE.match(icon)
+
+        if icon_mimetype not in ACCEPTED_MIMETYPES:
+            abort(400, "`icon` mimetype should either be 'image/png' or 'image/jpeg'")
+
+        icon_sample = base64.b64decode(icon_data[:44])  # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        icon_type = data_is_acceptable_img(icon_sample)
+
+        if icon_type is None:
+            abort(400, "`icon` data is not PNG or JPEG")
+        elif icon_type != icon_mimetype.split('/')[1]:  # Compare type from mimetype and actual image data type
+            abort(400, "`icon` mimetype and data mismatch")
+
+        icon_size = get_b64_size(icon_data.encode('utf-8'))
+
+        if icon_size > (5 * 1000 * 1000):  # Check if image is larger than 5MB
+            abort(400, "`icon` should be less than 5MB")
+
+        # Pre-requirements for mod banner (determine proper type and size).
+        banner_mimetype, banner_data = DATA_URI_RE.match(banner)
+
+        banner_sample = base64.b64decode(banner_data[:44])  # Get first 33 bytes of banner data and decode. See: https://stackoverflow.com/a/34287968/8778928
+        banner_type = data_is_acceptable_img(banner_sample)
+
+        if banner_type is None:
+            abort(400, "`banner` data is not PNG or JPEG")
+        elif banner_type != banner_mimetype.split('/')[1]:  # Compare type from mimetype and actual image data type
+            abort(400, "`banner` mimetype and data mismatch")
+
+        banner_size = get_b64_size(banner_data.encode('utf-8'))
+
+        if banner_size > (5 * 1000 * 1000):  # Check if image is larger than 5MB
+            abort(400, "`banner` should be less than 5MB")
 
         for i, author in enumerate(authors):
             if author["id"] == user_id:
@@ -134,18 +201,22 @@ class Mods(RouteCog):
             mod.is_private_beta = is_private_beta
 
         if playtesters is not None:
+            if not is_private_beta:
+                abort(400, "No need for `playtesters` if open beta")
+
             for playtester in playtesters:
-                seen = set()
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
-                if playtester not in seen:
-                    seen.add(playtester)
 
+        img_urls = await owo.async_upload_files(base64.b64decode(icon_data), base64.b64decode(banner_data))
+
+        mod.icon = img_urls["file_0"]
+        mod.banner = img_urls["file_1"]
 
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
-        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in seen])
+        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
 
         return jsonify(mod.to_dict())
 
