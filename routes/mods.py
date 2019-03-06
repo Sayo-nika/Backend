@@ -20,7 +20,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate
+from framework.utils import paginate, verify_recaptcha
 
 
 class AuthorSchema(Schema):
@@ -137,10 +137,17 @@ class Mods(RouteCog):
         ),
         "is_private_beta": fields.Bool(missing=False),
         "playtesters": fields.List(fields.Str()),
+        "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
-                        status: str, icon: str, banner: str, is_private_beta: bool = None,
+                        status: str, icon: str, banner: str, recaptcha: str, is_private_beta: bool = None,
                         playtesters: List[str] = None):
+        score = await verify_recaptcha(recaptcha, "create_mod")
+
+        if score < 0.5:
+            # TODO: discuss what to do here
+            abort(400, "Possibly a bot")
+
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
