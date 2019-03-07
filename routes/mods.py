@@ -47,7 +47,7 @@ def get_b64_size(data: bytes):
 
 
 ACCEPTED_MIMETYPES = ("image/png", "image/jpeg")
-DATA_URI_RE = re.compile(r"data:([a-z]/[a-z-.+]);base64,([a-zA-Z0-9/+]+)")
+DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+)")
 sorters = {
     ModSorting.title: Mod.title,
     # ModSorting.rating: lambda ascending:
@@ -118,6 +118,7 @@ class Mods(RouteCog):
         "description": fields.Str(required=True, validate=validate.Length(max=10000)),
         "website": fields.Url(required=True),
         "status": EnumField(ModStatus, required=True),
+        "category": EnumField(ModCategory, required=True),
         "authors": fields.List(fields.Nested(AuthorSchema), required=True),
         "icon": fields.Str(
             validate=validate.Regexp(
@@ -140,8 +141,8 @@ class Mods(RouteCog):
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
-                        status: str, icon: str, banner: str, recaptcha: str, is_private_beta: bool = None,
-                        playtesters: List[str] = None):
+                        status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
+                        is_private_beta: bool = None, playtesters: List[str] = None):
         score = await verify_recaptcha(recaptcha, "create_mod")
 
         if score < 0.5:
@@ -158,10 +159,11 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
-        mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status)
+        mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status,
+                  category=category)
 
         # Pre-requirements for mod icon (determine proper type and size).
-        icon_mimetype, icon_data = DATA_URI_RE.match(icon)
+        icon_mimetype, icon_data = DATA_URI_RE.match(icon).groups()
 
         if icon_mimetype not in ACCEPTED_MIMETYPES:
             abort(400, "`icon` mimetype should either be 'image/png' or 'image/jpeg'")
@@ -181,7 +183,7 @@ class Mods(RouteCog):
             abort(400, "`icon` should be less than 5MB")
 
         # Pre-requirements for mod banner (determine proper type and size).
-        banner_mimetype, banner_data = DATA_URI_RE.match(banner)
+        banner_mimetype, banner_data = DATA_URI_RE.match(banner).groups()
 
         # Get first 33 bytes of banner data and decode. See: https://stackoverflow.com/a/34287968/8778928
         banner_sample = base64.b64decode(banner_data[:44])
@@ -225,7 +227,9 @@ class Mods(RouteCog):
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
-        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
+
+        if playtesters is not None:
+            await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
 
         return jsonify(mod.to_dict())
 
