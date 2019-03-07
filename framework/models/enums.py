@@ -3,11 +3,11 @@ from enum import Enum
 
 
 class ModStatus(Enum):
+    Archived = 0
     Planning = 1
     InDevelopment = 2
-    PlayTesting = 3
+    Playtesting = 3
     Released = 4
-    Archived = 5
 
 
 class ConnectionType(Enum):
