@@ -11,4 +11,5 @@ webargs>=5.1.1.post0
 marshmallow_enum>=1.4.1
 aiohttp>=3.5.4
 bcrypt>=3.1.6
+pycryptodomex>=3.7.3
 git+https://owo.codes/whats-this/owo.py.git
