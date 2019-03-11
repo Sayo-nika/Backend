@@ -1,8 +1,13 @@
+# Stdlib
+import base64
+
 # External Libraries
+from Cryptodome.Cipher import AES
 from quart import abort, jsonify, request
 
 # Sayonika Internals
 from framework.models import Mod
+from framework.objects import SETTINGS
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
@@ -53,6 +58,25 @@ class Admin(RouteCog):
         await Mod.delete.where(Mod.id == mod_id).gino.status()
 
         return jsonify(True)
+
+    @route("/api/v1/admin/decrypt_tb", methods=["POST"])
+    @requires_admin
+    @json
+    async def post_decrypt_tb(self):
+        data = await request.get_data()
+        data = data.strip()
+
+        if b"." not in data or data.count(b".") != 1:
+            abort(400, "Bad data")
+
+        nonce, digest = data.split(b".")
+        nonce = base64.b64decode(nonce)
+        digest = base64.decodebytes(digest.replace(rb'\n', b'\n'))
+
+        c = AES.new(SETTINGS["AES_KEY"], AES.MODE_CTR, nonce=nonce)
+        parsed = c.decrypt(digest).decode()
+
+        return jsonify(parsed)
 
 
 def setup(core: Sayonika):
