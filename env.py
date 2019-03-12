@@ -29,7 +29,7 @@ fileConfig(config.config_file_name)
 
 
 def get_url():
-    return URL("asyncpg", username=SETTINGS["DB_NAME"], password=SETTINGS["DB_PASS"], host=SETTINGS["DB_HOST"],
+    return URL("postgres", username=SETTINGS["DB_NAME"], password=SETTINGS["DB_PASS"], host=SETTINGS["DB_HOST"],
                port=SETTINGS["DB_PORT"], database=SETTINGS["DB_NAME"])
 
 
