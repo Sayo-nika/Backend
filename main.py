@@ -9,10 +9,15 @@ from framework.objects import SETTINGS, db, loop, redis, sayonika_instance
 
 
 async def setup_db():
-    # Set binding for Gino, and create all tables.
-    await db.set_bind(URL("asyncpg", username=SETTINGS["DB_NAME"], password=SETTINGS["DB_PASS"],
-                          host=SETTINGS["DB_HOST"], port=SETTINGS["DB_PORT"], database=SETTINGS["DB_NAME"]))
-    await db.gino.create_all()  # TODO: move to Alembic before v1 for proper DB migrations
+    # Set binding for Gino and init Redis
+    await db.set_bind(URL(
+        "postgres",
+        username=SETTINGS["DB_NAME"],
+        password=SETTINGS["DB_PASS"],
+        host=SETTINGS["DB_HOST"],
+        port=SETTINGS["DB_PORT"],
+        database=SETTINGS["DB_NAME"]
+    ))
 
     await redis.setup()
 

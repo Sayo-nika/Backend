@@ -8,7 +8,7 @@ from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 
-sys.path.append(os.getcwd())
+sys.path.append(os.path.dirname(os.path.realname(__file__)))
 
 # Sayonika Internals
 from framework.db import db as target_metadata  # isort:skip
@@ -29,21 +29,20 @@ fileConfig(config.config_file_name)
 
 
 def get_url():
-    return URL("postgres", username=SETTINGS["DB_NAME"], password=SETTINGS["DB_PASS"], host=SETTINGS["DB_HOST"],
-               port=SETTINGS["DB_PORT"], database=SETTINGS["DB_NAME"])
+    return URL(
+        "postgres",
+        username=SETTINGS["DB_NAME"],
+        password=SETTINGS["DB_PASS"],
+        host=SETTINGS["DB_HOST"],
+        port=SETTINGS["DB_PORT"],
+        database=SETTINGS["DB_NAME"]
+    )
 
 
 def run_migrations_offline():
-    """Run migrations in 'offline' mode.
-
-    This configures the context with just a URL
-    and not an Engine, though an Engine is acceptable
-    here as well.  By skipping the Engine creation
-    we don't even need a DBAPI to be available.
-
-    Calls to context.execute() here emit the given string to the
-    script output.
-
+    """
+    Run migrations in 'offline' mode. Run when passing the `--sql flag to alembic.
+    Outputs an SQL string which is used to upgrade/downgrade a database, instead of working on it through alembic.
     """
     url = get_url()
     context.configure(
@@ -55,11 +54,9 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+    """
+    Run migrations in 'online' mode.
+    Connects to the given database and automatically applies the wanted upgrades/downgrades.
     """
     connectable = create_engine(get_url())
 
