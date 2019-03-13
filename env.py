@@ -8,7 +8,7 @@ from alembic import context
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import URL
 
-sys.path.append(os.path.dirname(os.path.realname(__file__)))
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 # Sayonika Internals
 from framework.db import db as target_metadata  # isort:skip

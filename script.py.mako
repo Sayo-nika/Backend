@@ -1,13 +1,15 @@
-"""${message}
+# flake8: noqa: E128
+"""
+${message}
 
 Revision ID: ${up_revision}
 Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
-
 """
+# External Libraries
 from alembic import op
-import sqlalchemy as sa
 import gino
+import sqlalchemy as sa
 ${imports if imports else ""}
 
 # revision identifiers, used by Alembic.
