@@ -71,7 +71,7 @@ class Admin(RouteCog):
 
         nonce, digest = data.split(b".")
         nonce = base64.b64decode(nonce)
-        digest = base64.decodebytes(digest.replace(rb'\n', b'\n'))
+        digest = base64.decodebytes(digest.replace(rb"\n", b"\n"))
 
         c = AES.new(SETTINGS["AES_KEY"], AES.MODE_CTR, nonce=nonce)
         parsed = c.decrypt(digest).decode()

@@ -32,7 +32,7 @@ class Sayonika(Quart):
     def gather(self, route_dir: str):
         """Gathers and registers all routes in a specified directory."""
         for path in glob.glob(f"{route_dir}/**.py"):
-            module = importlib.import_module(path.replace(sep, '.')[:-3])
+            module = importlib.import_module(path.replace(sep, ".")[:-3])
 
             if not hasattr(module, "setup"):
                 raise ValueError(

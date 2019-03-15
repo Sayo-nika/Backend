@@ -13,7 +13,7 @@ import framework.models
 
 class JWT:
     """Class for generating and validating JWTs."""
-    algorithm = 'HS256'
+    algorithm = "HS256"
 
     def __init__(self, settings: dict):
         # `settings` is the dict of all ENV vars starting with SAYONIKA_

@@ -14,7 +14,7 @@ class Authenticator:
     @classmethod
     async def has_authorized_access(cls, _, **kwargs) -> bool:
         """Checks if a user has a valid token and has verified email."""
-        token = request.headers.get("Authorization", request.cookies.get('token'))
+        token = request.headers.get("Authorization", request.cookies.get("token"))
 
         if token is None:
             abort(401, "No token")
@@ -44,7 +44,7 @@ class Authenticator:
     @classmethod
     async def has_supporter_features(cls) -> bool:
         """Check if a user is a supporter."""
-        token = request.headers.get("Authorization", request.cookies.get('token'))
+        token = request.headers.get("Authorization", request.cookies.get("token"))
 
         if token is None:
             abort(401)
@@ -64,7 +64,7 @@ class Authenticator:
     @classmethod
     async def has_admin_access(cls) -> bool:
         """Check if a user is an admin."""
-        token = request.headers.get("Authorization", request.cookies.get('token'))
+        token = request.headers.get("Authorization", request.cookies.get("token"))
 
         if token is None:
             abort(401)

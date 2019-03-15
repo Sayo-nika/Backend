@@ -21,13 +21,13 @@ class MailTemplates(Enum):
 
 
 class MailSubjects:
-    account_suspended = 'Your account has beeen suspended'
-    mod_approved = 'Your mod has been approved'
-    mod_deleted = 'Your mod has been deleted'
-    mod_rejected = 'Your mod has been rejected'
-    mod_removed = 'Your mod has been removed'
-    mod_submitted = 'Your mod has been submitted'
-    verify_email = 'Verify your email'
+    account_suspended = "Your account has beeen suspended"
+    mod_approved = "Your mod has been approved"
+    mod_deleted = "Your mod has been deleted"
+    mod_rejected = "Your mod has been rejected"
+    mod_removed = "Your mod has been removed"
+    mod_submitted = "Your mod has been submitted"
+    verify_email = "Verify your email"
 
 
 class Mailer(Mail):
@@ -69,6 +69,6 @@ class Mailer(Mail):
             template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
         msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=getattr(MailSubjects, mail_type.value),
-                      recipients=[recipient], html=template, charset='utf-8')
+                      recipients=[recipient], html=template, charset="utf-8")
 
         self.send(msg)

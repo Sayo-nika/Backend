@@ -44,7 +44,7 @@ exception_handlers[429] = error_handler(
 async def handle_500(err):
     from framework.objects import SETTINGS, jwt_service
 
-    tb = ''.join(
+    tb = "".join(
         format_exception(type(err), err, err.__traceback__)
     )
     token = request.headers.get("Authorization", request.cookies.get("token"))
