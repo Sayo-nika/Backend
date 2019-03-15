@@ -46,6 +46,31 @@ def get_b64_size(data: bytes):
     return (len(data) * 3) / 4 - data.count(b"=", -2)
 
 
+def validate_img(uri: str, name: str, *, return_data: bool = True):
+    """Validates an image to be used for banner or icon."""
+    # Pre-requirements for uri (determine proper type and size).
+    mimetype, data = DATA_URI_RE.match(uri).groups()
+
+    if mimetype not in ACCEPTED_MIMETYPES:
+        abort(400, f"`{name}` mimetype should either be 'image/png' or 'image/jpeg'")
+
+    # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
+    sample = base64.b64decode(data[:44])
+    type_ = data_is_acceptable_img(sample)
+
+    if type_ is None:
+        abort(400, f"`{name}` data is not PNG or JPEG")
+    elif type_ != mimetype.split("/")[1]:  # Compare type from mimetype and actual image data type
+        abort(400, f"`{name}` mimetype and data mismatch")
+
+    size = get_b64_size(data.encode("utf-8"))
+
+    if size > (5 * 1000 * 1000):  # Check if image is larger than 5MB
+        abort(400, f"`{name}` should be less than 5MB")
+
+    return (mimetype, data) if return_data else None
+
+
 ACCEPTED_MIMETYPES = ("image/png", "image/jpeg")
 DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+)")
 sorters = {
@@ -94,7 +119,7 @@ class Mods(RouteCog):
 
         if rating is not None:
             query = query.where(rating + 1 > db.select([
-                func.avg(Review.select('rating').where(Review.mod_id == Mod.id))
+                func.avg(Review.select("rating").where(Review.mod_id == Mod.id))
             ]) >= rating)
 
         if status is not None:
@@ -115,7 +140,7 @@ class Mods(RouteCog):
     @use_kwargs({
         "title": fields.Str(required=True, validate=validate.Length(max=64)),
         "tagline": fields.Str(required=True, validate=validate.Length(max=100)),
-        "description": fields.Str(required=True, validate=validate.Length(max=10000)),
+        "description": fields.Str(required=True, validate=validate.Length(min=100, max=10000)),
         "website": fields.Url(required=True),
         "status": EnumField(ModStatus, required=True),
         "category": EnumField(ModCategory, required=True),
@@ -162,42 +187,8 @@ class Mods(RouteCog):
         mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status,
                   category=category)
 
-        # Pre-requirements for mod icon (determine proper type and size).
-        icon_mimetype, icon_data = DATA_URI_RE.match(icon).groups()
-
-        if icon_mimetype not in ACCEPTED_MIMETYPES:
-            abort(400, "`icon` mimetype should either be 'image/png' or 'image/jpeg'")
-
-        # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
-        icon_sample = base64.b64decode(icon_data[:44])
-        icon_type = data_is_acceptable_img(icon_sample)
-
-        if icon_type is None:
-            abort(400, "`icon` data is not PNG or JPEG")
-        elif icon_type != icon_mimetype.split('/')[1]:  # Compare type from mimetype and actual image data type
-            abort(400, "`icon` mimetype and data mismatch")
-
-        icon_size = get_b64_size(icon_data.encode('utf-8'))
-
-        if icon_size > (5 * 1000 * 1000):  # Check if image is larger than 5MB
-            abort(400, "`icon` should be less than 5MB")
-
-        # Pre-requirements for mod banner (determine proper type and size).
-        banner_mimetype, banner_data = DATA_URI_RE.match(banner).groups()
-
-        # Get first 33 bytes of banner data and decode. See: https://stackoverflow.com/a/34287968/8778928
-        banner_sample = base64.b64decode(banner_data[:44])
-        banner_type = data_is_acceptable_img(banner_sample)
-
-        if banner_type is None:
-            abort(400, "`banner` data is not PNG or JPEG")
-        elif banner_type != banner_mimetype.split('/')[1]:  # Compare type from mimetype and actual image data type
-            abort(400, "`banner` mimetype and data mismatch")
-
-        banner_size = get_b64_size(banner_data.encode('utf-8'))
-
-        if banner_size > (5 * 1000 * 1000):  # Check if image is larger than 5MB
-            abort(400, "`banner` should be less than 5MB")
+        icon_mimetype, icon_data = validate_img(icon, "icon")
+        banner_mimetype, banner_data = validate_img(banner, "banner")
 
         for i, author in enumerate(authors):
             if author["id"] == user_id:
@@ -219,10 +210,19 @@ class Mods(RouteCog):
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
 
-        img_urls = await owo.async_upload_files(base64.b64decode(icon_data), base64.b64decode(banner_data))
+        # Decode images and add name for mimetypes
+        icon_data = base64.b64decode(icon_data)
+        banner_data = base64.b64decode(banner_data)
+        icon_ext = icon_mimetype.split("/")[1]
+        banner_ext = banner_mimetype.split("/")[1]
 
-        mod.icon = img_urls["file_0"]
-        mod.banner = img_urls["file_1"]
+        icon_data.name = f"icon.{icon_ext}"
+        banner_data.name = f"banner.{banner_ext}"
+
+        img_urls = await owo.async_upload_files(icon_data, banner_data)
+
+        mod.icon = img_urls[icon_data.name]
+        mod.banner = img_urls[banner_data.name]
 
         await mod.create()
         await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
@@ -265,26 +265,35 @@ class Mods(RouteCog):
     @use_kwargs({
         "title": fields.Str(validate=validate.Length(max=64)),
         "tagline": fields.Str(validate=validate.Length(max=100)),
-        "description": fields.Str(validate=validate.Length(max=10000)),
+        "description": fields.Str(validate=validate.Length(min=100, max=10000)),
         "website": fields.Url(),
-        "is_private_beta": fields.Bool(),
-        "authors": fields.List(fields.Nested(AuthorSchema)),
-        "playtesters": fields.List(fields.Str()),
         "status": EnumField(ModStatus),
-        "icon": None
+        "category": EnumField(ModCategory),
+        "authors": fields.List(fields.Nested(AuthorSchema)),
+        "icon": fields.Str(
+            validate=validate.Regexp(
+                DATA_URI_RE,
+                error=("`icon` should be a data uri like 'data:image/png;base64,<data>' or "
+                       "'data:image/jpeg;base64,<data>'")
+            )
+        ),
+        "banner": fields.Str(
+            validate=validate.Regexp(
+                DATA_URI_RE,
+                error=("`banner` should be a data uri like 'data:image/png;base64,<data>' or "
+                       "'data:image/jpeg;base64,<data>'"),
+            )
+        ),
+        "is_private_beta": fields.Bool(),
+        "playtesters": fields.List(fields.Str())
     }, locations=("json",))
-    async def patch_mod(self, mod_id: str = None, is_private_beta: bool = None, playtesters: List[str] = None,
-                        **kwargs):
+    async def patch_mod(self, mod_id: str = None, authors: List[dict] = None, playtesters: List[str] = None,
+                        icon: str = None, banner: str = None, **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
         mod = await Mod.get(mod_id)
-        updates = mod.update()
-
-        authors = kwargs.pop('authors') if 'authors' in kwargs else None
-
-        for attr, item in kwargs.items():
-            updates = updates.update(**{attr: item})
+        updates = mod.update(**kwargs)
 
         if authors is not None:
             authors = [author for author in authors if await User.exists(author["id"])]
@@ -302,6 +311,36 @@ class Mods(RouteCog):
                     Playtesters.mod_id == mod.id)
                 ).gino.all():
                     abort(400, f"{playtester} is already enrolled.")
+
+        to_upload = []
+
+        if icon is not None:
+            icon_mimetype, icon_data = validate_img(icon, "icon")
+            icon_data = base64.b64decode(icon_data)
+            icon_ext = icon_mimetype.split("/")[1]
+            icon_data.name = f"icon.{icon_ext}"
+
+            to_upload.append(icon_data)
+
+        if banner is not None:
+            banner_mimetype, banner_data = validate_img(banner, "banner")
+            banner_data = base64.b64decode(banner_data)
+            banner_ext = banner_mimetype.split("/")[1]
+            banner_data.name = f"banner.{banner_ext}"
+
+            to_upload.append(banner_data)
+
+        img_urls = await owo.async_upload_files(*to_upload)
+        img_updates = {}
+
+        if icon is not None:
+            img_updates["icon"] = img_urls[icon_data.name]
+
+        if banner is not None:
+            img_updates["banner"] = img_urls[banner_data.name]
+
+        # Lump together image updates because lessening operations or some shit.
+        updates = updates.update(**img_updates)
 
         await updates.apply()
         await ModAuthors.insert().gino.all(*[
