@@ -52,14 +52,14 @@ def validate_img(uri: str, name: str, *, return_data: bool = True):
     mimetype, data = DATA_URI_RE.match(uri).groups()
 
     if mimetype not in ACCEPTED_MIMETYPES:
-        abort(400, f"`{name}` mimetype should either be 'image/png' or 'image/jpeg'")
+        abort(400, f"`{name}` mimetype should either be 'image/png', 'image/jpeg', or 'image/webp'")
 
     # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
     sample = base64.b64decode(data[:44])
     type_ = data_is_acceptable_img(sample)
 
     if type_ is None:
-        abort(400, f"`{name}` data is not PNG or JPEG")
+        abort(400, f"`{name}` data is not PNG, JPEG, or WEBP")
     elif type_ != mimetype.split("/")[1]:  # Compare type from mimetype and actual image data type
         abort(400, f"`{name}` mimetype and data mismatch")
 
@@ -71,7 +71,7 @@ def validate_img(uri: str, name: str, *, return_data: bool = True):
     return (mimetype, data) if return_data else None
 
 
-ACCEPTED_MIMETYPES = ("image/png", "image/jpeg")
+ACCEPTED_MIMETYPES = ("image/png", "image/jpeg", "image/webp")
 DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+)")
 sorters = {
     ModSorting.title: Mod.title,
