@@ -72,7 +72,7 @@ def validate_img(uri: str, name: str, *, return_data: bool = True):
 
 
 ACCEPTED_MIMETYPES = ("image/png", "image/jpeg", "image/webp")
-DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+=+)")
+DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+=*)")
 sorters = {
     ModSorting.title: Mod.title,
     # ModSorting.rating: lambda ascending:
