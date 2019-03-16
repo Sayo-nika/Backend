@@ -29,3 +29,13 @@ async def verify_recaptcha(token: str, action: str) -> float:
                 abort(400, "Invalid captcha action")
 
             return data["score"]
+
+
+class NamedBytes(bytes):
+    """Helper class for having `bytes` with `name` for owo."""
+
+    def __new__(cls, *args, name: str=None, **kwargs):
+        inst = bytes.__new__(cls, *args, **kwargs)
+        inst.name = name
+
+        return inst

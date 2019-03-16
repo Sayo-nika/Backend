@@ -20,7 +20,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate, verify_recaptcha
+from framework.utils import paginate, verify_recaptcha, NamedBytes
 
 
 class AuthorSchema(Schema):
@@ -216,8 +216,8 @@ class Mods(RouteCog):
         icon_ext = icon_mimetype.split("/")[1]
         banner_ext = banner_mimetype.split("/")[1]
 
-        icon_data.name = f"icon.{icon_ext}"
-        banner_data.name = f"banner.{banner_ext}"
+        icon_data = NamedBytes(icon_data, name=f"icon.{icon_ext}")
+        banner_data = NamedBytes(banner_data, name=f"banner.{banner_ext}")
 
         img_urls = await owo.async_upload_files(icon_data, banner_data)
 
@@ -317,16 +317,18 @@ class Mods(RouteCog):
         if icon is not None:
             icon_mimetype, icon_data = validate_img(icon, "icon")
             icon_data = base64.b64decode(icon_data)
+
             icon_ext = icon_mimetype.split("/")[1]
-            icon_data.name = f"icon.{icon_ext}"
+            icon_data = NamedBytes(icon_data, name=f"icon.{icon_ext}")
 
             to_upload.append(icon_data)
 
         if banner is not None:
             banner_mimetype, banner_data = validate_img(banner, "banner")
             banner_data = base64.b64decode(banner_data)
+
             banner_ext = banner_mimetype.split("/")[1]
-            banner_data.name = f"banner.{banner_ext}"
+            banner_data = NamedBytes(banner_data, name=f"banner.{banner_ext}")
 
             to_upload.append(banner_data)
 
