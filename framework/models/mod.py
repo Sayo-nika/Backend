@@ -5,7 +5,7 @@ from datetime import datetime
 from framework.objects import db
 
 from .base import Base
-from .enums import ModStatus, AuthorRole, ModCategory
+from .enums import ModStatus, AuthorRole, ModCategory, ModColor
 
 
 class Mod(db.Model, Base):
@@ -20,9 +20,11 @@ class Mod(db.Model, Base):
     is_private_beta = db.Column(db.Boolean(), default=False)
     category = db.Column(db.Enum(ModCategory), default=ModCategory.Unassigned)
     nsfw = db.Column(db.Boolean(), default=False)
+    theme_color = db.Column(db.Enum(ModColor))
     released_at = db.Column(db.Date(), nullable=True)
     last_updated = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.Enum(ModStatus))
+    # TODO: probably turn this into a table and have better metrics for determining DLs
     downloads = db.Column(db.BigInteger(), default=0)
     download_url = db.Column(db.Unicode(), nullable=True)
     verified = db.Column(db.Boolean(), default=False)

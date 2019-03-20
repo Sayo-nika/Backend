@@ -3,7 +3,7 @@ import base64
 from enum import Enum
 import imghdr
 import re
-from typing import List
+from typing import List, Optional, Tuple
 
 # External Libraries
 from marshmallow import Schema
@@ -13,7 +13,7 @@ from sqlalchemy import and_, func
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor
 from framework.objects import db, owo, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -41,12 +41,12 @@ def data_is_acceptable_img(data: str) -> bool:
     return imghdr.test_png(data, None) or imghdr.test_jpeg(data, None)
 
 
-def get_b64_size(data: bytes):
+def get_b64_size(data: bytes) -> int:
     """Get the size of data encoded in base64."""
     return (len(data) * 3) / 4 - data.count(b"=", -2)
 
 
-def validate_img(uri: str, name: str, *, return_data: bool = True):
+def validate_img(uri: str, name: str, *, return_data: bool = True) -> Optional[Tuple[str, str]]:
     """Validates an image to be used for banner or icon."""
     # Pre-requirements for uri (determine proper type and size).
     mimetype, data = DATA_URI_RE.match(uri).groups()
@@ -163,11 +163,12 @@ class Mods(RouteCog):
         ),
         "is_private_beta": fields.Bool(missing=False),
         "playtesters": fields.List(fields.Str()),
+        "color": EnumField(ModColor, missing=ModColor.Default),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
-                        is_private_beta: bool = None, playtesters: List[str] = None):
+                        color: ModColor, is_private_beta: bool = None, playtesters: List[str] = None):
         score = await verify_recaptcha(recaptcha, "create_mod")
 
         if score < 0.5:
@@ -185,7 +186,7 @@ class Mods(RouteCog):
             abort(400, "A mod with that title already exists")
 
         mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status,
-                  category=category)
+                  category=category, color=ModColor)
 
         icon_mimetype, icon_data = validate_img(icon, "icon")
         banner_mimetype, banner_data = validate_img(banner, "banner")
@@ -284,6 +285,7 @@ class Mods(RouteCog):
                        "'data:image/jpeg;base64,<data>'"),
             )
         ),
+        "color": EnumField(ModColor),
         "is_private_beta": fields.Bool(),
         "playtesters": fields.List(fields.Str())
     }, locations=("json",))
