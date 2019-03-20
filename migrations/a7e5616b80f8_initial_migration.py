@@ -19,8 +19,23 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
+# Create SQLAlchemy enum types here to prevent duplication later on. Needed since Alembic doesn't auto-drop enums
+# and often doesn't auto-create them, so we gotta do that manually.
+enums = {
+    "media_type": sa.Enum(MediaType),
+    "mod_status": sa.Enum(ModStatus),
+    "author_role": sa.Enum(AuthorRole),
+    "mod_category": sa.Enum(ModCategory),
+    "connection_type": sa.Enum(ConnectionType)
+}
+
 
 def upgrade():
+    op_bind = op.get_bind()
+
+    for enum in enums.values():
+        enum.create(op_bind, checkfirst=False)
+
     op.create_table("mods",
         sa.Column("id", sa.Unicode(), nullable=False),
         sa.Column("title", sa.Unicode(length=64), nullable=True),
@@ -30,11 +45,11 @@ def upgrade():
         sa.Column("description", sa.Unicode(length=10000), nullable=True),
         sa.Column("website", sa.Unicode(), nullable=True),
         sa.Column("is_private_beta", sa.Boolean(), nullable=True),
-        sa.Column("category", sa.Enum(ModCategory), nullable=True),
+        sa.Column("category", enums["mod_category"], nullable=True),
         sa.Column("nsfw", sa.Boolean(), nullable=True),
         sa.Column("released_at", sa.Date(), nullable=True),
         sa.Column("last_updated", sa.DateTime(), nullable=True),
-        sa.Column("status", sa.Enum(ModStatus), nullable=True),
+        sa.Column("status", enums["mod_status"], nullable=True),
         sa.Column("downloads", sa.BigInteger(), nullable=True),
         sa.Column("download_url", sa.Unicode(), nullable=True),
         sa.Column("verified", sa.Boolean(), nullable=True),
@@ -62,7 +77,7 @@ def upgrade():
     op.create_table("connections",
         sa.Column("id", sa.Unicode(), nullable=False),
         sa.Column("name", sa.Unicode(), nullable=True),
-        sa.Column("type", sa.Enum(ConnectionType), nullable=True),
+        sa.Column("type", enums["connection_type"], nullable=True),
         sa.Column("user", sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(["user"], ["users.id"]),
         sa.PrimaryKeyConstraint("id")
@@ -80,7 +95,7 @@ def upgrade():
     )
     op.create_table("media",
         sa.Column("id", sa.Unicode(), nullable=False),
-        sa.Column("type", sa.Enum(MediaType), nullable=True),
+        sa.Column("type", enums["media_type"], nullable=True),
         sa.Column("url", sa.Unicode(), nullable=True),
         sa.Column("mod_id", sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(["mod_id"], ["mods.id"]),
@@ -118,7 +133,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["user_id"], ["users.id"])
     )
     op.create_table("user_mods",
-        sa.Column("role", sa.Enum(AuthorRole), nullable=True),
+        sa.Column("role", enums["author_role"], nullable=True),
         sa.Column("user_id", sa.Unicode(), nullable=True),
         sa.Column("mod_id", sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(["mod_id"], ["mods.id"]),
@@ -158,3 +173,8 @@ def downgrade():
     op.drop_table("connections")
     op.drop_table("users")
     op.drop_table("mods")
+
+    op_bind = op.get_bind()
+
+    for enum in enums.values():
+        enum.drop(op_bind, checkfirst=False)
