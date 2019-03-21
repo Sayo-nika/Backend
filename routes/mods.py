@@ -185,6 +185,9 @@ class Mods(RouteCog):
         if mods is not None:
             abort(400, "A mod with that title already exists")
 
+        if status is ModStatus.archived:
+            abort(400, "Can't create a new archived mod")
+
         mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status,
                   category=category, color=ModColor)
 
