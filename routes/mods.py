@@ -163,7 +163,7 @@ class Mods(RouteCog):
         ),
         "is_private_beta": fields.Bool(missing=False),
         "playtesters": fields.List(fields.Str()),
-        "color": EnumField(ModColor, missing=ModColor.Default),
+        "color": EnumField(ModColor, missing=ModColor.default),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],

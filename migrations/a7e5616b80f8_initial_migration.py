@@ -31,11 +31,6 @@ enums = {
 
 
 def upgrade():
-    op_bind = op.get_bind()
-
-    for enum in enums.values():
-        enum.create(op_bind, checkfirst=False)
-
     op.create_table("mods",
         sa.Column("id", sa.Unicode(), nullable=False),
         sa.Column("title", sa.Unicode(length=64), nullable=True),
