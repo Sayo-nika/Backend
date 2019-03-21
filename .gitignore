@@ -2,6 +2,7 @@
 *.py[cod]
 venv/
 .vscode/
+__pycache__/
 
 *.zip
 node_modules/
