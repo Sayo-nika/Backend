@@ -22,6 +22,13 @@ async def setup_db():
     await redis.setup()
 
 
+@sayonika_instance.after_serving
+async def teardown():
+    sayonika_instance.aioh_sess.shutdown()
+    await db.pop_bind().close()
+    redis.close()
+
+
 sayonika_instance.debug = (len(sys.argv) > 1 and sys.argv[1] == "--debug")
 sayonika_instance.gather("routes")
 loop.run_until_complete(setup_db())

@@ -4,6 +4,7 @@ import importlib
 from os.path import sep
 
 # External Libraries
+from aiohttp import ClientSession, DummyCookieJar
 from quart import Quart
 
 # Sayonika Internals
@@ -21,10 +22,11 @@ class Sayonika(Quart):
     """
 
     def __init__(self):
-        self.route_dir = ""
         super().__init__("Sayonika")
 
+        self.route_dir = ""
         self.json_encoder = CombinedEncoder
+        self.aioh_sess = ClientSession(cookie_jar=DummyCookieJar(), raise_for_status=True)
 
         for code, func in exception_handlers.items():
             self.register_error_handler(code, func)

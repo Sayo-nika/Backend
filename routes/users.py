@@ -75,17 +75,16 @@ class Users(RouteCog):
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_users(self, username: str, password: str, email: str, recaptcha: str):
-        async with aiohttp.ClientSession(raise_for_status=True) as sess:
-            params = {
-                "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
-                "response": recaptcha
-            }
+        params = {
+            "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
+            "response": recaptcha
+        }
 
-            async with sess.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
-                data = await resp.json()
+        async with self.core.aioh_sess.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
+            data = await resp.json()
 
-                if data["success"] is False:
-                    abort(400, "Invalid captcha")
+            if data["success"] is False:
+                abort(400, "Invalid captcha")
 
         users = await User.get_any(True, username=username, email=email).first()
 

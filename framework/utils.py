@@ -12,23 +12,23 @@ def paginate(query: Query, page: int, limit: int = 50) -> Query:
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, action: str) -> float:
-    async with aiohttp.ClientSession(raise_for_status=True) as sess:
-        params = {
-            "secret": SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"],
-            "response": token
-        }
+async def verify_recaptcha(token: str, action: str, session: aiohttp.ClientSession) -> float:
+    """Verify an 'invisible' reCAPTCHA request."""
+    params = {
+        "secret": SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"],
+        "response": token
+    }
 
-        async with sess.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
-            data = await resp.json()
+    async with session.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
+        data = await resp.json()
 
-            if data["success"] is False:
-                abort(400, "Invalid captcha")
+        if data["success"] is False:
+            abort(400, "Invalid captcha")
 
-            if data["action"] != action:
-                abort(400, "Invalid captcha action")
+        if data["action"] != action:
+            abort(400, "Invalid captcha action")
 
-            return data["score"]
+    return data["score"]
 
 
 class NamedBytes(bytes):
