@@ -240,7 +240,10 @@ class Mods(RouteCog):
     @route("/api/v1/mods/recent_releases")
     @json
     async def get_recent_releases(self):
-        mods = await Mod.query.where(Mod.verified).order_by(Mod.released_at.desc()).limit(10).gino.all()
+        mods = await Mod.query.where(and_(
+            Mod.verified,
+            Mod.status == ModStatus.released
+        )).order_by(Mod.released_at.desc()).limit(10).gino.all()
         return jsonify(self.dict_all(mods))
 
     @route("/api/v1/mods/popular")

@@ -28,7 +28,7 @@ class UserSorting(Enum):
 
 sorters = {
     UserSorting.name: User.username,
-    UserSorting.joined_at: User.joined_at
+    UserSorting.joined_at: User.created_at
 }
 
 
