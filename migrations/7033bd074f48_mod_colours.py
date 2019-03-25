@@ -14,8 +14,8 @@ import sqlalchemy as sa
 from framework.models import ModColor
 
 # revision identifiers, used by Alembic.
-revision = '7033bd074f48'
-down_revision = 'a7e5616b80f8'
+revision = "7033bd074f48"
+down_revision = "a7e5616b80f8"
 branch_labels = None
 depends_on = None
 
@@ -25,11 +25,11 @@ mod_color = sa.Enum(ModColor)
 def upgrade():
     mod_color.create(op.get_bind(), checkfirst=False)
 
-    op.add_column('mods',
-        sa.Column('theme_color', mod_color, nullable=True)
+    op.add_column("mods",
+        sa.Column("theme_color", mod_color, nullable=True)
     )
 
 
 def downgrade():
-    op.drop_column('mods', 'theme_color')
+    op.drop_column("mods", "theme_color")
     mod_color.drop(op.get_bind(), checkfirst=False)

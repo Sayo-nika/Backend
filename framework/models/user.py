@@ -1,6 +1,3 @@
-# Stdlib
-from datetime import datetime
-
 # Sayonika Internals
 from framework.objects import db
 
@@ -21,7 +18,6 @@ class User(db.Model, Base):
     developer = db.Column(db.Boolean(), default=False)
     moderator = db.Column(db.Boolean(), default=False)
     editor = db.Column(db.Boolean(), default=False)
-    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
     email_verified = db.Column(db.Boolean(), default=False)
     password = db.Column(db.Binary())
     last_pass_reset = db.Column(db.DateTime())

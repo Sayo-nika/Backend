@@ -1,4 +1,5 @@
 # Stdlib
+from datetime import datetime
 from typing import List, Union
 
 # External Libraries
@@ -13,6 +14,7 @@ from framework.objects import db
 class Base:
     """Base utility class for models to inherit from."""
     id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     @classmethod
     async def exists(cls: db.Model, id_: str) -> bool:
