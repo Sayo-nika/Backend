@@ -1,6 +1,6 @@
 # flake8: noqa: E128
 """
-created_at
+Created at columns for all tables
 
 Revision ID: 593d015e8bff
 Revises: 7033bd074f48
