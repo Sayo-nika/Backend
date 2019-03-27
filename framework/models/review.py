@@ -9,6 +9,7 @@ class Review(db.Model, Base):
 
     rating = db.Column(db.Numeric())
     content = db.Column(db.Unicode(2000))
+    title = db.Column(db.Unicode(32))
     mod_id = db.Column(None, db.ForeignKey("mods.id"))
     author_id = db.Column(None, db.ForeignKey("users.id"))
 

@@ -399,9 +399,10 @@ class Mods(RouteCog):
             lambda x: 5 >= x >= 1,
             lambda x: x % 0.5 == 0
         ]),
-        "content": fields.Str(required=True, validate=validate.Length(max=2000))
+        "content": fields.Str(required=True, validate=validate.Length(max=2000)),
+        "title": fields.Str(required=True, validate=validate.Length(max=32))
     })
-    async def post_review(self, mod_id: str, rating: int, content: str):
+    async def post_review(self, mod_id: str, rating: int, content: str, title: str):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
@@ -409,7 +410,7 @@ class Mods(RouteCog):
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
-        review = await Review.create(content=content, rating=rating, author_id=user_id, mod_id=mod_id)
+        review = await Review.create(title=title, content=content, rating=rating, author_id=user_id, mod_id=mod_id)
 
         return jsonify(review.to_json())
 
