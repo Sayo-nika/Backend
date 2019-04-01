@@ -406,6 +406,9 @@ class Mods(RouteCog):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
+        if await Review.query.where(and_(Review.author_id == user_id, Review.mod_id == mod_id)).gino.first():
+            abort(400, "Review already exists")
+
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
