@@ -67,3 +67,9 @@ class AuthorRole(Enum):
     writer = 5
     musician = 6
     public_relations = 7
+
+
+class ReportType(Enum):
+    IPGViolation = 0
+    ConductViolation = 1
+    Dmca = 2
