@@ -70,6 +70,6 @@ class AuthorRole(Enum):
 
 
 class ReportType(Enum):
-    IPGViolation = 0
-    ConductViolation = 1
-    Dmca = 2
+    ipg_violation = 0
+    conduct_violation = 1
+    dmca = 2
