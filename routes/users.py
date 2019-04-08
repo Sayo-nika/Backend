@@ -144,18 +144,13 @@ class Users(RouteCog):
         "bio": fields.Str(validate=validate.Length(max=100)),
         "avatar": None
     }, locations=("json",))
-    async def patch_user(self, **kwargs):
+    async def patch_user(self, password: str = None, **kwargs):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
         user = await User.get(user_id)
-        updates = user.update()
-
-        password = kwargs.pop("password") if "password" in kwargs else None
-
-        for attr, item in kwargs.items():
-            updates = updates.update(**{attr: item})
+        updates = user.update(**kwargs)
 
         if password is not None:
             password = Authenticator.hash_password(password)
