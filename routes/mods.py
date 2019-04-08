@@ -3,17 +3,17 @@ import base64
 from enum import Enum
 import imghdr
 import re
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 # External Libraries
 from marshmallow import Schema
 from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters
 from framework.objects import db, owo, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -29,11 +29,20 @@ class AuthorSchema(Schema):
 
 
 class ModSorting(Enum):
-    title = 1
-    rating = 2
-    last_updated = 3
-    release_date = 4
-    downloads = 5
+    title = 0
+    rating = 1
+    last_updated = 2
+    release_date = 3
+    downloads = 4
+
+
+class ReviewSorting(Enum):
+    best = 0
+    newest = 1
+    oldest = 2
+    highest = 3
+    lowest = 4
+    funniest = 5
 
 
 def data_is_acceptable_img(data: str) -> bool:
@@ -73,12 +82,19 @@ def validate_img(uri: str, name: str, *, return_data: bool = True) -> Optional[T
 
 ACCEPTED_MIMETYPES = ("image/png", "image/jpeg", "image/webp")
 DATA_URI_RE = re.compile(r"data:([a-z]+/[a-z-.+]+);base64,([a-zA-Z0-9/+]+=*)")
-sorters = {
+mod_sorters = {
     ModSorting.title: Mod.title,
     # ModSorting.rating: lambda ascending:
     ModSorting.last_updated: Mod.last_updated,
     ModSorting.release_date: Mod.released_at,
     ModSorting.downloads: Mod.downloads
+}
+
+review_sorters = {
+    ReviewSorting.newest: Review.created_at,
+    ReviewSorting.oldest: Review.created_at.asc(),
+    ReviewSorting.highest: Review.rating,
+    ReviewSorting.lowest: Review.rating.asc()
 }
 
 
@@ -126,7 +142,7 @@ class Mods(RouteCog):
             query = query.where(Mod.status == status)
 
         if sort is not None:
-            sort_by = sorters[sort]
+            sort_by = mod_sorters[sort]
             query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
 
         results = await paginate(query, page, limit).gino.all()
@@ -383,11 +399,44 @@ class Mods(RouteCog):
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["GET"], other_methods=["POST"])
     @json
-    async def get_reviews(self, mod_id: str):
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=10),
+        "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5, "all"]), missing="all"),
+        "sort": EnumField(ReviewSorting, missing=ReviewSorting.best)
+    }, locations=("query",))
+    async def get_reviews(self, mod_id: str, page: int, limit: int, rating: Union[int, str],
+                          sort: ReviewSorting):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        reviews = await Review.query.where(Review.mod_id == mod_id).gino.all()
+        if not 1 <= limit <= 25:
+            limit = max(1, min(limit, 25))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        page = page - 1 if page > 0 else 0
+        query = Review.query.where(Review.mod_id == mod_id)
+
+        if review_sorters[sort]:
+            query = query.order_by(review_sorters[sort])
+        elif sort == ReviewSorting.best:
+            upvoters_count = select([func.count()]).where(ReviewUpvoters.review_id == Review.id).as_scalar()
+            downvoters_count = select([func.count()]).where(ReviewDownvoters.review_id == Review.id).as_scalar()
+            query = query.order_by(upvoters_count - downvoters_count)
+        elif sort == ReviewSorting.funniest:
+            # Get count of all funny ratings by review.
+            sub_order = select([func.count()]).where(ReviewFunnys.review_id == Review.id)
+            query = query.order_by(desc(sub_order))
+
+        if isinstance(rating, int):
+            values = [rating, rating + 0.5]
+
+            if rating == 1:
+                # Also get reviews with a 0.5 star rating, otherwise they'll never appear.
+                values.append(0.5)
+
+            query = query.where(Review.rating.in_(values))
+
+        reviews = await query.gino.all()
 
         return jsonify(self.dict_all(reviews))
 
@@ -396,6 +445,7 @@ class Mods(RouteCog):
     @json
     @use_kwargs({
         "rating": fields.Int(required=True, validate=[
+            # Only allow increments of 0.5, up to 5.
             lambda x: 5 >= x >= 1,
             lambda x: x % 0.5 == 0
         ]),
