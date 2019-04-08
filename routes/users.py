@@ -140,16 +140,21 @@ class Users(RouteCog):
     @use_kwargs({
         "username": fields.Str(validate=validate.Length(max=25)),
         "password": fields.Str(),
+        "old_password": fields.Str(required=True),
         "email": fields.Email(),
         "bio": fields.Str(validate=validate.Length(max=100)),
         "avatar": None
     }, locations=("json",))
-    async def patch_user(self, password: str = None, **kwargs):
+    async def patch_user(self, old_password: str, password: str = None, **kwargs):
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
         user = await User.get(user_id)
+
+        if Authenticator.hash_password(old_password) != user.password:
+            abort(403, "`old_password` doesn't match")
+
         updates = user.update(**kwargs)
 
         if password is not None:
