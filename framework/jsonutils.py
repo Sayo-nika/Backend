@@ -24,7 +24,7 @@ class DatetimeJSONEncoder(JSONEncoder):
         return super().default(o)
 
 
-class TimedletaJSONEncoder(JSONEncoder):
+class TimedeltaJSONEncoder(JSONEncoder):
     """JSON encoder for encoding timedelta objects."""
     def default(self, o):
         if isinstance(o, timedelta):
@@ -33,6 +33,6 @@ class TimedletaJSONEncoder(JSONEncoder):
         return super().default(o)
 
 
-class CombinedEncoder(EnumJSONEncoder, DatetimeJSONEncoder, TimedletaJSONEncoder):
+class CombinedEncoder(EnumJSONEncoder, DatetimeJSONEncoder, TimedeltaJSONEncoder):
     """JSON encoder that inherits functionality of other custom encoders."""
     pass
