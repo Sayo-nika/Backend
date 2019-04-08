@@ -185,7 +185,7 @@ class Mods(RouteCog):
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
                         color: ModColor, is_private_beta: bool = None, playtesters: List[str] = None):
-        score = await verify_recaptcha(recaptcha, "create_mod")
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "create_mod")
 
         if score < 0.5:
             # TODO: discuss what to do here
