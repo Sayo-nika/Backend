@@ -6,7 +6,7 @@ from Cryptodome.Cipher import AES
 from quart import abort, jsonify, request
 
 # Sayonika Internals
-from framework.models import Mod
+from framework.models import Mod, Report
 from framework.objects import SETTINGS
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
@@ -36,6 +36,26 @@ class Admin(RouteCog):
         mods = await paginate(Mod.query, page, limit).where(~Mod.verified).gino.all()
 
         return jsonify(self.to_dict(mods))
+
+    @route("/api/v1/mods/report_queue", methods=["GET"])
+    @requires_admin
+    @json
+    async def get_queue(self):
+        page = request.args.get("page")
+        limit = request.args.get("limit")
+        page = int(page) if page.isdigit() else 0
+        limit = int(limit) if limit.isdigit() else 50
+
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        page = page - 1 if page > 0 else 0
+
+        reports = await paginate(Report.query.order_by('mod_id'), page, limit).gino.all()
+        if reports:
+            return jsonify(self.to_dict(reports))
+        else:
+            return jsonify({})
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
