@@ -1,3 +1,6 @@
+# Stdlib
+from typing import Optional
+
 # External Libraries
 import aiohttp
 from quart import abort
