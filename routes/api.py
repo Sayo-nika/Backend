@@ -28,7 +28,7 @@ class Userland(RouteCog):
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def login(self, username: str, password: str, recaptcha: str):
-        score = await verify_recaptcha(recaptcha, "login")
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "login")
 
         if score < 0.5:
             # TODO: send email/other 2FA when below 0.5

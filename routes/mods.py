@@ -13,8 +13,8 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters
-from framework.objects import db, owo, jwt_service
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters, ReportType, Report
+from framework.objects import db, owo, jwt_service, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -185,7 +185,7 @@ class Mods(RouteCog):
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
                         color: ModColor, is_private_beta: bool = None, playtesters: List[str] = None):
-        score = await verify_recaptcha(recaptcha, "create_mod")
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "create_mod")
 
         if score < 0.5:
             # TODO: discuss what to do here
@@ -492,6 +492,25 @@ class Mods(RouteCog):
             abort(404, "Unknown mod")
 
         abort(501, "Coming soon")
+
+    @route("/api/v1/mods/<mod_id>/report", methods=["POST"])
+    @json
+    @use_kwargs({
+        "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
+        "type": EnumField(ReportType, required=True),
+        "recaptcha": fields.Str(required=True)
+    }, locations=("json",))
+    @requires_login
+    @limiter.limit("2 per hour")
+    async def report(self, mod_id: str, content: str, type: ReportType, recaptcha: str):
+        await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
+
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
+
+        report = await Report.create(content=content, author_id=user_id, mod_id=mod_id, type=type)
+        return jsonify(report.to_dict())
 
 
 def setup(core: Sayonika):

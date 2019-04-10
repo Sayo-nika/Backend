@@ -18,7 +18,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate
+from framework.utils import paginate, verify_recaptcha
 
 
 class UserSorting(Enum):
@@ -75,16 +75,8 @@ class Users(RouteCog):
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_users(self, username: str, password: str, email: str, recaptcha: str):
-        params = {
-            "secret": SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"],
-            "response": recaptcha
-        }
-
-        async with self.core.aioh_sess.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
-            data = await resp.json()
-
-            if data["success"] is False:
-                abort(400, "Invalid captcha")
+        """Register a user to the site."""
+        await verify_recaptcha(recaptcha, self.core.aioh_sess, version=2)
 
         users = await User.get_any(True, username=username, email=email).first()
 

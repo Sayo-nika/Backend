@@ -1,3 +1,6 @@
+# Stdlib
+from typing import Optional
+
 # External Libraries
 import aiohttp
 from quart import abort
@@ -12,10 +15,18 @@ def paginate(query: Query, page: int, limit: int = 50) -> Query:
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, action: str, session: aiohttp.ClientSession) -> float:
-    """Verify an 'invisible' reCAPTCHA request."""
+async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: int, action: Optional[str] = None) -> float:
+    """Verify a reCAPTCHA request."""
+
+    if version == 2:
+        secret = SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"]
+    elif version == 3:
+        secret = SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"]
+    else:
+        raise ValueError("Invalid reCAPTCHA version")
+
     params = {
-        "secret": SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"],
+        "secret": secret,
         "response": token
     }
 
@@ -25,10 +36,13 @@ async def verify_recaptcha(token: str, action: str, session: aiohttp.ClientSessi
         if data["success"] is False:
             abort(400, "Invalid captcha")
 
-        if data["action"] != action:
+        if version == 3 and action and data["action"] != action:
             abort(400, "Invalid captcha action")
 
-    return data["score"]
+    if version == 3:
+        return data["score"]
+    else:
+        return True
 
 
 class NamedBytes(bytes):
