@@ -272,7 +272,7 @@ class Mods(RouteCog):
 
         return jsonify(self.dict_all(mods))
 
-    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH"])
+    @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH", "DELETE"])
     @json
     async def get_mod(self, mod_id: str):
         mod = await Mod.get(mod_id)
@@ -282,7 +282,7 @@ class Mods(RouteCog):
 
         return jsonify(mod.to_dict())
 
-    @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET"])
+    @multiroute("/api/v1/mods/<mod_id>", methods=["PATCH"], other_methods=["GET", "DELETE"])
     @requires_login
     @json
     @use_kwargs({
@@ -373,6 +373,19 @@ class Mods(RouteCog):
             dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors
         ])
         await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
+
+        return jsonify(mod.to_dict())
+
+    @multiroute("/api/v1/mods/<mod_id>", methods=["DELETE"], other_methods=["PATCH", "GET"])
+    @requires_login
+    @json
+    async def get_mod(self, mod_id: str):
+        mod = await Mod.get(mod_id)
+        authors = await ModAuthors
+        if mod is None:
+            abort(404, "Unknown mod")
+
+        await Mod.delete.where(Mod.id == mod_id).gino.status()
 
         return jsonify(mod.to_dict())
 
