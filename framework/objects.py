@@ -32,7 +32,8 @@ SETTINGS = {
     "JWT_SECRET": "testing123",
     "AES_KEY": "this is a  pretty long key oh no",
     "REDIS_URL": "redis://localhost:6379/0",
-    "EMAIL_BASE": "http://localhost:4444"
+    "EMAIL_BASE": "http://localhost:4444",
+    "MEDIUM_PUBLICATION": "sayonika"
 }
 
 SETTINGS.update({

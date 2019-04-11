@@ -1,12 +1,14 @@
 # External Libraries
 import bcrypt
+from cachetools import TTLCache
+import json as json_
 from quart import abort, jsonify
-from sqlalchemy import or_
+from sqlalchemy import or_, func, and_
 from webargs import fields
 
 # Sayonika Internals
-from framework.models import Mod, User
-from framework.objects import jwt_service
+from framework.models import Mod, User, EditorsChoice
+from framework.objects import jwt_service, SETTINGS
 from framework.quart_webargs import use_kwargs
 from framework.route import route
 from framework.route_wrappers import json
@@ -15,7 +17,35 @@ from framework.sayonika import Sayonika
 from framework.utils import verify_recaptcha
 
 
+async def get_latest_medium_post(session):
+    """
+    Properly gets and parses the latest post from Medium.
+    Returns it as a nice simple object with no bs.
+    """
+    publication = SETTINGS["MEDIUM_PUBLICATION"]
+
+    async with session.get(f"https://medium.com/{publication}/latest?format=json") as resp:
+        # Have to get the response body as text instead of json, because Medium prepends "])}while(1);</x>" to the
+        # start of responses from this "endpoint" because it's unofficial I guess, and there's no "official" endpoint
+        # we can use. Thanks, Medium.
+        data = await resp.text()
+
+    # Replace the first instance of the shitty string (may be present in the article), and then parse.
+    data = data.replace("])}while(1);</x>", "", 1)
+    data = json_.loads(data)
+
+    post = data.payload.posts[0]
+
+    return {
+        "title": post["title"],
+        "body": post["previewContent"]["subtitle"],
+        url: f"https://medium.com/{publication}/{post['uniqueSlug']}"
+    }
+
+
 class Userland(RouteCog):
+    news_cache = TTLCache(1, 60 * 60)
+
     @staticmethod
     def dict_all(models):
         return [m.to_dict() for m in models]
@@ -92,6 +122,46 @@ class Userland(RouteCog):
         )).limit(5).gino.all()
 
         return jsonify(mods=self.dict_all(mods), users=self.dict_all(users))
+
+    @route("/api/v1/news", methods=["GET"])
+    @json
+    async def news(self):
+        if self.news_cache.get("news"):
+            return jsonify(self.news_cache["news"])
+
+        recent = await Mod.query.where(and_(
+            Mod.verified,
+            Mod.status == ModStatus.released
+        )).order_by(func.random()).limit(10).gino.first()
+        featured = await EditorsChoice.load(mod=Mod).where(EditorsChoice.featured).order_by(
+            EditorsChoice.created_at.desc()
+        ).gino.first()
+        blog = await get_latest_medium_post(self.core.aioh_sess)
+
+        recent = {
+            "type": 0,
+            "title": recent.title,
+            "body": recent.tagline,
+            "url": f"/mods/{recent.id}"
+        }
+        featured = {
+            "type": 1,
+            "title": featured.mod.title,
+            "body": featured.editors_notes,
+            "url": featured.article_url
+        }
+        blog = {
+            "type": 2,
+            **blog
+        }
+
+        self.news_cache["news"] = news = [
+            recent,
+            featured,
+            blog
+        ]
+
+        return jsonify(news)
 
 
 def setup(core: Sayonika):

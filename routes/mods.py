@@ -415,6 +415,7 @@ class Mods(RouteCog):
     @use_kwargs({
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=10),
+        # Probably won't work right now, will need union field.
         "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5, "all"]), missing="all"),
         "sort": EnumField(ReviewSorting, missing=ReviewSorting.best)
     }, locations=("query",))
