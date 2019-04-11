@@ -24,7 +24,7 @@ async def setup_db():
 
 @sayonika_instance.after_serving
 async def teardown():
-    sayonika_instance.aioh_sess.shutdown()
+    await sayonika_instance.aioh_sess.close()
     await db.pop_bind().close()
     redis.close()
 

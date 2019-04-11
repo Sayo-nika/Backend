@@ -7,7 +7,7 @@ from sqlalchemy import or_, func, and_
 from webargs import fields
 
 # Sayonika Internals
-from framework.models import Mod, User, EditorsChoice
+from framework.models import Mod, User, EditorsChoice, ModStatus
 from framework.objects import jwt_service, SETTINGS
 from framework.quart_webargs import use_kwargs
 from framework.route import route
@@ -34,12 +34,13 @@ async def get_latest_medium_post(session):
     data = data.replace("])}while(1);</x>", "", 1)
     data = json_.loads(data)
 
-    post = data.payload.posts[0]
+    post = data["payload"]["posts"][0]
 
+    # Make nice object :) (one that can be simply expanded with `**` for news).
     return {
         "title": post["title"],
         "body": post["previewContent"]["subtitle"],
-        url: f"https://medium.com/{publication}/{post['uniqueSlug']}"
+        "url": f"https://medium.com/{publication}/{post['uniqueSlug']}"
     }
 
 
