@@ -23,7 +23,7 @@ class Admin(RouteCog):
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
-    async def get_queue(self):
+    async def get_verify_queue(self):
         page = request.args.get("page")
         limit = request.args.get("limit")
         page = int(page) if page.isdigit() else 0
@@ -40,7 +40,7 @@ class Admin(RouteCog):
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
     @json
-    async def get_queue(self):
+    async def get_report_queue(self):
         page = request.args.get("page")
         limit = request.args.get("limit")
         page = int(page) if page.isdigit() else 0
@@ -51,7 +51,7 @@ class Admin(RouteCog):
 
         page = page - 1 if page > 0 else 0
 
-        reports = await paginate(Report.query.order_by('mod_id'), page, limit).gino.all()
+        reports = await paginate(Report.query.order_by("mod_id"), page, limit).gino.all()
         if reports:
             return jsonify(self.to_dict(reports))
         else:
