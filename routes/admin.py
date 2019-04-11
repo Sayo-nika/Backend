@@ -68,16 +68,6 @@ class Admin(RouteCog):
 
         return jsonify(True)
 
-    @route("/api/v1/<mod_id>/reject", methods=["POST"])
-    @requires_admin
-    @json
-    async def post_reject(self, mod_id: str):
-        if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
-
-        await Mod.delete.where(Mod.id == mod_id).gino.status()
-
-        return jsonify(True)
 
     @route("/api/v1/admin/decrypt_tb", methods=["POST"])
     @requires_admin
