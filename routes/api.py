@@ -144,23 +144,26 @@ class Userland(RouteCog):
             "title": recent.title,
             "body": recent.tagline,
             "url": f"/mods/{recent.id}"
-        }
+        } if recent is not None else None
         featured = {
             "type": 1,
             "title": featured.mod.title,
             "body": featured.editors_notes,
             "url": featured.article_url
-        }
+        } if featured is not None else None
         blog = {
             "type": 2,
             **blog
         }
 
-        self.news_cache["news"] = news = [
+        news = [
             recent,
             featured,
             blog
         ]
+
+        # Featured and recent may be None if there are no EditorsChoices or Mods respectively.
+        self.news_cache["news"] = news = [x for x in news if x is not None]
 
         return jsonify(news)
 
