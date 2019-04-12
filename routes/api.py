@@ -40,7 +40,8 @@ async def get_latest_medium_post(session):
     return {
         "title": post["title"],
         "body": post["previewContent"]["subtitle"],
-        "url": f"https://medium.com/{publication}/{post['uniqueSlug']}"
+        "url": f"https://medium.com/{publication}/{post['uniqueSlug']}",
+        "banner": f"https://cdn-images-1.medium.com/max/2048/{post['virtuals']['previewImage']['imageId']}"
     }
 
 
@@ -143,13 +144,15 @@ class Userland(RouteCog):
             "type": 0,
             "title": recent.title,
             "body": recent.tagline,
-            "url": f"/mods/{recent.id}"
+            "url": f"/mods/{recent.id}",
+            "banner": recent.banner
         } if recent is not None else None
         featured = {
             "type": 1,
             "title": featured.mod.title,
             "body": featured.editors_notes,
-            "url": featured.article_url
+            "url": featured.article_url,
+            "banner": featured.mod.banner
         } if featured is not None else None
         blog = {
             "type": 2,
