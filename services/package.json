@@ -1,38 +1,25 @@
 {
   "name": "server",
   "version": "0.0.1",
-  "description": "Sayonika REST server",
-  "main": "echo \"No index\"",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Sayonika backend services",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Sayo-nika/server.git"
+    "url": "git+https://github.com/Sayo-nika/Backend.git"
   },
-  "keywords": [
-    "sayonika",
-    "server",
-    "git"
-  ],
   "author": "sr229",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/Sayo-nika/server/issues"
+    "url": "https://github.com/Sayo-nika/Backend/issues"
   },
-  "homepage": "https://github.com/Sayo-nika/server#readme",
+  "homepage": "https://github.com/Sayo-nika/Backend#readme",
   "dependencies": {
-    "bcrypt": "^3.0.2",
-    "bluebird": "^3.5.3",
+    "got": "^9.6.0",
     "micro": "^9.3.3",
     "micro-proxy": "^1.1.0",
-    "nodemailer": "^4.6.8",
-    "nodemailer-smtp-transport": "^2.7.4",
-    "redis": "^2.8.0",
-    "snowflake-codon": "^4.1.1",
     "urlencoded-body-parser": "^2.0.1"
   },
   "devDependencies": {
     "eslint": "^5.8.0"
-  }
+  },
+  "private": true
 }

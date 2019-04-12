@@ -9,7 +9,7 @@
 
     "parserOptions": {
         "sourceType": "module",
-        "ecmaVersion": 8,
+        "ecmaVersion": 2018,
         "ecmaFeatures": {
             "jsx": false
         }
@@ -17,7 +17,7 @@
     "rules": {
         "no-console": 0,
         "global-require":"off",
-        
+
         "quotes": ["warn", "double", {"avoidEscape": true, "allowTemplateLiterals": true}],
         "semi": "warn",
         "indent": ["error", 4, {"SwitchCase": 1}],
