@@ -33,8 +33,10 @@ sayonika_instance.debug = (len(sys.argv) > 1 and sys.argv[1] == "--debug")
 sayonika_instance.gather("routes")
 loop.run_until_complete(setup_db())
 
-try:
-    sayonika_instance.run(SETTINGS["SERVER_BIND"], int(SETTINGS["SERVER_PORT"]), loop=loop)
-except KeyboardInterrupt:
-    # Stop big stack trace getting printed when interrupting
-    pass
+# Only run `app.run` if running this file directly - intended for development. Otherwise should use hypercorn.
+if __name__ == "__main__":
+    try:
+        sayonika_instance.run(SETTINGS["SERVER_BIND"], int(SETTINGS["SERVER_PORT"]), loop=loop)
+    except KeyboardInterrupt:
+        # Stop big stack trace getting printed when interrupting
+        pass
