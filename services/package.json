@@ -16,6 +16,7 @@
     "got": "^9.6.0",
     "micro": "^9.3.3",
     "micro-proxy": "^1.1.0",
+    "pg": "^7.9.0",
     "urlencoded-body-parser": "^2.0.1"
   },
   "devDependencies": {

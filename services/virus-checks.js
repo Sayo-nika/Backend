@@ -1,9 +1,8 @@
 /**
- * @file av_worker.js
+ * @file Microservice for checking given urls against VirusTotal.
  * @author Capuccino
- * @license BSD-3-Clause
  */
-const got = require('got');
+const got = require("got");
 const micro = require("micro");
 const {json, send} = micro;
 
@@ -14,7 +13,7 @@ exports.server = ({apiKey}) => micro(async (req, res) => {
 
     try {
         var avResponse = await got.get(virusTotalURL, {
-            responseType: 'json',
+            responseType: "json",
             query: {
                 resource: reqBody.url,
                 apikey: apiKey,

@@ -1,12 +1,12 @@
 /**
- * @file server.js
- * @description micro-proxy Proxy to handle routing for microservices.
+ * @file micro-proxy Proxy to handle routing for microservices.
  * @author Capuccino
  */
 
 const createProxy = require("micro-proxy");
 const config = require("./config");
 const av = require("./virus-checks");
+const expirer = require('./account-expirer');
 
 const proxy = createProxy([
     // Anti-virus file checking.
@@ -17,6 +17,7 @@ const proxy = createProxy([
     }
 ]);
 
+expirer(config.expirer);
 av(config.av).listen(config.av.port);
 
 proxy.listen(config.proxy.port, err => {
