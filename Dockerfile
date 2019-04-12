@@ -5,4 +5,4 @@ COPY . .
 RUN pip install --user -r requirements.txt
 EXPOSE 4444
 ENV PYTHONPATH="$PYTHONPATH:/app"
-CMD ["hypercorn", "main:sayonika_instance"]
+CMD ["hypercorn", "main:sayonika_instance", "-k uvloop"]

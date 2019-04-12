@@ -13,5 +13,5 @@ aiohttp>=3.5.4
 bcrypt>=3.1.6
 pycryptodomex>=3.7.3
 alembic>=1.0.8
-hypercorn>=0.5.3
+hypercorn[uvloop]>=0.5.3
 git+https://owo.codes/whats-this/owo.py.git
