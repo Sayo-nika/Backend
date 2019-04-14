@@ -15,7 +15,7 @@ RUN adduser --disabled-password --gecos '' sayonika && \
 COPY . .
 COPY entrypoint /home/sayonika
 
-RUN pip install requests && pip install -r requirements.txt && \
+RUN pip install requests uvloop && pip install -r requirements.txt && \
     chmod g+rw /app;
 
 RUN chgrp -R 0 /home/sayonika && \
