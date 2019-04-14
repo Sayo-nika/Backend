@@ -30,4 +30,4 @@ ENV PYTHONPATH="$PYTHONPATH:/app"
 USER 10001
 
 ENTRYPOINT [ "/home/sayonika/entrypoint" ]
-CMD ["hypercorn", "main:sayonika_instance", "-k uvloop"]
+CMD ["hypercorn", "main:sayonika_instance"]
