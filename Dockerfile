@@ -3,7 +3,7 @@ RUN mkdir -p /app
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y sudo gettext && \
+    apt-get install -y sudo gettext dumb-init && \
     apt-get clean;
 
 RUN adduser --disabled-password --gecos '' sayonika && \
@@ -15,12 +15,14 @@ RUN adduser --disabled-password --gecos '' sayonika && \
 COPY . .
 COPY entrypoint /home/sayonika
 COPY passwd_template /tmp
+COPY run.sh /tmp
 
-RUN pip install requests uvloop && pip install -r requirements.txt && \
+RUN pip install requests uvloop psycopg2 && pip install -r requirements.txt && \
     chmod g+rw /app;
 
 RUN chgrp -R 0 /home/sayonika && \
     chmod a+x /home/sayonika/entrypoint && \
+    chmod a+x /tmp/run.sh && \
     chmod -R g=u /home/sayonika && \
     chmod g=u /etc/passwd && \
     find /home/sayonika -type d -exec chmod g+x {} +
@@ -31,4 +33,4 @@ ENV PYTHONPATH="$PYTHONPATH:/app"
 USER 10001
 
 ENTRYPOINT [ "/home/sayonika/entrypoint" ]
-CMD ["hypercorn", "main:sayonika_instance"]
+CMD ["dumb-init", "bash", "/tmp/run.sh"]
