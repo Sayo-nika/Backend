@@ -3,7 +3,7 @@ RUN mkdir -p /app
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install sudo gettext && \
+    apt-get install -y sudo gettext && \
     apt-get clean;
 
 RUN pip install -r requirements.txt && \
