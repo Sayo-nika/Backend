@@ -4,4 +4,4 @@
 alembic upgrade head
 
 # Now run the server
-hypercorn main:sayonika_instance
+python main.py
