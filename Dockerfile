@@ -6,9 +6,6 @@ RUN apt-get update && \
     apt-get install -y sudo gettext && \
     apt-get clean;
 
-RUN pip install -r requirements.txt && \
-    chmod g+rw /app;
-
 RUN adduser --disabled-password --gecos '' sayonika && \
     mkdir -p /etc/sudoers.d && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
@@ -17,6 +14,9 @@ RUN adduser --disabled-password --gecos '' sayonika && \
 
 COPY . .
 COPY entrypoint /home/sayonika
+
+RUN pip install -r requirements.txt && \
+    chmod g+rw /app;
 
 RUN chgrp -R 0 /home/sayonika && \
     chmod a+x /home/sayonika/entrypoint && \
