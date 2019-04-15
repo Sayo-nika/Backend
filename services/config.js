@@ -2,7 +2,7 @@
 const env = Object.entries(process.env)
     .filter(([key]) => key.startsWith("SAYONIKA_"))
     .map(([key, value]) => ({[key.slice("SAYONIKA_".length)]: value}))
-    .reduce((prev, value) => ({...prev, ...value}));
+    .reduce((prev, value) => ({...prev, ...value}), {});
 
 module.exports = {
     proxy: {

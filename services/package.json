@@ -1,5 +1,5 @@
 {
-  "name": "server",
+  "name": "services",
   "version": "0.0.1",
   "description": "Sayonika backend services",
   "repository": {
@@ -12,12 +12,14 @@
     "url": "https://github.com/Sayo-nika/Backend/issues"
   },
   "homepage": "https://github.com/Sayo-nika/Backend#readme",
+  "scripts": {
+    "start": "node proxy.js"
+  },
   "dependencies": {
     "got": "^9.6.0",
     "micro": "^9.3.3",
     "micro-proxy": "^1.1.0",
-    "pg": "^7.9.0",
-    "urlencoded-body-parser": "^2.0.1"
+    "pg": "^7.9.0"
   },
   "devDependencies": {
     "eslint": "^5.8.0"

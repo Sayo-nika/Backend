@@ -8,7 +8,7 @@ const {json, send} = micro;
 
 const virusTotalURL = "https://www.virustotal.com/vtapi/v2/url/report";
 
-exports.server = ({apiKey}) => micro(async (req, res) => {
+module.exports = ({apiKey}) => micro(async (req, res) => {
     const reqBody = json(req);
 
     try {

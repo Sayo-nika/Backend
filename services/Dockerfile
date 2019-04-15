@@ -1,8 +1,18 @@
-FROM node:10
-RUN mkdir -p /app && \
-    chown -R node:node /app
+FROM node:10-alpine
+
+# Create container root
+USER root
+RUN mkdir /app
+
+COPY package.json /app/
+RUN cd /app; yarn
+
+COPY . /app
 WORKDIR /app
-COPY . .
-RUN npm i -S -P
+
+RUN apk add dumb-init
+
 EXPOSE 9000
-CMD ["node", "server"]
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["yarn", "start"]
