@@ -7,6 +7,7 @@ RUN mkdir /app
 
 # Install Python dependencies
 COPY requirements.txt /app
+RUN pip install daphne
 RUN pip install -r /app/requirements.txt
 
 COPY . /app
