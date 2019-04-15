@@ -19,7 +19,7 @@ async def setup_db():
         database=SETTINGS["DB_NAME"]
     ))
 
-    await redis.setup()
+    # await redis.setup()
 
 
 @sayonika_instance.after_serving

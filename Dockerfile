@@ -1,36 +1,26 @@
+# TODO: replace with Alpine image. Will require some more configuration to get stuff like uvloop working.
 FROM python:3.7-stretch
-RUN mkdir -p /app
+
+# Make container root
+USER root
+RUN mkdir /app
+
+# Install Python dependencies
+COPY requirements.txt /app
+RUN pip install -r /app/requirements.txt
+
+COPY . /app
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y sudo gettext dumb-init && \
-    apt-get clean;
+# Setup user to run the server as
+RUN useradd -m python
 
-RUN adduser --disabled-password --gecos '' sayonika && \
-    mkdir -p /etc/sudoers.d && \
-    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
-    echo "sayonika ALL=(root) NOPASSWD:ALL" >> /etc/sudoers.d/user && \
-    chmod 0440 /etc/sudoers.d/user;
+# Install dumb-init
+RUN apt-get update && apt-get install \
+    dumb-init
 
-COPY . .
-COPY entrypoint /home/sayonika
-COPY passwd_template /tmp
-COPY run.sh /tmp
+USER python
+EXPOSE 8000
 
-RUN pip install requests uvloop psycopg2 && pip install -r requirements.txt && \
-    chmod g+rw /app;
-
-RUN chgrp -R 0 /home/sayonika && \
-    chmod a+x /home/sayonika/entrypoint && \
-    chmod a+x /tmp/run.sh && \
-    chmod -R g=u /home/sayonika && \
-    chmod g=u /etc/passwd && \
-    find /home/sayonika -type d -exec chmod g+x {} +
-
-EXPOSE 4444
-ENV PYTHONPATH="$PYTHONPATH:/app"
-
-USER 10001
-
-ENTRYPOINT [ "/home/sayonika/entrypoint" ]
-CMD ["dumb-init", "bash", "/tmp/run.sh"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["sh", "dockerrun.sh"]
