@@ -267,7 +267,7 @@ class Mods(RouteCog):
     @json
     async def get_most_loved(self):
         love_counts = select([func.count()]).where(UserFavorites.mod_id == Mod.id).as_scalar()
-        mods = await Mod.query.order_by(love_counts.desc()).limit(10)
+        mods = await Mod.query.order_by(love_counts.desc()).limit(10).gino.all()
 
         return jsonify(self.dict_all(mods))
 
