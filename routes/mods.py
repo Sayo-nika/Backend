@@ -13,7 +13,7 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters, ReportType, Report
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters, ReportType, Report, UserFavorites
 from framework.objects import db, owo, jwt_service, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -260,17 +260,32 @@ class Mods(RouteCog):
             Mod.verified,
             Mod.status == ModStatus.released
         )).order_by(Mod.released_at.desc()).limit(10).gino.all()
+
         return jsonify(self.dict_all(mods))
 
-    @route("/api/v1/mods/popular")
+    @route("/api/v1/mods/most_loved")
     @json
-    async def get_popular(self):
+    async def get_most_loved(self):
+        love_counts = select([func.count()]).where(UserFavorites.mod_id == Mod.id)
+        mods = await Mod.query.order_by(desc(love_counts)).limit(10).gino.all()
+
+        return jsonify(self.dict_all(mods))
+
+    @route("/api/v1/mods/most_downloads")
+    @json
+    async def get_most_downloads(self):
         mods = await Mod.query.where(and_(
             Mod.verified,
             Mod.released_at is not None
         )).order_by(Mod.downloads.desc()).limit(10).gino.all()
 
         return jsonify(self.dict_all(mods))
+
+    @route("/api/v1/mods/trending")
+    @json
+    async def get_trending(self):
+        # TODO: implement
+        return jsonify([])
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH", "DELETE"])
     @json
