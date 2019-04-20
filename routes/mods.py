@@ -266,8 +266,8 @@ class Mods(RouteCog):
     @route("/api/v1/mods/most_loved")
     @json
     async def get_most_loved(self):
-        love_counts = select([func.count()]).where(UserFavorites.mod_id == Mod.id)
-        mods = await Mod.query.order_by(desc(love_counts)).limit(10).gino.all()
+        love_counts = select([func.count()]).where(UserFavorites.mod_id == Mod.id).as_scalar()
+        mods = await Mod.query.order_by(love_counts.desc()).limit(10)
 
         return jsonify(self.dict_all(mods))
 
@@ -453,8 +453,8 @@ class Mods(RouteCog):
             query = query.order_by(upvoters_count - downvoters_count)
         elif sort == ReviewSorting.funniest:
             # Get count of all funny ratings by review.
-            sub_order = select([func.count()]).where(ReviewFunnys.review_id == Review.id)
-            query = query.order_by(desc(sub_order))
+            sub_order = select([func.count()]).where(ReviewFunnys.review_id == Review.id).as_scalar()
+            query = query.order_by(sub_order.desc())
 
         if isinstance(rating, int):
             values = [rating, rating + 0.5]
