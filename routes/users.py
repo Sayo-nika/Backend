@@ -96,7 +96,7 @@ class Users(RouteCog):
             "USER_NAME": user.username,
             "TOKEN": token,
             "BASE_URL": SETTINGS["EMAIL_BASE"]
-        })
+            }, session=self.core.aioh_sess)
 
         return jsonify(user.to_dict())
 

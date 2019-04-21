@@ -5,7 +5,10 @@ from typing import Dict
 
 # External Libraries
 import aiofiles
-from flask_mail import Mail, Message
+import aiohttp
+
+# Sayonika internals
+from framework.objects import SETTINGS
 
 TEMPLATES_PATH = "./framework/mail_templates/__.html"
 
@@ -30,8 +33,11 @@ class MailSubjects:
     verify_email = "Verify your email"
 
 
-class Mailer(Mail):
-    """Extension of flask_mail's Mail to provide functionality for sending templates."""
+class EmailFailed(Exception):
+    pass
+
+class Mailer:
+    """Sending mail templates via Mailgun."""
     # XXX: switch to redis soon
     cached_templates = {}
 
@@ -53,7 +59,7 @@ class Mailer(Mail):
 
         return data
 
-    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str]) -> None:
+    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str], session: aiohttp.ClientSession) -> None:
         """
         Send mail using a template, along with optionally replacing some values.
         Templates can be found in `framework/mail_templates`.
@@ -68,7 +74,17 @@ class Mailer(Mail):
             # interpolate our variable into them
             template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
-        msg = Message(sender=("Sayonika", "noreply@sayonika.moe"), subject=getattr(MailSubjects, mail_type.value),
-                      recipients=[recipient], html=template, charset="utf-8")
+        msg = {"from": "Sayonika <noreply@sayonika.moe>",
+               "subject": getattr(MailSubjects, mail_type.value),
+               "to": [recipient],
+               "html": template}
 
-        self.send(msg)
+        async with session.post(
+                "https://api.mailgun.net/v3/sayonika.moe/messages",
+                auth=aiohttp.BasicAuth("api", SETTINGS["MAILGUN_KEY"]),
+                data=msg) as resp:
+            if resp.status == 200:
+                return True
+            else:
+                raise EmailFailed
+

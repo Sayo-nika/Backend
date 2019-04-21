@@ -14,3 +14,5 @@ The server uses several environment variables in order to run correctly. All of 
  - `RECAPTCHA_INVISIBLE_SECRET_KEY`: Secret key to use for validating invisible reCAPTCHA.
  - `RECAPTCHA_CHECKBOX_SECRET_KEY`: Secret key to use for validating regular reCAPTCHA.
  - `AES_KEY`: 32 bit secret key to use for encryption (usually tracebacks). (Default: `this is a  pretty long key oh no`)
+ - `MAILGUN_KEY`: Token to use for sending mail via Mailgun.
+ 

@@ -1,6 +1,5 @@
 quart
 flask-limiter
-flask-mail
 gino
 sqlalchemy
 simpleflake
