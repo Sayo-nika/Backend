@@ -7,12 +7,12 @@ import os
 import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from aioredis import ConnectionsPool
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from owo import Client as OWOClient
 
 # Sayonika Internals
 from framework.db import db
 from framework.init_later_redis import InitLaterRedis
+from framework.limiter import get_ratelimit_key
 from framework.mailer import Mailer
 from framework.sayonika import Sayonika
 from framework.tokens import JWT
@@ -52,7 +52,7 @@ sayonika_instance = Sayonika()
 jwt_service = JWT(SETTINGS)
 mailer = Mailer()
 limiter = Limiter(
-    key_func=get_remote_address,
+    key_func=get_ratelimit_key,
     default_limits=SETTINGS.get(
         "RATELIMITS",
         "1 per 2 seconds;20 per minute;1000 per hour"
