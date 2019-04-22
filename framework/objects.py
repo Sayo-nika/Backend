@@ -50,7 +50,7 @@ else:
 logger = logging.getLogger("Sayonika")
 sayonika_instance = Sayonika()
 jwt_service = JWT(SETTINGS)
-mailer = Mailer()
+mailer = Mailer(SETTINGS)
 limiter = Limiter(
     key_func=get_ratelimit_key,
     default_limits=SETTINGS.get(
@@ -66,5 +66,4 @@ owo = OWOClient(SETTINGS["OWO_KEY"])
 # Use env vars to update config
 sayonika_instance.config.update(SETTINGS)
 limiter.init_app(sayonika_instance)
-mailer.init_app(sayonika_instance)
 logger.setLevel(logging.INFO)

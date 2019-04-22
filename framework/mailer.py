@@ -7,9 +7,6 @@ from typing import Dict
 import aiofiles
 import aiohttp
 
-# Sayonika internals
-from framework.objects import SETTINGS
-
 TEMPLATES_PATH = "./framework/mail_templates/__.html"
 
 
@@ -40,6 +37,10 @@ class Mailer:
     """Sending mail templates via Mailgun."""
     # XXX: switch to redis soon
     cached_templates = {}
+
+    def __init__(self, settings: dict):
+        # `settings` is the dict of all ENV vars starting with SAYONIKA_
+        self.mailgun_key = settings["MAILGUN_KEY"]
 
     async def _get_template(self, template: MailTemplates) -> str:
         template_name = template.value
@@ -81,7 +82,7 @@ class Mailer:
 
         async with session.post(
                 "https://api.mailgun.net/v3/sayonika.moe/messages",
-                auth=aiohttp.BasicAuth("api", SETTINGS["MAILGUN_KEY"]),
+                auth=aiohttp.BasicAuth("api", self.mailgun_key),
                 data=msg) as resp:
             if resp.status == 200:
                 return True
