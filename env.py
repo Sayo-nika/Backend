@@ -31,7 +31,7 @@ fileConfig(config.config_file_name)
 def get_url():
     return URL(
         "postgres",
-        username=SETTINGS["DB_NAME"],
+        username=SETTINGS["DB_USER"],
         password=SETTINGS["DB_PASS"],
         host=SETTINGS["DB_HOST"],
         port=SETTINGS["DB_PORT"],

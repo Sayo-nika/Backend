@@ -12,7 +12,7 @@ async def setup_db():
     # Set binding for Gino and init Redis
     await db.set_bind(URL(
         "postgres",
-        username=SETTINGS["DB_NAME"],
+        username=SETTINGS["DB_USER"],
         password=SETTINGS["DB_PASS"],
         host=SETTINGS["DB_HOST"],
         port=SETTINGS["DB_PORT"],
