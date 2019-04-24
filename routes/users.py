@@ -11,7 +11,7 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, ModAuthors, UserFavorites
+from framework.models import Mod, User, Review, ModAuthor, UserFavorite
 from framework.objects import SETTINGS, mailer, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -171,7 +171,7 @@ class Users(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        favorite_pairs = await UserFavorites.query.where(UserFavorites.user_id == user_id).gino.all()
+        favorite_pairs = await UserFavourite.query.where(UserFavourite.user_id == user_id).gino.all()
         favorite_pairs = [x.mod_id for x in favorite_pairs]
         favorites = await Mod.query.where(Mod.id.in_(favorite_pairs)).gino.all()
 
@@ -191,7 +191,7 @@ class Users(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        mod_pairs = await ModAuthors.query.where(ModAuthors.user_id == user_id).gino.all()
+        mod_pairs = await ModAuthor.query.where(ModAuthor.user_id == user_id).gino.all()
         mod_pairs = [x.mod_id for x in mod_pairs]
         mods = await Mod.query.where(Mod.id.in_(mod_pairs)).gino.all()
 

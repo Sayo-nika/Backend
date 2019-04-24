@@ -8,7 +8,7 @@ DEFAULT_FILTERED = (*COMMON_FILTERED, "email")
 
 
 class User(db.Model, Base):
-    __tablename__ = "users"
+    __tablename__ = "user"
 
     email = db.Column(db.Unicode(), unique=True)
     username = db.Column(db.Unicode(25), unique=True)
@@ -37,8 +37,8 @@ class User(db.Model, Base):
         }
 
 
-class UserFavorites(db.Model):
-    __tablename__ = "user_favourites"
+class UserFavorite(db.Model):
+    __tablename__ = "user_favorite"
 
-    user_id = db.Column(None, db.ForeignKey("users.id"))
-    mod_id = db.Column(None, db.ForeignKey("mods.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id"))

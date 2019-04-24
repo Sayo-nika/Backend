@@ -13,7 +13,7 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthors, ModCategory, Playtesters, ModColor, ReviewFunnys, ReviewUpvoters, ReviewDownvoters, ReportType, Report, UserFavorites
+from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthor, ModCategory, ModPlaytester, ModColor, ReviewReaction, ReportType, Report, UserFavorite, ReactionType
 from framework.objects import db, owo, jwt_service, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -178,13 +178,13 @@ class Mods(RouteCog):
             required=True
         ),
         "is_private_beta": fields.Bool(missing=False),
-        "playtesters": fields.List(fields.Str()),
+        "ModPlaytester": fields.List(fields.Str()),
         "color": EnumField(ModColor, missing=ModColor.default),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
-                        color: ModColor, is_private_beta: bool = None, playtesters: List[str] = None):
+                        color: ModColor, is_private_beta: bool = None, ModPlaytester: List[str] = None):
         score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "create_mod")
 
         if score < 0.5:
@@ -222,11 +222,11 @@ class Mods(RouteCog):
         if is_private_beta is not None:
             mod.is_private_beta = is_private_beta
 
-        if playtesters is not None:
+        if ModPlaytester is not None:
             if not is_private_beta:
-                abort(400, "No need for `playtesters` if open beta")
+                abort(400, "No need for `ModPlaytester` if open beta")
 
-            for playtester in playtesters:
+            for playtester in ModPlaytester:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
 
@@ -245,11 +245,11 @@ class Mods(RouteCog):
         mod.banner = img_urls[banner_data.name]
 
         await mod.create()
-        await ModAuthors.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
+        await ModAuthor.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                              in authors])
 
-        if playtesters is not None:
-            await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
+        if ModPlaytester is not None:
+            await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in ModPlaytester])
 
         return jsonify(mod.to_dict())
 
@@ -266,7 +266,7 @@ class Mods(RouteCog):
     @route("/api/v1/mods/most_loved")
     @json
     async def get_most_loved(self):
-        love_counts = select([func.count()]).where(UserFavorites.mod_id == Mod.id).as_scalar()
+        love_counts = select([func.count()]).where(UserFavorite.mod_id == Mod.id).as_scalar()
         mods = await Mod.query.order_by(love_counts.desc()).limit(10).gino.all()
 
         return jsonify(self.dict_all(mods))
@@ -324,9 +324,9 @@ class Mods(RouteCog):
         ),
         "color": EnumField(ModColor),
         "is_private_beta": fields.Bool(),
-        "playtesters": fields.List(fields.Str())
+        "ModPlaytester": fields.List(fields.Str())
     }, locations=("json",))
-    async def patch_mod(self, mod_id: str = None, authors: List[dict] = None, playtesters: List[str] = None,
+    async def patch_mod(self, mod_id: str = None, authors: List[dict] = None, ModPlaytester: List[str] = None,
                         icon: str = None, banner: str = None, **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
@@ -337,17 +337,17 @@ class Mods(RouteCog):
         if authors is not None:
             authors = [author for author in authors if await User.exists(author["id"])]
             # TODO: if user is owner or co-owner, allow them to change the role of others to ones below them.
-            authors = [author for author in authors if not await ModAuthors.query.where(
-                and_(ModAuthors.user_id == author["id"], ModAuthors.mod_id == mod_id)
+            authors = [author for author in authors if not await ModAuthor.query.where(
+                and_(ModAuthor.user_id == author["id"], ModAuthor.mod_id == mod_id)
             ).gino.first()]
 
-        if playtesters is not None:
-            for playtester in playtesters:
+        if ModPlaytester is not None:
+            for playtester in ModPlaytester:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
-                elif await Playtesters.query.where(and_(
-                    Playtesters.user_id == playtester,
-                    Playtesters.mod_id == mod.id)
+                elif await ModPlaytester.query.where(and_(
+                    ModPlaytester.user_id == playtester,
+                    ModPlaytester.mod_id == mod.id)
                 ).gino.all():
                     abort(400, f"{playtester} is already enrolled.")
 
@@ -384,10 +384,10 @@ class Mods(RouteCog):
         updates = updates.update(**img_updates)
 
         await updates.apply()
-        await ModAuthors.insert().gino.all(*[
+        await ModAuthor.insert().gino.all(*[
             dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author in authors
         ])
-        await Playtesters.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in playtesters])
+        await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in ModPlaytester])
 
         return jsonify(mod.to_dict())
 
@@ -396,7 +396,7 @@ class Mods(RouteCog):
     @json
     async def get_mod(self, mod_id: str):
         mod = await Mod.get(mod_id)
-        authors = await ModAuthors
+        authors = await ModAuthor
         if mod is None:
             abort(404, "Unknown mod")
 
@@ -417,7 +417,7 @@ class Mods(RouteCog):
             abort(404, "Unknown mod")
         if user_id is None and mod.is_private_beta:
             abort(403, "Private beta mods requires authentication.")
-        if not await Playtesters.query.where(and_(Playtesters.user_id == user_id, Playtesters.mod_id == mod.id))\
+        if not await ModPlaytester.query.where(and_(ModPlaytester.user_id == user_id, ModPlaytester.mod_id == mod.id))\
                 .gino.all():
             abort(403, "You are not enrolled to the private beta.")
         elif not mod.zip_url:
@@ -448,8 +448,14 @@ class Mods(RouteCog):
         if review_sorters[sort]:
             query = query.order_by(review_sorters[sort])
         elif sort == ReviewSorting.best:
-            upvoters_count = select([func.count()]).where(ReviewUpvoters.review_id == Review.id).as_scalar()
-            downvoters_count = select([func.count()]).where(ReviewDownvoters.review_id == Review.id).as_scalar()
+            upvoters_count = select([func.count()]).where(
+                ReviewReaction.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.upvote).as_scalar()
+
+            downvoters_count = select([func.count()]).where(
+                ReviewDownvoters.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.downvote).as_scalar()
+
             query = query.order_by(upvoters_count - downvoters_count)
         elif sort == ReviewSorting.funniest:
             # Get count of all funny ratings by review.
@@ -502,7 +508,7 @@ class Mods(RouteCog):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        author_pairs = await ModAuthors.query.where(ModAuthors.mod_id == mod_id).gino.all()
+        author_pairs = await ModAuthor.query.where(ModAuthor.mod_id == mod_id).gino.all()
         author_pairs = [x.user_id for x in author_pairs]
         authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
 

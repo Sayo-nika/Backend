@@ -9,7 +9,7 @@ from .enums import ModStatus, AuthorRole, ModCategory, ModColor
 
 
 class Mod(db.Model, Base):
-    __tablename__ = "mods"
+    __tablename__ = "mod"
 
     title = db.Column(db.Unicode(64), unique=True)
     icon = db.Column(db.Unicode())
@@ -30,16 +30,16 @@ class Mod(db.Model, Base):
     verified = db.Column(db.Boolean(), default=False)
 
 
-class ModAuthors(db.Model):
-    __tablename__ = "user_mods"
+class ModAuthor(db.Model):
+    __tablename__ = "user_mod"
 
     role = db.Column(db.Enum(AuthorRole), default=AuthorRole.unassigned)
-    user_id = db.Column(None, db.ForeignKey("users.id"))
-    mod_id = db.Column(None, db.ForeignKey("mods.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id"))
 
 
-class Playtesters(db.Model):
-    __tablename__ = "mod_playtesters"
+class ModPlaytester(db.Model):
+    __tablename__ = "mod_playtester"
 
-    user_id = db.Column(None, db.ForeignKey("users.id"))
-    mod_id = db.Column(None, db.ForeignKey("mods.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id"))

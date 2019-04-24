@@ -73,3 +73,9 @@ class ReportType(Enum):
     ipg_violation = 0
     conduct_violation = 1
     dmca = 2
+
+
+class ReactionType(Enum):
+    upvote = 1
+    downvote = 2
+    funny = 3

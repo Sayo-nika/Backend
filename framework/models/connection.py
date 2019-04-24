@@ -6,8 +6,8 @@ from .enums import ConnectionType
 
 
 class Connection(db.Model, Base):
-    __tablename__ = "connections"
+    __tablename__ = "connection"
 
     name = db.Column(db.Unicode())
     type = db.Column(db.Enum(ConnectionType))
-    user = db.Column(None, db.ForeignKey("users.id"))
+    user = db.Column(None, db.ForeignKey("user.id"))

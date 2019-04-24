@@ -6,9 +6,9 @@ from .enums import ReportType
 
 
 class Report(db.Model, Base):
-    __tablename__ = "reports"
+    __tablename__ = "report"
 
     content = db.Column(db.Unicode(1000))
-    author_id = db.Column(None, db.ForeignKey("users.id"))
-    mod_id = db.Column(None, db.ForeignKey("mods.id"))
+    author_id = db.Column(None, db.ForeignKey("user.id"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id"))
     type = db.Column(db.Enum(ReportType))
