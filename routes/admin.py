@@ -34,7 +34,7 @@ class Admin(RouteCog):
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-        mods = await paginate(Mod.query, page, limit).where(~Mod.verified).gino.all()
+        mods = await paginate(Mod.query, page, limit).where(Mod.verified == False).gino.all()
 
         return jsonify(self.dict_all(mods))
 
