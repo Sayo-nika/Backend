@@ -4,10 +4,12 @@ import base64
 # External Libraries
 from Cryptodome.Cipher import AES
 from quart import abort, jsonify, request
+from webargs import fields
 
 # Sayonika Internals
 from framework.models import Mod, Report
 from framework.objects import SETTINGS
+from framework.quart_webargs import use_kwargs
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
 from framework.routecog import RouteCog
@@ -23,39 +25,34 @@ class Admin(RouteCog):
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
-    async def get_verify_queue(self):
-        page = request.args.get("page")
-        limit = request.args.get("limit")
-        page = int(page) if page.isdigit() else 0
-        limit = int(limit) if limit.isdigit() else 50
-
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50)
+    }, locations=("json",))
+    async def get_verify_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
         mods = await paginate(Mod.query, page, limit).where(~Mod.verified).gino.all()
 
-        return jsonify(self.to_dict(mods))
+        return jsonify(self.dict_all(mods))
 
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
     @json
-    async def get_report_queue(self):
-        page = request.args.get("page")
-        limit = request.args.get("limit")
-        page = int(page) if page.isdigit() else 0
-        limit = int(limit) if limit.isdigit() else 50
-
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50)
+    }, locations=("json",))
+    async def get_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-
         reports = await paginate(Report.query.order_by("mod_id"), page, limit).gino.all()
-        if reports:
-            return jsonify(self.to_dict(reports))
-        else:
-            return jsonify({})
+
+        return jsonify(self.dict_all(reports))
 
     @route("/api/v1/<mod_id>/verify", methods=["POST"])
     @requires_admin
