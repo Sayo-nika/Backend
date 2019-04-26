@@ -4,11 +4,12 @@ import base64
 # External Libraries
 from Cryptodome.Cipher import AES
 from quart import abort, jsonify, request
+from sqlalchemy import and_
 from webargs import fields
 
 # Sayonika Internals
-from framework.models import Mod, Report
-from framework.objects import SETTINGS
+from framework.models import Mod, Report, ModAuthor, User, AuthorRole
+from framework.objects import SETTINGS, db
 from framework.quart_webargs import use_kwargs
 from framework.route import route
 from framework.route_wrappers import json, requires_admin
@@ -17,10 +18,30 @@ from framework.sayonika import Sayonika
 from framework.utils import paginate
 
 
+# Probably will need to add this to util or smth later
+def deep_to_dict(model):
+    """
+    Turn a model into a dictionary and recurse through any model attributes
+    """
+    dicted = model.to_dict()
+
+    for attr in dir(model):
+        attr_on_model = getattr(model, attr)
+
+        if isinstance(attr_on_model, db.Model) and attr not in dicted:
+            dicted[attr] = deep_to_dict(attr_on_model)
+
+    return dicted
+
+
 class Admin(RouteCog):
     @staticmethod
     def dict_all(models):
         return [m.to_dict() for m in models]
+
+    @staticmethod
+    def deep_dict_all(models):
+        return [deep_to_dict(m) for m in models]
 
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
@@ -34,9 +55,16 @@ class Admin(RouteCog):
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-        mods = await paginate(Mod.query, page, limit).where(Mod.verified == False).gino.all()
 
-        return jsonify(self.dict_all(mods))
+        query = Mod.outerjoin(ModAuthor).outerjoin(User).select().where(and_(
+            ModAuthor.role == AuthorRole.owner,
+            ModAuthor.mod_id == Mod.id,
+            ModAuthor.user_id == User.id
+        ))
+        query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
+        mods = await paginate(query, page, limit).where(Mod.verified == False).gino.all()
+
+        return jsonify(self.deep_dict_all(mods))
 
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
