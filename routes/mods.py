@@ -124,10 +124,16 @@ class Mods(RouteCog):
         query = Mod.query.where(Mod.verified)
 
         if q is not None:
+            like = f"%{q}%"
+
             query = query.where(and_(
                 Mod.title.match(q),
                 Mod.tagline.match(q),
-                Mod.description.match(q)
+                Mod.description.match(q),
+
+                Mod.title.ilike(like),
+                Mod.tagline.ilike(like),
+                Mod.description.ilike(like)
             ))
 
         if category is not None:

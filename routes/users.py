@@ -6,6 +6,7 @@ from enum import Enum
 import aiohttp
 from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
+from sqlalchemy import or_
 from webargs import fields, validate
 
 # Sayonika Internals
@@ -55,7 +56,10 @@ class Users(RouteCog):
         query = User.query
 
         if q is not None:
-            query = query.where(User.username.match(q))
+            query = query.where(or_(
+                User.username.match(q),
+                User.username.ilike(f"%{q}%")
+            ))
 
         if sort is not None:
             sort_by = sorters[sort]
