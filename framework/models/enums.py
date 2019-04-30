@@ -13,9 +13,9 @@ class ModStatus(Enum):
 
 class ConnectionType(Enum):
     """All valid service types for profile connections."""
-    github = 1
-    gitlab = 2
-    discord = 3
+    github = 0
+    gitlab = 1
+    discord = 2
 
 
 class MediaType(Enum):
@@ -76,6 +76,7 @@ class ReportType(Enum):
 
 
 class ReactionType(Enum):
-    upvote = 1
-    downvote = 2
-    funny = 3
+    upvote = 0
+    downvote = 1
+    funny = 2
+
