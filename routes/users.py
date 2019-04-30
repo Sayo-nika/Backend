@@ -1,12 +1,13 @@
 # Stdlib
 from datetime import datetime
 from enum import Enum
+from typing import List
 
 # External Libraries
 import aiohttp
 from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
-from sqlalchemy import or_
+from sqlalchemy import or_, not_
 from webargs import fields, validate
 
 # Sayonika Internals
@@ -45,10 +46,11 @@ class Users(RouteCog):
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50),
         "sort": EnumField(UserSorting),
-        "ascending": fields.Bool(missing=False)
+        "ascending": fields.Bool(missing=False),
+        "ignore": fields.Str()  # Comma separated list of IDs to filter out
     }, locations=("query",))
     async def get_users(self, q: str = None, page: int = None, limit: int = None, sort: UserSorting = None,
-                        ascending: bool = False):
+                        ascending: bool = False, ignore: str = None):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
@@ -64,6 +66,10 @@ class Users(RouteCog):
         if sort is not None:
             sort_by = sorters[sort]
             query = query.order_by(sort_by.asc() if ascending else sort_by.desc())
+
+        if ignore is not None:
+            ignore = ignore.split(",")
+            query = query.where(not_(User.id.in_(ignore)))
 
         results = await paginate(query, page, limit).gino.all()
         total = await query.alias().count().gino.scalar()
