@@ -117,10 +117,10 @@ class Admin(RouteCog):
     @requires_developer
     @json
     @use_kwargs({
-        "supporter": fields.Boolean(),
-        "editor": fields.Boolean(),
-        "moderator": fields.Boolean(),
-        "developer": fields.Boolean(),
+        "supporter": fields.Boolean(allow_none=True),
+        "editor": fields.Boolean(allow_none=True),
+        "moderator": fields.Boolean(allow_none=True),
+        "developer": fields.Boolean(allow_none=True),
         "password": fields.Str(required=True)
     }, locations=("json",))
     async def patch_user_roles(self, user_id: str, password: str, **kwargs):
