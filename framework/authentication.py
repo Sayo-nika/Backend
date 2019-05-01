@@ -29,16 +29,13 @@ class Authenticator:
         if not user.email_verified:
             abort(401, "User email needs to be verified")
 
-        # XXX: this gives site devs and moderators unrestricted access. Limit in v2.
-        if user.developer or user.moderator:
+        # XXX: this gives site devs unrestricted access. Limit in v2.
+        if user.developer:
             return True
 
-        if not request.method == "GET": # Check all methods other than get
+        if request.method != "GET": # Check all methods other than get
             if "mod_id" in kwargs:
                 if kwargs["mod_id"] not in (mod.id for mod in user.mods):
-                    abort(403, "User does not have the required permissions to fulfill the request.")
-            elif "user_id" in kwargs:
-                if kwargs["user_id"] != user.id:
                     abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True
