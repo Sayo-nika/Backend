@@ -134,13 +134,15 @@ class Admin(RouteCog):
 
         user = await User.get(admin_user_id)
 
-        if Authenticator.hash_password(password) != user.password:
+        if not Authenticator.compare_password(password, user.password):
             abort(401, "Invalid password")
 
         if not kwargs:
             return jsonify(True)
 
-        await User.update.values(**kwargs).where(User.id == user_id).gino.status()
+        await User.update.values(**{
+            k: v for k, v in kwargs.items() if v is not None
+        }).where(User.id == user_id).gino.status()
 
         return jsonify(True)
 
@@ -161,7 +163,7 @@ class Admin(RouteCog):
 
         user = await User.get(admin_user_id)
 
-        if Authenticator.hash_password(password) != user.password:
+        if not Authenticator.compare_password(password, user.password):
             abort(401, "Invalid password")
 
         await User.delete.where(User.id == user_id).gino.status()

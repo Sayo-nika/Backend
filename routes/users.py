@@ -152,7 +152,7 @@ class Users(RouteCog):
 
         user = await User.get(user_id)
 
-        if Authenticator.hash_password(old_password) != user.password:
+        if not Authenticator.compare_password(old_password, user.password):
             abort(403, "`old_password` doesn't match")
 
         updates = user.update(**kwargs)

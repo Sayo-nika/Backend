@@ -87,3 +87,8 @@ class Authenticator:
     def hash_password(cls, password: str) -> bytes:
         """Hashes a password and returns the digest."""
         return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+    @classmethod
+    def compare_password(cls, password: str, hash: bytes):
+        """Compares a password against hash"""
+        return bcrypt.checkpw(password.encode(), hash)
