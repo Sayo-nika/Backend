@@ -61,7 +61,7 @@ class Authenticator:
         return True
 
     @classmethod
-    async def has_admin_access(cls) -> bool:
+    async def has_admin_access(cls, developer_only: bool = False) -> bool:
         """Check if a user is an admin."""
         token = request.headers.get("Authorization", request.cookies.get("token"))
 
@@ -75,7 +75,8 @@ class Authenticator:
 
         user = await User.get(parsed_token["id"])
 
-        if not user.moderator or not user.developer:
+        if (developer_only and not user.developer) or
+           (not developer_only and (not user.moderator or not user.developer)):
             abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True

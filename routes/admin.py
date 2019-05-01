@@ -11,8 +11,8 @@ from webargs import fields
 from framework.models import Mod, Report, ModAuthor, User, AuthorRole
 from framework.objects import SETTINGS, db
 from framework.quart_webargs import use_kwargs
-from framework.route import route
-from framework.route_wrappers import json, requires_admin
+from framework.route import route, multiroute
+from framework.route_wrappers import json, requires_admin, requires_developer
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 from framework.utils import paginate
@@ -112,6 +112,58 @@ class Admin(RouteCog):
         parsed = c.decrypt(digest).decode()
 
         return jsonify(parsed)
+
+    @multiroute("/api/v1/admin/users/<user_id>", methods=["PATCH"], other_methods=["DELETE"])
+    @requires_developer
+    @json
+    @use_kwargs({
+        "supporter": fields.Boolean(),
+        "editor": fields.Boolean(),
+        "moderator": fields.Boolean(),
+        "developer": fields.Boolean(),
+        "password": fields.Str(required=True)
+    }, locations=("json",))
+    async def patch_user_roles(self, user_id: str, password: str, **kwargs):
+        # TODO: audit log stuff
+        if not await User.exists(user_id):
+            abort(404, "Unknown user")
+
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        admin_user_id = parsed_token["id"]
+
+        user = await User.get(admin_user_id)
+
+        if Authenticator.hash_password(password) != user.password:
+            abort(401, "Invalid password")
+
+        if not kwargs:
+            return jsonify(True)
+
+        await User.update.values(**kwargs).where(User.id == user_id).gino.status()
+
+        return jsonify(True)
+
+    @multiroute("/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"])
+    @requires_developer
+    @json
+    async def delete_user(self, user_id: str):
+        # TODO: audit log stuff
+        if not await User.exists(user_id):
+            abort(404, "Unknown user")
+
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        admin_user_id = parsed_token["id"]
+
+        user = await User.get(admin_user_id)
+
+        if Authenticator.hash_password(password) != user.password:
+            abort(401, "Invalid password")
+
+        await User.delete.where(User.id == user_id).gino.status()
+
+        return jsonify(True)
 
 
 def setup(core: Sayonika):

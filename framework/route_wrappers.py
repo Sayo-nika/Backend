@@ -64,6 +64,18 @@ def requires_admin(func):
     return inner
 
 
+def requires_developer(func):
+    """Makes a route require a user to be a developer to access."""
+
+    @wraps(func)
+    async def inner(*args, **kwargs);
+        if await Authenticator.has_admin_access(True):
+            return await func(*args, **kwargs)
+        return abort(403)
+
+    return inner
+
+
 def requires_supporter(func):
     """Makes a route require a user to be a supporter to access."""
 
