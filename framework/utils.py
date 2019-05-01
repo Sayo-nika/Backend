@@ -15,7 +15,8 @@ def paginate(query: Query, page: int, limit: int = 50) -> Query:
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: int, action: Optional[str] = None) -> float:
+async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: int, action: Optional[str] = None
+                           ) -> float:
     """Verify a reCAPTCHA request."""
 
     if version == 2:
@@ -48,7 +49,7 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: 
 class NamedBytes(bytes):
     """Helper class for having `bytes` with `name` for owo."""
 
-    def __new__(cls, *args, name: str=None, **kwargs):
+    def __new__(cls, *args, name: str = None, **kwargs):
         inst = bytes.__new__(cls, *args, **kwargs)
         inst.name = name
 

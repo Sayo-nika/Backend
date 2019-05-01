@@ -8,8 +8,9 @@ from sqlalchemy import and_
 from webargs import fields
 
 # Sayonika Internals
-from framework.models import Mod, Report, ModAuthor, User, AuthorRole
-from framework.objects import SETTINGS, db
+from framework.authentication import Authenticator
+from framework.models import Mod, User, Report, ModAuthor, AuthorRole
+from framework.objects import SETTINGS, db, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_admin, requires_developer
@@ -62,7 +63,7 @@ class Admin(RouteCog):
             ModAuthor.user_id == User.id
         ))
         query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
-        mods = await paginate(query, page, limit).where(Mod.verified == False).gino.all()
+        mods = await paginate(query, page, limit).where(Mod.verified == False).gino.all()  # noqa: E712
 
         return jsonify(self.deep_dict_all(mods))
 
@@ -92,7 +93,6 @@ class Admin(RouteCog):
         await Mod.update.values(verified=True).where(Mod.id == mod_id).gino.status()
 
         return jsonify(True)
-
 
     @route("/api/v1/admin/decrypt_tb", methods=["POST"])
     @requires_admin
@@ -147,7 +147,10 @@ class Admin(RouteCog):
     @multiroute("/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"])
     @requires_developer
     @json
-    async def delete_user(self, user_id: str):
+    @use_kwargs({
+        "password": fields.Str(required=True)
+    }, locations=("json",))
+    async def delete_user(self, user_id: str, password: str):
         # TODO: audit log stuff
         if not await User.exists(user_id):
             abort(404, "Unknown user")

@@ -10,7 +10,6 @@ from sqlalchemy.engine.url import URL
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-# Sayonika Internals
 from framework.db import db as target_metadata  # isort:skip
 from framework.objects import SETTINGS  # isort:skip
 

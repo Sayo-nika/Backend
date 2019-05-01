@@ -33,6 +33,7 @@ class MailSubjects:
 class EmailFailed(Exception):
     pass
 
+
 class Mailer:
     """Sending mail templates via Mailgun."""
     # XXX: switch to redis soon
@@ -60,7 +61,8 @@ class Mailer:
 
         return data
 
-    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str], session: aiohttp.ClientSession) -> None:
+    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str],
+                        session: aiohttp.ClientSession) -> None:
         """
         Send mail using a template, along with optionally replacing some values.
         Templates can be found in `framework/mail_templates`.
@@ -88,4 +90,3 @@ class Mailer:
                 return True
             else:
                 raise EmailFailed
-

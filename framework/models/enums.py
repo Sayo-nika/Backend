@@ -79,4 +79,3 @@ class ReactionType(Enum):
     upvote = 0
     downvote = 1
     funny = 2
-

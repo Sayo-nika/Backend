@@ -33,7 +33,7 @@ class Authenticator:
         if user.developer:
             return True
 
-        if request.method != "GET": # Check all methods other than get
+        if request.method != "GET":  # Check all methods other than get
             if "mod_id" in kwargs:
                 if kwargs["mod_id"] not in (mod.id for mod in user.mods):
                     abort(403, "User does not have the required permissions to fulfill the request.")
@@ -75,8 +75,10 @@ class Authenticator:
 
         user = await User.get(parsed_token["id"])
 
-        if ((developer_only and not user.developer) or
-           (not developer_only and (not user.moderator or not user.developer))):
+        if (
+            (developer_only and not user.developer)
+            or (not developer_only and (not user.moderator or not user.developer))
+        ):
             abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True

@@ -3,7 +3,7 @@ import base64
 from enum import Enum
 import imghdr
 import re
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union, Optional
 
 # External Libraries
 from marshmallow import Schema
@@ -13,14 +13,17 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import Mod, User, Review, ModStatus, AuthorRole, ModAuthor, ModCategory, ModPlaytester, ModColor, ReviewReaction, ReportType, Report, UserFavorite, ReactionType
-from framework.objects import db, owo, jwt_service, limiter
+from framework.models import (
+    Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
+    UserFavorite, ModPlaytester, ReviewReaction
+)
+from framework.objects import db, owo, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate, verify_recaptcha, NamedBytes
+from framework.utils import NamedBytes, paginate, verify_recaptcha
 
 
 class AuthorSchema(Schema):
@@ -252,7 +255,7 @@ class Mods(RouteCog):
 
         await mod.create()
         await ModAuthor.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
-                                             in authors])
+                                            in authors])
 
         if ModPlaytester is not None:
             await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in ModPlaytester])
@@ -397,19 +400,6 @@ class Mods(RouteCog):
 
         return jsonify(mod.to_dict())
 
-    @multiroute("/api/v1/mods/<mod_id>", methods=["DELETE"], other_methods=["PATCH", "GET"])
-    @requires_login
-    @json
-    async def get_mod(self, mod_id: str):
-        mod = await Mod.get(mod_id)
-        authors = await ModAuthor
-        if mod is None:
-            abort(404, "Unknown mod")
-
-        await Mod.delete.where(Mod.id == mod_id).gino.status()
-
-        return jsonify(mod.to_dict())
-
     @route("/api/v1/mods/<mod_id>/download")
     @json
     async def get_download(self, mod_id: str):
@@ -497,12 +487,12 @@ class Mods(RouteCog):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        if await Review.query.where(and_(Review.author_id == user_id, Review.mod_id == mod_id)).gino.first():
-            abort(400, "Review already exists")
-
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
+
+        if await Review.query.where(and_(Review.author_id == user_id, Review.mod_id == mod_id)).gino.first():
+            abort(400, "Review already exists")
 
         review = await Review.create(title=title, content=content, rating=rating, author_id=user_id, mod_id=mod_id)
 

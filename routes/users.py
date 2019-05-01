@@ -1,10 +1,8 @@
 # Stdlib
 from datetime import datetime
 from enum import Enum
-from typing import List
 
 # External Libraries
-import aiohttp
 from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
 from sqlalchemy import or_, not_
@@ -106,7 +104,7 @@ class Users(RouteCog):
             "USER_NAME": user.username,
             "TOKEN": token,
             "BASE_URL": SETTINGS["EMAIL_BASE"]
-            }, session=self.core.aioh_sess)
+        }, session=self.core.aioh_sess)
 
         return jsonify(user.to_dict())
 
@@ -181,7 +179,7 @@ class Users(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        favorite_pairs = await UserFavourite.query.where(UserFavourite.user_id == user_id).gino.all()
+        favorite_pairs = await UserFavorite.query.where(UserFavorite.user_id == user_id).gino.all()
         favorite_pairs = [x.mod_id for x in favorite_pairs]
         favorites = await Mod.query.where(Mod.id.in_(favorite_pairs)).gino.all()
 
