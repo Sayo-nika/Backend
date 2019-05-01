@@ -444,18 +444,23 @@ class Mods(RouteCog):
         if review_sorters[sort]:
             query = query.order_by(review_sorters[sort])
         elif sort == ReviewSorting.best:
-            upvoters_count = select([func.count()]).where(
+            upvoters_count = select([func.count()]).where(and_(
                 ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.upvote).as_scalar()
+                ReviewReaction.reaction == ReactionType.upvote
+            )).as_scalar()
 
-            downvoters_count = select([func.count()]).where(
-                ReviewDownvoters.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.downvote).as_scalar()
+            downvoters_count = select([func.count()]).where(and_(
+                ReviewReaction.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.downvote
+            )).as_scalar()
 
             query = query.order_by(upvoters_count - downvoters_count)
         elif sort == ReviewSorting.funniest:
             # Get count of all funny ratings by review.
-            sub_order = select([func.count()]).where(ReviewFunnys.review_id == Review.id).as_scalar()
+            sub_order = select([func.count()]).where(and_(
+                ReviewReaction.review_id == Review.id,
+                Reviewreaction.reaction == ReactionType.funny
+            )).as_scalar()
             query = query.order_by(sub_order.desc())
 
         if isinstance(rating, int):
