@@ -34,12 +34,12 @@ class ModAuthor(db.Model):
     __tablename__ = "user_mod"
 
     role = db.Column(db.Enum(AuthorRole), default=AuthorRole.unassigned)
-    user_id = db.Column(None, db.ForeignKey("user.id"))
-    mod_id = db.Column(None, db.ForeignKey("mod.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))
 
 
 class ModPlaytester(db.Model):
     __tablename__ = "mod_playtester"
 
-    user_id = db.Column(None, db.ForeignKey("user.id"))
-    mod_id = db.Column(None, db.ForeignKey("mod.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))

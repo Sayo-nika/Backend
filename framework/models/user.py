@@ -40,5 +40,5 @@ class User(db.Model, Base):
 class UserFavorite(db.Model):
     __tablename__ = "user_favorite"
 
-    user_id = db.Column(None, db.ForeignKey("user.id"))
-    mod_id = db.Column(None, db.ForeignKey("mod.id"))
+    user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))

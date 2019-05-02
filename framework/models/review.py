@@ -11,13 +11,13 @@ class Review(db.Model, Base):
     rating = db.Column(db.Numeric())
     content = db.Column(db.Unicode(2000))
     title = db.Column(db.Unicode(32))
-    mod_id = db.Column(None, db.ForeignKey("mod.id"))
-    author_id = db.Column(None, db.ForeignKey("user.id"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))
+    author_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
 
 
 class ReviewReaction(db.Model):
     __tablename__ = "review_reaction"
 
-    review_id = db.Column(None, db.ForeignKey("review.id"))
-    user_id = db.Column(None, db.ForeignKey("user.id"))
+    review_id = db.Column(None, db.ForeignKey("review.id", ondelete="CASCADE"))
+    user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
     reaction = db.Column(db.Enum(ReactionType), nullable=False)

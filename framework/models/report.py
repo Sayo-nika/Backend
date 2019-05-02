@@ -9,6 +9,6 @@ class Report(db.Model, Base):
     __tablename__ = "report"
 
     content = db.Column(db.Unicode(1000))
-    author_id = db.Column(None, db.ForeignKey("user.id"))
-    mod_id = db.Column(None, db.ForeignKey("mod.id"))
+    author_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
+    mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))
     type = db.Column(db.Enum(ReportType))
