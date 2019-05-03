@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 # External Libraries
-import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
+import quart.flask_patch  # noqa: F401
 from aioredis import ConnectionsPool
 from flask_limiter import Limiter
 from owo import Client as OWOClient

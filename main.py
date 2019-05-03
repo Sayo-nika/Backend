@@ -5,7 +5,8 @@ import sys
 from sqlalchemy.engine.url import URL
 
 # Sayonika Internals
-from framework.objects import SETTINGS, db, loop, redis, sayonika_instance
+from framework.objects import db, loop, redis, sayonika_instance
+from framework.settings import SETTINGS
 
 
 async def setup_db():

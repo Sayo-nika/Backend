@@ -11,6 +11,7 @@ from sqlalchemy.engine.url import URL
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from framework.db import db as target_metadata  # isort:skip
+import framework.models  # noqa: F401 isort:skip
 from framework.settings import SETTINGS  # isort:skip
 
 # this is the Alembic Config object, which provides
