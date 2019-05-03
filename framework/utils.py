@@ -1,13 +1,40 @@
 # Stdlib
+import string
 from typing import Optional
 
 # External Libraries
 import aiohttp
 from quart import abort
 from sqlalchemy.orm import Query
+from unidecode import unidecode
 
 # Sayonika Internals
 from framework.objects import SETTINGS
+
+
+def generalize_text(text: str) -> str:
+    """
+    Transforms a given string into a lowercased, dash separated sequence,
+    with non-ascii characters and punctuation removed.
+
+    e.g.
+    Input: öBLiq.ue fońt]
+    Output: oblique-font
+    """
+    return (
+        # Rejoin with only one space
+        " ".join(
+            # Remove unicode characters by trying to find visually similar ASCII
+            unidecode(text)
+            # Strip punctuation characters
+            .translate(str.maketrans("", "", string.punctuation))
+            # Split on any whitespace character, including multiple
+            .split()
+        )
+        .strip()
+        .replace(" ", "-")
+        .lower()
+    )
 
 
 def paginate(query: Query, page: int, limit: int = 50) -> Query:

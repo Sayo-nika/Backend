@@ -23,7 +23,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import NamedBytes, paginate, verify_recaptcha
+from framework.utils import NamedBytes, paginate, verify_recaptcha, generalize_text
 
 
 class AuthorSchema(Schema):
@@ -204,8 +204,9 @@ class Mods(RouteCog):
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
-        # TODO: maybe strip out stuff like whitespace and punctuation so people can't be silly.
-        mods = await Mod.get_any(True, title=title).first()
+        # Check if any mod with a similar enough name exists already.
+        generalized_title = generalize_text(title)
+        mods = await Mod.get_any(True, generalized_title=generalized_title).first()
 
         if mods is not None:
             abort(400, "A mod with that title already exists")
@@ -459,7 +460,7 @@ class Mods(RouteCog):
             # Get count of all funny ratings by review.
             sub_order = select([func.count()]).where(and_(
                 ReviewReaction.review_id == Review.id,
-                Reviewreaction.reaction == ReactionType.funny
+                ReviewReaction.reaction == ReactionType.funny
             )).as_scalar()
             query = query.order_by(sub_order.desc())
 
