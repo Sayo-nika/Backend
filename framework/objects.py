@@ -1,7 +1,6 @@
 # Stdlib
 import asyncio
 import logging
-import os
 
 # External Libraries
 import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
@@ -15,37 +14,12 @@ from framework.init_later_redis import InitLaterRedis
 from framework.limiter import get_ratelimit_key
 from framework.mailer import Mailer
 from framework.sayonika import Sayonika
+from framework.settings import SETTINGS
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "SETTINGS", "loop", "redis", "owo")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "loop", "redis", "owo")
 
 loop = asyncio.get_event_loop()
-SETTINGS = {
-    # Default
-    "SERVER_BIND": "localhost",
-    "SERVER_PORT": 4444,
-    "DB_HOST": "localhost",
-    "DB_PORT": 5432,
-    "DB_USER": "sayonika",
-    "DB_PASS": "sayonika",
-    "DB_NAME": "sayonika",
-    "JWT_SECRET": "testing123",
-    "AES_KEY": "this is a  pretty long key oh no",
-    "REDIS_URL": "redis://localhost:6379/0",
-    "EMAIL_BASE": "http://localhost:4444",
-    "MEDIUM_PUBLICATION": "sayonika"
-}
-
-SETTINGS.update({
-    k[9:]: v for k, v in os.environ.items()
-    if k.startswith("SAYONIKA_")
-})
-
-if len(SETTINGS["AES_KEY"]) != 32:
-    # Early catch for wrong length key
-    raise ValueError("SAYONIKA_AES_KEY must be a 32 bit key.")
-else:
-    SETTINGS["AES_KEY"] = SETTINGS["AES_KEY"].encode()
 
 logger = logging.getLogger("Sayonika")
 sayonika_instance = Sayonika()
