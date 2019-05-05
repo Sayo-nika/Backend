@@ -6,12 +6,12 @@ Revision ID: 2c6a0e4b5616
 Revises: 3007e0d40f26
 Create Date: 2019-05-02 10:57:00.579594+00:00
 """
+# Stdlib
 import re
 
 # External Libraries
 from alembic import op
 import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision = '2c6a0e4b5616'

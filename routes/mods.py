@@ -23,7 +23,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import NamedBytes, paginate, verify_recaptcha, generalize_text
+from framework.utils import NamedBytes, paginate, generalize_text, verify_recaptcha
 
 
 class AuthorSchema(Schema):
@@ -215,7 +215,7 @@ class Mods(RouteCog):
             abort(400, "Can't create a new archived mod")
 
         mod = Mod(title=title, tagline=tagline, description=description, website=website, status=status,
-                  category=category, color=ModColor)
+                  category=category, theme_color=color)
 
         icon_mimetype, icon_data = validate_img(icon, "icon")
         banner_mimetype, banner_data = validate_img(banner, "banner")
@@ -227,7 +227,7 @@ class Mods(RouteCog):
             elif not await User.exists(author["id"]):
                 abort(400, f"Unknown user '{author['id']}'")
 
-        authors.append({"id": user_id, "role": AuthorRole.Owner})
+        authors.append({"id": user_id, "role": AuthorRole.owner})
 
         if is_private_beta is not None:
             mod.is_private_beta = is_private_beta

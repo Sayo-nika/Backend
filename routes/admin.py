@@ -166,6 +166,11 @@ class Admin(RouteCog):
         if not Authenticator.compare_password(password, user.password):
             abort(401, "Invalid password")
 
+        await Mod.delete.where(and_(
+            ModAuthor.user_id == user_id,
+            ModAuthor.mod_id == Mod.id,
+            ModAuthor.role == AuthorRole.owner
+        )).gino.status()
         await User.delete.where(User.id == user_id).gino.status()
 
         return jsonify(True)
