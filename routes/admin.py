@@ -1,10 +1,12 @@
 # Stdlib
 import base64
+from enum import Enum
 
 # External Libraries
 from Cryptodome.Cipher import AES
+from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 from webargs import fields
 
 # Sayonika Internals
@@ -35,6 +37,17 @@ def deep_to_dict(model):
     return dicted
 
 
+class VerifyQueueSorting(Enum):
+    date_submitted = 0
+    name = 1
+
+
+queue_sorting = {
+    VerifyQueueSorting.date_submitted: Mod.created_at,
+    VerifyQueueSorting.name: Mod.title
+}
+
+
 class Admin(RouteCog):
     @staticmethod
     def dict_all(models):
@@ -49,13 +62,16 @@ class Admin(RouteCog):
     @json
     @use_kwargs({
         "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50)
+        "limit": fields.Int(missing=50),
+        "sort": EnumField(VerifyQueueSorting, missing=VerifyQueueSorting.date_submitted),
+        "ascending": fields.Bool(missing=False)
     }, locations=("json",))
-    async def get_verify_queue(self, limit: int, page: int):
+    async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
+        sort_by = queue_sorting[sort]
 
         query = Mod.outerjoin(ModAuthor).outerjoin(User).select().where(and_(
             ModAuthor.role == AuthorRole.owner,
@@ -63,7 +79,9 @@ class Admin(RouteCog):
             ModAuthor.user_id == User.id
         ))
         query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
-        query = query.where(Mod.verified == False)  # noqa: E712
+        query = query.where(Mod.verified == False).order_by(  # noqa: E712
+            sort_by.asc() if ascending else sort_by.desc()
+        )
 
         results = await paginate(query, page, limit).gino.all()
         total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712
