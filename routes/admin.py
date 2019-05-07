@@ -4,7 +4,7 @@ import base64
 # External Libraries
 from Cryptodome.Cipher import AES
 from quart import abort, jsonify, request
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from webargs import fields
 
 # Sayonika Internals
@@ -63,9 +63,12 @@ class Admin(RouteCog):
             ModAuthor.user_id == User.id
         ))
         query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
-        mods = await paginate(query, page, limit).where(Mod.verified == False).gino.all()  # noqa: E712
+        query = query.where(Mod.verified == False)  # noqa: E712
 
-        return jsonify(self.deep_dict_all(mods))
+        results = await paginate(query, page, limit).gino.all()
+        total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712
+
+        return jsonify(total=total, page=page, limit=limit, results=self.deep_dict_all(results))
 
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
