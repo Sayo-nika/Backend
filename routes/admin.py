@@ -63,7 +63,7 @@ class Admin(RouteCog):
     @use_kwargs({
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50),
-        "sort": EnumField(VerifyQueueSorting, missing=VerifyQueueSorting.date_submitted),
+        "sort": EnumField(VerifyQueueSorting, missing="date_submitted"),
         "ascending": fields.Bool(missing=False)
     }, locations=("json",))
     async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool):
