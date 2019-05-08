@@ -29,7 +29,7 @@ limiter = Limiter(
     key_func=get_ratelimit_key,
     default_limits=SETTINGS.get(
         "RATELIMITS",
-        "1 per 2 seconds;20 per minute;1000 per hour"
+        "5 per 2 seconds;1000 per hour"
     ).split(";")
 )
 redis = InitLaterRedis(
