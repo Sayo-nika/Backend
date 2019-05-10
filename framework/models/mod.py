@@ -46,7 +46,7 @@ class Mod(db.Model, Base):
         }
 
 
-class ModAuthor(db.Model):
+class ModAuthor(db.Model, Base):
     __tablename__ = "user_mod"
 
     role = db.Column(db.Enum(AuthorRole), default=AuthorRole.unassigned)
@@ -54,7 +54,7 @@ class ModAuthor(db.Model):
     mod_id = db.Column(None, db.ForeignKey("mod.id", ondelete="CASCADE"))
 
 
-class ModPlaytester(db.Model):
+class ModPlaytester(db.Model, Base):
     __tablename__ = "mod_playtester"
 
     user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))

@@ -15,7 +15,7 @@ class Review(db.Model, Base):
     author_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
 
 
-class ReviewReaction(db.Model):
+class ReviewReaction(db.Model, Base):
     __tablename__ = "review_reaction"
 
     review_id = db.Column(None, db.ForeignKey("review.id", ondelete="CASCADE"))

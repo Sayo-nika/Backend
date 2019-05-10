@@ -12,7 +12,12 @@ from framework.objects import db
 
 
 class Base:
-    """Base utility class for models to inherit from."""
+    """
+    Base class for models to inherit from.
+    Provides default `id` column and `created_at` column, and utility class methods:
+        `exists`: check if a row exists with given id
+        `get_any`: gets all rows matching at least one of the given arguments, being optionally case insensitive.
+    """
     id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

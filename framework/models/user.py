@@ -37,7 +37,7 @@ class User(db.Model, Base):
         }
 
 
-class UserFavorite(db.Model):
+class UserFavorite(db.Model, Base):
     __tablename__ = "user_favorite"
 
     user_id = db.Column(None, db.ForeignKey("user.id", ondelete="CASCADE"))
