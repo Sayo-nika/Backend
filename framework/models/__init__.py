@@ -9,6 +9,5 @@ from .review import Review, ReviewReaction
 from .user import User, UserFavorite
 
 __all__ = ("AuthorRole", "Base", "Connection", "ModStatus", "ModCategory", "ModColor", "ConnectionType", "MediaType",
-           "Media", "Mod", "Report", "Review", "ReviewDownvoters", "ReviewFunnys", "ReviewUpvoters", "User",
-           "UserFavorite", "ModAuthor", "EditorsChoice", "Playtesters", "ReportType", "ReactionType", "ModPlaytester",
-           "ReviewReaction")
+           "Media", "Mod", "Report", "Review", "User", "UserFavorite", "ModAuthor", "EditorsChoice", "ReportType",
+           "ReactionType", "ModPlaytester", "ReviewReaction")
