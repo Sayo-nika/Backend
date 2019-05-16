@@ -1,6 +1,8 @@
 # Stdlib
 import base64
 from enum import Enum
+import inspect
+from typing import List
 
 # External Libraries
 from Cryptodome.Cipher import AES
@@ -21,6 +23,11 @@ from framework.sayonika import Sayonika
 from framework.utils import paginate
 
 
+def get_members(type_) -> List[str]:
+    non_routines = inspect.getmembers(type_, lambda x: not inspect.isroutine(x))
+    return [x[0] for x in non_routines if not (x[0].startswith("_") or x[0].endswith("_"))]
+
+
 # Probably will need to add this to util or smth later
 def deep_to_dict(model):
     """
@@ -28,11 +35,14 @@ def deep_to_dict(model):
     """
     dicted = model.to_dict()
 
-    for attr in dir(model):
+    for attr in get_members(model):
         attr_on_model = getattr(model, attr)
 
-        if isinstance(attr_on_model, db.Model) and attr not in dicted:
-            dicted[attr] = deep_to_dict(attr_on_model)
+        if attr not in dicted or dicted[attr] == attr_on_model:
+            if isinstance(attr_on_model, db.Model):
+                dicted[attr] = deep_to_dict(attr_on_model)
+            elif isinstance(attr_on_model, list):
+                dicted[attr] = [deep_to_dict(x) for x in attr_on_model]
 
     return dicted
 
@@ -58,35 +68,43 @@ class Admin(RouteCog):
         return [deep_to_dict(m) for m in models]
 
     @route("/api/v1/mods/verify_queue", methods=["GET"])
-    @requires_admin
+    # @requires_admin
     @json
     @use_kwargs({
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50),
         "sort": EnumField(VerifyQueueSorting, missing="date_submitted"),
-        "ascending": fields.Bool(missing=False)
-    }, locations=("json",))
-    async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool):
+        "ascending": fields.Bool(missing=False),
+        "get_all_authors": fields.Bool(missing=False)
+    })
+    async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool,
+                               get_all_authors: bool):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
         sort_by = queue_sorting[sort]
 
-        query = Mod.outerjoin(ModAuthor).outerjoin(User).select().where(and_(
-            ModAuthor.role == AuthorRole.owner,
-            ModAuthor.mod_id == Mod.id,
-            ModAuthor.user_id == User.id
-        ))
-        query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
+        query = Mod.outerjoin(ModAuthor).outerjoin(User).select()
+
+        # FIXME: currently broken. Returns same owners for all rows.
+        # See https://github.com/fantix/gino/issues/480 for more info.
+        loader = Mod.distinct(Mod.id).load(
+            authors=User.distinct(User.id).load(
+                role=ModAuthor.distinct(ModAuthor.id)
+            )
+        )
+        query = query.gino.load(loader).query
+
         query = query.where(Mod.verified == False).order_by(  # noqa: E712
             sort_by.asc() if ascending else sort_by.desc()
         )
 
         results = await paginate(query, page, limit).gino.all()
         total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712
+        results = self.deep_dict_all(results)
 
-        return jsonify(total=total, page=page, limit=limit, results=self.deep_dict_all(results))
+        return jsonify(total=total, page=page, limit=limit, results=results)
 
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin

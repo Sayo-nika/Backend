@@ -1,5 +1,6 @@
 # Stdlib
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 # External Libraries
 from sqlalchemy.engine.default import DefaultExecutionContext
@@ -10,6 +11,9 @@ from framework.utils import generalize_text
 
 from .base import Base
 from .enums import ModColor, ModStatus, AuthorRole, ModCategory
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 def create_generalized_title(context: DefaultExecutionContext) -> str:
@@ -40,9 +44,36 @@ class Mod(db.Model, Base):
     download_url = db.Column(db.Unicode(), nullable=True)
     verified = db.Column(db.Boolean(), default=False)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._authors = []
+        self._owner = None
+
+    @property
+    def authors(self):
+        return self._authors
+
+    @authors.setter
+    def authors(self, value: "User"):
+        if hasattr(value, "role"):
+            # TODO: try to figure this out in the loader query.
+
+            if value.role.role == AuthorRole.owner:
+                self._owner = value
+                return
+
+        self._authors.append(value)
+
+    @property
+    def owner(self):
+        return self._owner
+
     def to_dict(self):
         return {
-            k: v for k, v in super().to_dict().items() if k not in ("generalized_title",)
+            **{k: v for k, v in super().to_dict().items() if k not in ("generalized_title",)},
+            "authors": self._authors,
+            "owner": self._owner
         }
 
 

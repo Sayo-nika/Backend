@@ -2,6 +2,7 @@
 from framework.objects import db
 
 from .base import Base
+from .mod import ModAuthor
 
 COMMON_FILTERED = ("password", "last_pass_reset", "email_verified")
 DEFAULT_FILTERED = (*COMMON_FILTERED, "email")
@@ -22,9 +23,26 @@ class User(db.Model, Base):
     password = db.Column(db.Binary())
     last_pass_reset = db.Column(db.DateTime())
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self._role = None
+        self._role_name = None
+
+    @property
+    def role(self):
+        return self._role
+
+    @role.setter
+    def role(self, value: ModAuthor):
+        self._role = value
+        self._role_name = value.role.name
+
     def to_dict(self):
         return {
-            k: v for k, v in super().to_dict().items() if k not in DEFAULT_FILTERED
+            **{k: v for k, v in super().to_dict().items() if k not in DEFAULT_FILTERED},
+            "role": self._role_name,
+            # "__": self._role.to_dict()
         }
 
     def to_self_dict(self):
