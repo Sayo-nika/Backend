@@ -87,10 +87,8 @@ class Admin(RouteCog):
 
         query = Mod.outerjoin(ModAuthor).outerjoin(User).select()
 
-        # FIXME: currently broken. Returns same owners for all rows.
-        # See https://github.com/fantix/gino/issues/480 for more info.
         loader = Mod.distinct(Mod.id).load(
-            authors=User.distinct(User.id).load(
+            authors=User.load(
                 role=ModAuthor.distinct(ModAuthor.id)
             )
         )
@@ -122,7 +120,7 @@ class Admin(RouteCog):
 
         return jsonify(self.dict_all(reports))
 
-    @route("/api/v1/<mod_id>/verify", methods=["POST"])
+    @route("/api/v1/mods/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
     async def post_verify(self, mod_id: str):
