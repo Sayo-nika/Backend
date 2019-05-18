@@ -401,6 +401,15 @@ class Mods(RouteCog):
 
         return jsonify(mod.to_dict())
 
+    # TODO: decline route with reason, maybe doesn't 100% delete it? idk
+    @multiroute("/api/v1/mods/<mod_id>", methods=["DELETE"], other_methods=["GET", "PATCH"])
+    @requires_login
+    @json
+    async def delete_mod(self, mod_id: str):
+        await Mod.delete.where(Mod.id == mod_id).gino.status()
+
+        return jsonify(True)
+
     @route("/api/v1/mods/<mod_id>/download")
     @json
     async def get_download(self, mod_id: str):
