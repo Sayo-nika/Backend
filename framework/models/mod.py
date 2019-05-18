@@ -17,8 +17,15 @@ if TYPE_CHECKING:
 
 
 def create_generalized_title(context: DefaultExecutionContext) -> str:
-    title = context.get_current_parameters()["title"]
-    return generalize_text(title)
+    params = context.get_current_parameters()
+    print(params)
+    print(context.prefetch_cols)
+    # print(context.)
+
+    # FIXME: this will set generalized_title to null if title isn't update.
+    # How to get current row cols???
+    if "title" in params:
+        return generalize_text(params["title"])
 
 
 class Mod(db.Model, Base):
