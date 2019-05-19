@@ -1,5 +1,9 @@
+# External Libraries
+from sqlalchemy.engine.default import DefaultExecutionContext
+
 # Sayonika Internals
 from framework.objects import db
+from framework.utils import generate_gravatar
 
 from .base import Base
 from .mod import ModAuthor
@@ -8,12 +12,17 @@ COMMON_FILTERED = ("password", "last_pass_reset", "email_verified")
 DEFAULT_FILTERED = (*COMMON_FILTERED, "email")
 
 
+def create_default_avatar(context: DefaultExecutionContext) -> str:
+    params = context.get_current_parameters()
+    return generate_gravatar(params["email"])
+
+
 class User(db.Model, Base):
     __tablename__ = "user"
 
     email = db.Column(db.Unicode(), unique=True)
     username = db.Column(db.Unicode(25), unique=True)
-    avatar = db.Column(db.Unicode(), nullable=True)
+    avatar = db.Column(db.Unicode(), nullable=True, default=create_default_avatar)
     bio = db.Column(db.Unicode(100), nullable=True)
     supporter = db.Column(db.Boolean(), default=False)
     developer = db.Column(db.Boolean(), default=False)

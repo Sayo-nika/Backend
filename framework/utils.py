@@ -1,6 +1,8 @@
 # Stdlib
+import hashlib
 import string
 from typing import Optional
+import urllib.parse as urlp
 
 # External Libraries
 import aiohttp
@@ -10,6 +12,11 @@ from unidecode import unidecode
 
 # Sayonika Internals
 from framework.objects import SETTINGS
+
+GRAVATAR_BASE = "https://www.gravatar.com/avatar/{}?s=512"  # noqa: P103
+DEFAULT_AVATAR = GRAVATAR_BASE.format(
+    hashlib.md5(b"hello@sayonika.moe").hexdigest()  # noqa: S303
+)
 
 
 def generalize_text(text: str) -> str:
@@ -35,6 +42,14 @@ def generalize_text(text: str) -> str:
         .replace(" ", "-")
         .lower()
     )
+
+
+def generate_gravatar(email: str) -> str:
+    """Generates a Gravatar URL given an email. Comes with default fallback."""
+    email_ = email.strip().lower()
+    hash_ = hashlib.md5(email_.encode()).hexdigest()  # noqa: S303
+
+    return GRAVATAR_BASE.format(hash_) + f"&d={urlp.quote(DEFAULT_AVATAR, '')}"
 
 
 def paginate(query: Query, page: int, limit: int = 50) -> Query:
