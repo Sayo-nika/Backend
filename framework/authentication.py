@@ -79,7 +79,7 @@ class Authenticator:
 
         if (
             (developer_only and not user.developer)
-            or (not developer_only and (not user.moderator or not user.developer))
+            or (not developer_only and (not user.moderator and not user.developer))
         ):
             abort(403, "User does not have the required permissions to fulfill the request.")
 

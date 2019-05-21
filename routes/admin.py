@@ -68,7 +68,7 @@ class Admin(RouteCog):
         return [deep_to_dict(m) for m in models]
 
     @route("/api/v1/mods/verify_queue", methods=["GET"])
-    # @requires_admin
+    @requires_admin
     @json
     @use_kwargs({
         "page": fields.Int(missing=0),
