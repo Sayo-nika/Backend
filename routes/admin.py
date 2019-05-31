@@ -111,7 +111,7 @@ class Admin(RouteCog):
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50)
     }, locations=("json",))
-    async def get_report_queue(self, limit: int, page: int):
+    async def get_mod_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
@@ -190,7 +190,7 @@ class Admin(RouteCog):
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50)
     }, locations=("json",))
-    async def get_report_queue(self, limit: int, page: int):
+    async def get_user_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
