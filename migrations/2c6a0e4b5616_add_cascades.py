@@ -11,7 +11,6 @@ import re
 
 # External Libraries
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '2c6a0e4b5616'

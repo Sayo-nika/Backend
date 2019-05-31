@@ -84,8 +84,7 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: 
 
     if version == 3:
         return data["score"]
-    else:
-        return True
+    return True
 
 
 class NamedBytes(bytes):

@@ -78,7 +78,8 @@ class Admin(RouteCog):
         "get_all_authors": fields.Bool(missing=False)
     })
     async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool,
-                               get_all_authors: bool):
+                               get_all_authors: bool):  # pylint: disable=unused-argument
+        # TODO: Handle get_all_authors
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
@@ -94,12 +95,12 @@ class Admin(RouteCog):
         )
         query = query.gino.load(loader).query
 
-        query = query.where(Mod.verified == False).order_by(  # noqa: E712
+        query = query.where(Mod.verified == False).order_by(  # noqa: E712 pylint: disable=singleton-comparison
             sort_by.asc() if ascending else sort_by.desc()
         )
 
         results = await paginate(query, page, limit).gino.all()
-        total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712
+        total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712 pylint: disable=singleton-comparison
         results = self.deep_dict_all(results)
 
         return jsonify(total=total, page=page, limit=limit, results=results)

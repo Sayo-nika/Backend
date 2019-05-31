@@ -77,10 +77,8 @@ class Authenticator:
 
         user = await User.get(parsed_token["id"])
 
-        if (
-            (developer_only and not user.developer)
-            or (not developer_only and (not user.moderator and not user.developer))
-        ):
+        if ((developer_only and not user.developer) or (
+                not developer_only and (not user.moderator and not user.developer))):
             abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True
@@ -91,6 +89,6 @@ class Authenticator:
         return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
     @classmethod
-    def compare_password(cls, password: str, hash: bytes):
-        """Compares a password against hash"""
-        return bcrypt.checkpw(password.encode(), hash)
+    def compare_password(cls, password: str, hash_: bytes):
+        """Compares a password against hash_"""
+        return bcrypt.checkpw(password.encode(), hash_)

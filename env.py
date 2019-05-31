@@ -10,9 +10,9 @@ from sqlalchemy.engine.url import URL
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-from framework.db import db as target_metadata  # isort:skip
-import framework.models  # noqa: F401 isort:skip
-from framework.settings import SETTINGS  # isort:skip
+from framework.db import db as target_metadata  # noqa: E402 isort:skip pylint: disable=wrong-import-position
+import framework.models  # noqa: F401 E402 isort:skip pylint: disable=unused-import,wrong-import-position
+from framework.settings import SETTINGS  # noqa: E402 isort:skip pylint: disable=wrong-import-position
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

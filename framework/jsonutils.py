@@ -35,4 +35,3 @@ class TimedeltaJSONEncoder(JSONEncoder):
 
 class CombinedEncoder(EnumJSONEncoder, DatetimeJSONEncoder, TimedeltaJSONEncoder):
     """JSON encoder that inherits functionality of other custom encoders."""
-    pass
