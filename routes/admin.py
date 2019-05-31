@@ -13,7 +13,7 @@ from webargs import fields
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import Mod, User, Report, ModAuthor, AuthorRole
+from framework.models import Mod, User, Report, ModAuthor, AuthorRole, UserReport
 from framework.objects import SETTINGS, db, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -182,6 +182,22 @@ class Admin(RouteCog):
         }).where(User.id == user_id).gino.status()
 
         return jsonify(True)
+
+    @route("/api/v1/users/report_queue", methods=["GET"])
+    @requires_admin
+    @json
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50)
+    }, locations=("json",))
+    async def get_report_queue(self, limit: int, page: int):
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        page = page - 1 if page > 0 else 0
+        reports = await paginate(UserReport.query.order_by("user_id"), page, limit).gino.all()
+
+        return jsonify(self.dict_all(reports))
 
     @multiroute("/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"])
     @requires_developer

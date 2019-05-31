@@ -5,9 +5,10 @@ from .enums import ModColor, MediaType, ModStatus, AuthorRole, ReportType, ModCa
 from .media import Media
 from .mod import Mod, ModAuthor, ModPlaytester
 from .report import Report
+from .user_report import UserReport
 from .review import Review, ReviewReaction
 from .user import User, UserFavorite
 
 __all__ = ("AuthorRole", "Base", "Connection", "ModStatus", "ModCategory", "ModColor", "ConnectionType", "MediaType",
-           "Media", "Mod", "Report", "Review", "User", "UserFavorite", "ModAuthor", "EditorsChoice", "ReportType",
-           "ReactionType", "ModPlaytester", "ReviewReaction")
+           "Media", "Mod", "Report", "Review", "User", "UserFavorite", "UserReport", "ModAuthor", "EditorsChoice",
+           "ReportType", "ReactionType", "ModPlaytester", "ReviewReaction")

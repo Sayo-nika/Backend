@@ -11,8 +11,8 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, ModAuthor, UserFavorite
-from framework.objects import SETTINGS, mailer, jwt_service
+from framework.models import Mod, User, Review, ModAuthor, UserFavorite, ReportType, UserReport
+from framework.objects import SETTINGS, mailer, jwt_service, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
@@ -222,6 +222,25 @@ class Users(RouteCog):
         reviews = await Review.query.where(Review.author_id == user_id).gino.all()
 
         return jsonify(self.dict_all(reviews))
+
+    @route("/api/v1/mods/<mod_id>/report", methods=["POST"])
+    @json
+    @use_kwargs({
+        "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
+        "type": EnumField(ReportType, required=True),
+        "recaptcha": fields.Str(required=True)
+    }, locations=("json",))
+    @requires_login
+    @limiter.limit("2 per hour")
+    async def report(self, mod_id: str, content: str, type: ReportType, recaptcha: str):
+        await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
+
+        token = request.headers.get("Authorization", request.cookies.get("token"))
+        parsed_token = await jwt_service.verify_login_token(token, True)
+        user_id = parsed_token["id"]
+
+        report = await UserReport.create(content=content, author_id=user_id, mod_id=mod_id, type=type)
+        return jsonify(report.to_dict())
 
 
 def setup(core: Sayonika):

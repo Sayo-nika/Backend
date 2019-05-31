@@ -13,10 +13,8 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import (
-    Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
-    UserFavorite, ModPlaytester, ReviewReaction
-)
+from framework.models import (Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType,
+                              ModCategory, ReactionType, UserFavorite, ModPlaytester, ReviewReaction)
 from framework.objects import db, owo, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
