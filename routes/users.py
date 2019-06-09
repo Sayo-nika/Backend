@@ -232,7 +232,7 @@ class Users(RouteCog):
     }, locations=("json",))
     @requires_login
     @limiter.limit("2 per hour")
-    async def report(self, user_id: str, content: str, type_: ReportType, recaptcha: str):
+    async def report_user(self, user_id: str, content: str, type_: ReportType, recaptcha: str):
         await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
 
         token = request.headers.get("Authorization", request.cookies.get("token"))
