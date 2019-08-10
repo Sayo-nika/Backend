@@ -192,7 +192,7 @@ class Mods(RouteCog):
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
                         color: ModColor, is_private_beta: bool = None, mod_playtester: List[str] = None):
-        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "create_mod")
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, "create_mod")
 
         if score < 0.5:
             # TODO: discuss what to do here
@@ -544,7 +544,7 @@ class Mods(RouteCog):
     @requires_login
     @limiter.limit("2 per hour")
     async def report_mod(self, mod_id: str, content: str, type_: ReportType, recaptcha: str):
-        await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
+        await verify_recaptcha(recaptcha, self.core.aioh_sess)
 
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
