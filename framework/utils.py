@@ -61,6 +61,8 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: O
                            ) -> float:
     """Verify a reCAPTCHA request."""
 
+    secret = SETTINGS["RECPATCHA_KEY"]
+
     params = {
         "secret": secret,
         "response": token
