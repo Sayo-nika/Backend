@@ -72,7 +72,7 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: O
         if data["success"] is False:
             abort(400, "Invalid captcha")
 
-        if version == 3 and action and data["action"] != action:
+        if data["action"] != action:
             abort(400, "Invalid captcha action")
 
     return data["score"]
