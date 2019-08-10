@@ -1,6 +1,8 @@
 # Stdlib
+import hashlib
 import string
 from typing import Optional
+import urllib.parse as urlp
 
 # External Libraries
 import aiohttp
@@ -10,6 +12,11 @@ from unidecode import unidecode
 
 # Sayonika Internals
 from framework.objects import SETTINGS
+
+GRAVATAR_BASE = "https://www.gravatar.com/avatar/{}?s=512"  # noqa: P103
+DEFAULT_AVATAR = GRAVATAR_BASE.format(
+    hashlib.md5(b"hello@sayonika.moe").hexdigest()  # noqa: S303
+)
 
 
 def generalize_text(text: str) -> str:
@@ -37,21 +44,24 @@ def generalize_text(text: str) -> str:
     )
 
 
+def generate_gravatar(email: str) -> str:
+    """Generates a Gravatar URL given an email. Comes with default fallback."""
+    email_ = email.strip().lower()
+    hash_ = hashlib.md5(email_.encode()).hexdigest()  # noqa: S303
+
+    return GRAVATAR_BASE.format(hash_) + f"&d={urlp.quote(DEFAULT_AVATAR, '')}"
+
+
 def paginate(query: Query, page: int, limit: int = 50) -> Query:
     """Paginates a query, calculating the proper offset for the page."""
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: int, action: Optional[str] = None
+async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: Optional[str] = None
                            ) -> float:
     """Verify a reCAPTCHA request."""
 
-    if version == 2:
-        secret = SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"]
-    elif version == 3:
-        secret = SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"]
-    else:
-        raise ValueError("Invalid reCAPTCHA version")
+    secret = SETTINGS["RECPATCHA_KEY"]
 
     params = {
         "secret": secret,
@@ -64,13 +74,11 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: 
         if data["success"] is False:
             abort(400, "Invalid captcha")
 
-        if version == 3 and action and data["action"] != action:
+        if data["action"] != action:
             abort(400, "Invalid captcha action")
 
-    if version == 3:
-        return data["score"]
-    else:
-        return True
+    return data["score"]
+    return True
 
 
 class NamedBytes(bytes):

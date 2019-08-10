@@ -11,7 +11,11 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
+<<<<<<< HEAD
 from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType
+=======
+from framework.models import Mod, User, Review, ModAuthor, ReportType, UserReport, UserFavorite
+>>>>>>> sr229/no-rcv2
 from framework.objects import SETTINGS, mailer, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -84,7 +88,11 @@ class Users(RouteCog):
     }, locations=("json",))
     async def post_users(self, username: str, password: str, email: str, recaptcha: str):
         """Register a user to the site."""
-        await verify_recaptcha(recaptcha, self.core.aioh_sess, version=2)
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess)
+
+        if score < 0.5:
+            # TODO: send email/other 2FA when below 0.5
+            abort(400, "Possibly a bot")
 
         users = await User.get_any(True, username=username, email=email).first()
 
@@ -227,13 +235,17 @@ class Users(RouteCog):
     @json
     @use_kwargs({
         "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
-        "type": EnumField(UserReportType, required=True),
+        "type_": EnumField(ReportType, required=True),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     @requires_login
     @limiter.limit("2 per hour")
-    async def report(self, user_id: str, content: str, type: UserReportType, recaptcha: str):
-        await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
+    async def report_user(self, user_id: str, content: str, type_: ReportType, recaptcha: str):
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess)
+
+        if score < 0.5:
+            # TODO: send email/other 2FA when below 0.5
+            abort(400, "Possibly a bot")
 
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)

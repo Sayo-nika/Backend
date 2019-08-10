@@ -13,10 +13,8 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import (
-    Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
-    UserFavorite, ModPlaytester, ReviewReaction
-)
+from framework.models import (Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType,
+                              ModCategory, ReactionType, UserFavorite, ModPlaytester, ReviewReaction)
 from framework.objects import db, owo, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -187,14 +185,14 @@ class Mods(RouteCog):
             required=True
         ),
         "is_private_beta": fields.Bool(missing=False),
-        "ModPlaytester": fields.List(fields.Str()),
+        "mod_playtester": fields.List(fields.Str()),
         "color": EnumField(ModColor, missing=ModColor.default),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
                         status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
-                        color: ModColor, is_private_beta: bool = None, ModPlaytester: List[str] = None):
-        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, 3, "create_mod")
+                        color: ModColor, is_private_beta: bool = None, mod_playtester: List[str] = None):
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess, "create_mod")
 
         if score < 0.5:
             # TODO: discuss what to do here
@@ -232,11 +230,11 @@ class Mods(RouteCog):
         if is_private_beta is not None:
             mod.is_private_beta = is_private_beta
 
-        if ModPlaytester is not None:
+        if mod_playtester is not None:
             if not is_private_beta:
                 abort(400, "No need for `ModPlaytester` if open beta")
 
-            for playtester in ModPlaytester:
+            for playtester in mod_playtester:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
 
@@ -259,7 +257,7 @@ class Mods(RouteCog):
                                             in authors])
 
         if ModPlaytester is not None:
-            await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in ModPlaytester])
+            await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in mod_playtester])
 
         return jsonify(mod.to_dict())
 
@@ -334,9 +332,9 @@ class Mods(RouteCog):
         ),
         "color": EnumField(ModColor),
         "is_private_beta": fields.Bool(),
-        "ModPlaytester": fields.List(fields.Str())
+        "mod_playtester": fields.List(fields.Str())
     }, locations=("json",))
-    async def patch_mod(self, mod_id: str = None, authors: List[dict] = None, ModPlaytester: List[str] = None,
+    async def patch_mod(self, mod_id: str = None, authors: List[dict] = None, mod_playtester: List[str] = None,
                         icon: str = None, banner: str = None, **kwargs):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
@@ -351,14 +349,12 @@ class Mods(RouteCog):
                 and_(ModAuthor.user_id == author["id"], ModAuthor.mod_id == mod_id)
             ).gino.first()]
 
-        if ModPlaytester is not None:
-            for playtester in ModPlaytester:
+        if mod_playtester is not None:
+            for playtester in mod_playtester:
                 if not await User.exists(playtester):
                     abort(400, f"Unknown user '{playtester}'")
-                elif await ModPlaytester.query.where(and_(
-                    ModPlaytester.user_id == playtester,
-                    ModPlaytester.mod_id == mod.id)
-                ).gino.all():
+                elif await ModPlaytester.query.where(
+                        and_(ModPlaytester.user_id == playtester, ModPlaytester.mod_id == mod.id)).gino.all():
                     abort(400, f"{playtester} is already enrolled.")
 
         to_upload = []
@@ -400,6 +396,15 @@ class Mods(RouteCog):
         await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in ModPlaytester])
 
         return jsonify(mod.to_dict())
+
+    # TODO: decline route with reason, maybe doesn't 100% delete it? idk
+    @multiroute("/api/v1/mods/<mod_id>", methods=["DELETE"], other_methods=["GET", "PATCH"])
+    @requires_login
+    @json
+    async def delete_mod(self, mod_id: str):
+        await Mod.delete.where(Mod.id == mod_id).gino.status()
+
+        return jsonify(True)
 
     @route("/api/v1/mods/<mod_id>/download")
     @json
@@ -533,19 +538,23 @@ class Mods(RouteCog):
     @json
     @use_kwargs({
         "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
-        "type": EnumField(ReportType, required=True),
+        "type_": EnumField(ReportType, required=True),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     @requires_login
     @limiter.limit("2 per hour")
-    async def report(self, mod_id: str, content: str, type: ReportType, recaptcha: str):
-        await verify_recaptcha(recaptcha, self.core.aioh_sess, 2)
+    async def report_mod(self, mod_id: str, content: str, type_: ReportType, recaptcha: str):
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess)
+
+        if score < 0.5:
+            # TODO: send email/other 2FA when below 0.5
+            abort(400, "Possibly a bot")
 
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)
         user_id = parsed_token["id"]
 
-        report = await Report.create(content=content, author_id=user_id, mod_id=mod_id, type=type)
+        report = await Report.create(content=content, author_id=user_id, mod_id=mod_id, type=type_)
         return jsonify(report.to_dict())
 
 

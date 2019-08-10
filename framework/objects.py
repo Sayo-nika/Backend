@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 # External Libraries
-import quart.flask_patch  # noqa: F401
+import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from aioredis import ConnectionsPool
 from flask_limiter import Limiter
 from owo import Client as OWOClient
@@ -29,7 +29,7 @@ limiter = Limiter(
     key_func=get_ratelimit_key,
     default_limits=SETTINGS.get(
         "RATELIMITS",
-        "1 per 2 seconds;20 per minute;1000 per hour"
+        "5 per 2 seconds;1000 per hour"
     ).split(";")
 )
 redis = InitLaterRedis(

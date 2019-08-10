@@ -1,15 +1,19 @@
 # Stdlib
 import base64
+from enum import Enum
+import inspect
+from typing import List
 
 # External Libraries
 from Cryptodome.Cipher import AES
+from marshmallow_enum import EnumField
 from quart import abort, jsonify, request
 from sqlalchemy import and_
 from webargs import fields
 
 # Sayonika Internals
 from framework.authentication import Authenticator
-from framework.models import Mod, User, Report, ModAuthor, AuthorRole
+from framework.models import Mod, User, Report, ModAuthor, AuthorRole, UserReport
 from framework.objects import SETTINGS, db, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -19,6 +23,11 @@ from framework.sayonika import Sayonika
 from framework.utils import paginate
 
 
+def get_members(type_) -> List[str]:
+    non_routines = inspect.getmembers(type_, lambda x: not inspect.isroutine(x))
+    return [x[0] for x in non_routines if not (x[0].startswith("_") or x[0].endswith("_"))]
+
+
 # Probably will need to add this to util or smth later
 def deep_to_dict(model):
     """
@@ -26,13 +35,27 @@ def deep_to_dict(model):
     """
     dicted = model.to_dict()
 
-    for attr in dir(model):
+    for attr in get_members(model):
         attr_on_model = getattr(model, attr)
 
-        if isinstance(attr_on_model, db.Model) and attr not in dicted:
-            dicted[attr] = deep_to_dict(attr_on_model)
+        if attr not in dicted or dicted[attr] == attr_on_model:
+            if isinstance(attr_on_model, db.Model):
+                dicted[attr] = deep_to_dict(attr_on_model)
+            elif isinstance(attr_on_model, list):
+                dicted[attr] = [deep_to_dict(x) for x in attr_on_model]
 
     return dicted
+
+
+class VerifyQueueSorting(Enum):
+    date_submitted = 0
+    name = 1
+
+
+queue_sorting = {
+    VerifyQueueSorting.date_submitted: Mod.created_at,
+    VerifyQueueSorting.name: Mod.title
+}
 
 
 class Admin(RouteCog):
@@ -49,23 +72,38 @@ class Admin(RouteCog):
     @json
     @use_kwargs({
         "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50)
-    }, locations=("json",))
-    async def get_verify_queue(self, limit: int, page: int):
+        "limit": fields.Int(missing=50),
+        "sort": EnumField(VerifyQueueSorting, missing="date_submitted"),
+        "ascending": fields.Bool(missing=False),
+        "get_all_authors": fields.Bool(missing=False)
+    })
+    async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool,
+                               get_all_authors: bool):  # pylint: disable=unused-argument
+        # TODO: Handle get_all_authors
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
+        sort_by = queue_sorting[sort]
 
-        query = Mod.outerjoin(ModAuthor).outerjoin(User).select().where(and_(
-            ModAuthor.role == AuthorRole.owner,
-            ModAuthor.mod_id == Mod.id,
-            ModAuthor.user_id == User.id
-        ))
-        query = query.gino.load(Mod.distinct(Mod.id).load(author=User.distinct(User.id))).query
-        mods = await paginate(query, page, limit).where(Mod.verified == False).gino.all()  # noqa: E712
+        query = Mod.outerjoin(ModAuthor).outerjoin(User).select()
 
-        return jsonify(self.deep_dict_all(mods))
+        loader = Mod.distinct(Mod.id).load(
+            authors=User.load(
+                role=ModAuthor.distinct(ModAuthor.id)
+            )
+        )
+        query = query.gino.load(loader).query
+
+        query = query.where(Mod.verified == False).order_by(  # noqa: E712 pylint: disable=singleton-comparison
+            sort_by.asc() if ascending else sort_by.desc()
+        )
+
+        results = await paginate(query, page, limit).gino.all()
+        total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712 pylint: disable=singleton-comparison
+        results = self.deep_dict_all(results)
+
+        return jsonify(total=total, page=page, limit=limit, results=results)
 
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
@@ -74,7 +112,7 @@ class Admin(RouteCog):
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=50)
     }, locations=("json",))
-    async def get_report_queue(self, limit: int, page: int):
+    async def get_mod_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
             limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
@@ -83,7 +121,7 @@ class Admin(RouteCog):
 
         return jsonify(self.dict_all(reports))
 
-    @route("/api/v1/<mod_id>/verify", methods=["POST"])
+    @route("/api/v1/mods/<mod_id>/verify", methods=["POST"])
     @requires_admin
     @json
     async def post_verify(self, mod_id: str):
@@ -145,6 +183,22 @@ class Admin(RouteCog):
         }).where(User.id == user_id).gino.status()
 
         return jsonify(True)
+
+    @route("/api/v1/users/report_queue", methods=["GET"])
+    @requires_admin
+    @json
+    @use_kwargs({
+        "page": fields.Int(missing=0),
+        "limit": fields.Int(missing=50)
+    }, locations=("json",))
+    async def get_user_report_queue(self, limit: int, page: int):
+        if not 1 <= limit <= 100:
+            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+
+        page = page - 1 if page > 0 else 0
+        reports = await paginate(UserReport.query.order_by("user_id"), page, limit).gino.all()
+
+        return jsonify(self.dict_all(reports))
 
     @multiroute("/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"])
     @requires_developer

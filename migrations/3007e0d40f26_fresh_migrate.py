@@ -17,19 +17,23 @@ branch_labels = None
 depends_on = None
 
 enums = {
-    'mod_category': sa.Enum('unassigned', 'tools', 'comedy', 'tragic_comedy', 'drama', 'rom_com', 'romance', 'horror', 'mystery', 'satire', 'thriller', 'sci_fi', name='modcategory'),
-    'mod_color': sa.Enum('default', 'red', 'pink', 'purple', 'deep_purple', 'indigo', 'blue', 'cyan', 'teal', 'green', 'lime', 'yellow', 'orange', 'deep_orange', name='modcolor'),
+    'mod_category': sa.Enum('unassigned', 'tools', 'comedy', 'tragic_comedy', 'drama', 'rom_com',
+                            'romance', 'horror', 'mystery', 'satire', 'thriller', 'sci_fi', name='modcategory'),
+    'mod_color': sa.Enum('default', 'red', 'pink', 'purple', 'deep_purple', 'indigo', 'blue', 'cyan',
+                         'teal', 'green', 'lime', 'yellow', 'orange', 'deep_orange', name='modcolor'),
     'mod_status': sa.Enum('archived', 'planning', 'in_development', 'playtesting', 'released', name='modstatus'),
     'connection_type': sa.Enum('github', 'gitlab', 'discord', name='connectiontype'),
     'media_type': sa.Enum('image', 'video', name='mediatype'),
     'report_type': sa.Enum('ipg_violation', 'conduct_violation', 'dmca', name='reporttype'),
-    'author_role': sa.Enum('unassigned', 'owner', 'co_owner', 'programmer', 'artist', 'writer', 'musician', 'public_relations', name='authorrole'),
+    'author_role': sa.Enum('unassigned', 'owner', 'co_owner', 'programmer', 'artist',
+                           'writer', 'musician', 'public_relations', name='authorrole'),
     'reaction_type': sa.Enum('upvote', 'downvote', 'funny', name='reactiontype')
 }
 
 
 def upgrade():
-    op.create_table('mod',
+    op.create_table(
+        'mod',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('title', sa.Unicode(length=64), nullable=True),
@@ -51,7 +55,8 @@ def upgrade():
         sa.PrimaryKeyConstraint('id', name=op.f('pk_mod')),
         sa.UniqueConstraint('title', name=op.f('uq_mod_title'))
     )
-    op.create_table('user',
+    op.create_table(
+        'user',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('email', sa.Unicode(), nullable=True),
@@ -69,7 +74,8 @@ def upgrade():
         sa.UniqueConstraint('email', name=op.f('uq_user_email')),
         sa.UniqueConstraint('username', name=op.f('uq_user_username'))
     )
-    op.create_table('connection',
+    op.create_table(
+        'connection',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('name', sa.Unicode(), nullable=True),
@@ -78,7 +84,8 @@ def upgrade():
         sa.ForeignKeyConstraint(['user'], ['user.id'], name=op.f('fk_connection_user_user')),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_connection'))
     )
-    op.create_table('editors_choice',
+    op.create_table(
+        'editors_choice',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('mod_id', sa.Unicode(), nullable=True),
@@ -90,7 +97,8 @@ def upgrade():
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_editors_choice_mod_id_mod')),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_editors_choice'))
     )
-    op.create_table('media',
+    op.create_table(
+        'media',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('type', enums['media_type'], nullable=True),
@@ -99,13 +107,15 @@ def upgrade():
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_media_mod_id_mod')),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_media'))
     )
-    op.create_table('mod_playtester',
+    op.create_table(
+        'mod_playtester',
         sa.Column('user_id', sa.Unicode(), nullable=True),
         sa.Column('mod_id', sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_mod_playtester_mod_id_mod')),
         sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_mod_playtester_user_id_user'))
     )
-    op.create_table('report',
+    op.create_table(
+        'report',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('content', sa.Unicode(length=1000), nullable=True),
@@ -116,7 +126,8 @@ def upgrade():
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_report_mod_id_mod')),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_report'))
     )
-    op.create_table('review',
+    op.create_table(
+        'review',
         sa.Column('id', sa.Unicode(), nullable=False),
         sa.Column('created_at', sa.DateTime(), nullable=True),
         sa.Column('rating', sa.Numeric(), nullable=True),
@@ -128,20 +139,23 @@ def upgrade():
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_review_mod_id_mod')),
         sa.PrimaryKeyConstraint('id', name=op.f('pk_review'))
     )
-    op.create_table('user_favorite',
+    op.create_table(
+        'user_favorite',
         sa.Column('user_id', sa.Unicode(), nullable=True),
         sa.Column('mod_id', sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_user_favorite_mod_id_mod')),
         sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_user_favorite_user_id_user'))
     )
-    op.create_table('user_mod',
+    op.create_table(
+        'user_mod',
         sa.Column('role', enums['author_role'], nullable=True),
         sa.Column('user_id', sa.Unicode(), nullable=True),
         sa.Column('mod_id', sa.Unicode(), nullable=True),
         sa.ForeignKeyConstraint(['mod_id'], ['mod.id'], name=op.f('fk_user_mod_mod_id_mod')),
         sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_user_mod_user_id_user'))
     )
-    op.create_table('review_reaction',
+    op.create_table(
+        'review_reaction',
         sa.Column('review_id', sa.Unicode(), nullable=True),
         sa.Column('user_id', sa.Unicode(), nullable=True),
         sa.Column('reaction', enums['reaction_type'], nullable=False),

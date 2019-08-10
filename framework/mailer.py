@@ -88,5 +88,4 @@ class Mailer:
                 data=msg) as resp:
             if resp.status == 200:
                 return True
-            else:
-                raise EmailFailed
+            raise EmailFailed

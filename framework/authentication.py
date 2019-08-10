@@ -3,7 +3,7 @@ import bcrypt
 from quart import abort, request
 
 # Sayonika Internals
-from framework.models import User
+from framework.models import Mod, User, ModAuthor
 from framework.objects import jwt_service
 
 
@@ -35,7 +35,9 @@ class Authenticator:
 
         if request.method != "GET":  # Check all methods other than get
             if "mod_id" in kwargs:
-                if kwargs["mod_id"] not in (mod.id for mod in user.mods):
+                user_mods = await Mod.query.where(ModAuthor.user_id == user.id).gino.all()
+
+                if not (user.developer or user.moderator) and kwargs["mod_id"] not in (mod.id for mod in user_mods):
                     abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True
@@ -75,10 +77,8 @@ class Authenticator:
 
         user = await User.get(parsed_token["id"])
 
-        if (
-            (developer_only and not user.developer)
-            or (not developer_only and (not user.moderator or not user.developer))
-        ):
+        if ((developer_only and not user.developer) or (
+                not developer_only and (not user.moderator and not user.developer))):
             abort(403, "User does not have the required permissions to fulfill the request.")
 
         return True
@@ -89,6 +89,6 @@ class Authenticator:
         return bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
     @classmethod
-    def compare_password(cls, password: str, hash: bytes):
-        """Compares a password against hash"""
-        return bcrypt.checkpw(password.encode(), hash)
+    def compare_password(cls, password: str, hash_: bytes):
+        """Compares a password against hash_"""
+        return bcrypt.checkpw(password.encode(), hash_)

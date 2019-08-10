@@ -12,7 +12,6 @@ def get_ratelimit_key():
 
     if token:
         return token
-    elif request.access_route:
+    if request.access_route:
         return request.access_route[0]
-    else:
-        return request.remote_addr
+    return request.remote_addr
