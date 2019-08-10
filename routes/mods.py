@@ -544,7 +544,11 @@ class Mods(RouteCog):
     @requires_login
     @limiter.limit("2 per hour")
     async def report_mod(self, mod_id: str, content: str, type_: ReportType, recaptcha: str):
-        await verify_recaptcha(recaptcha, self.core.aioh_sess)
+        score = await verify_recaptcha(recaptcha, self.core.aioh_sess)
+
+        if score < 0.5:
+            # TODO: send email/other 2FA when below 0.5
+            abort(400, "Possibly a bot")
 
         token = request.headers.get("Authorization", request.cookies.get("token"))
         parsed_token = await jwt_service.verify_login_token(token, True)

@@ -11,7 +11,7 @@ The server uses several environment variables in order to run correctly. All of 
  - `EMAIL_BASE`: Base URL used in emails. (Default: `http://localhost:4444`)
  - `RATELIMITS`: A semicolon (`;`) delimited string of what ratelimits to apply (Default: `1 per 2 seconds;20 per minute;1000 per hour`) (See: https://flask-limiter.readthedocs.io/en/stable/#rate-limit-string-notation)
  - `OWO_KEY`: Token to use for uploading to [whats-th.is](https://whats-th.is/).
- - `RECAPTCHA_KEY`: Secret key to use for validating invisible reCAPTCHA.
+ - `RECAPTCHA_KEY`: Secret key to use for validating reCAPTCHA.
  - `AES_KEY`: 32 bit secret key to use for encryption (usually tracebacks). (Default: `this is a  pretty long key oh no`)
  - `MAILGUN_KEY`: Token to use for sending mail via Mailgun.
  
