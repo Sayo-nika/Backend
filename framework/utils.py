@@ -57,16 +57,11 @@ def paginate(query: Query, page: int, limit: int = 50) -> Query:
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: int, action: Optional[str] = None
+async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: Optional[str] = None
                            ) -> float:
     """Verify a reCAPTCHA request."""
 
-    if version == 2:
-        secret = SETTINGS["RECAPTCHA_CHECKBOX_SECRET_KEY"]
-    elif version == 3:
-        secret = SETTINGS["RECAPTCHA_INVISIBLE_SECRET_KEY"]
-    else:
-        raise ValueError("Invalid reCAPTCHA version")
+    secret = SETTINGS["RECPATCHA_KEY"]
 
     params = {
         "secret": secret,
@@ -79,12 +74,10 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, version: 
         if data["success"] is False:
             abort(400, "Invalid captcha")
 
-        if version == 3 and action and data["action"] != action:
+        if data["action"] != action:
             abort(400, "Invalid captcha action")
 
-    if version == 3:
-        return data["score"]
-    return True
+    return data["score"]
 
 
 class NamedBytes(bytes):
