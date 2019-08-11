@@ -11,7 +11,7 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, ModAuthor, ReportType, UserReport, UserFavorite
+from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType
 from framework.objects import SETTINGS, mailer, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -247,7 +247,7 @@ class Users(RouteCog):
         parsed_token = await jwt_service.verify_login_token(token, True)
         author_id = parsed_token["id"]
 
-        report = await UserReport.create(content=content, author_id=author_id, user_id=user_id, type=type_)
+        report = await UserReport.create(content=content, author_id=author_id, user_id=user_id, type=type)
         return jsonify(report.to_dict())
 
 

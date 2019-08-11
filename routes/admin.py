@@ -184,7 +184,7 @@ class Admin(RouteCog):
 
         return jsonify(True)
 
-    @route("/api/v1/users/report_queue", methods=["GET"])
+    @route("/api/v1/admin/users/report_queue", methods=["GET"])
     @requires_admin
     @json
     @use_kwargs({

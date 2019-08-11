@@ -79,3 +79,10 @@ class ReactionType(Enum):
     upvote = 0
     downvote = 1
     funny = 2
+
+
+class UserReportType(Enum):
+    illegal_content = 0
+    harrasment = 1
+    spam = 2
+    tos_violation = 3
