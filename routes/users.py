@@ -11,7 +11,7 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType
+from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType, ReportType
 from framework.objects import SETTINGS, mailer, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
