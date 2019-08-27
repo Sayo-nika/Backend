@@ -5,7 +5,7 @@ __all__ = ("SETTINGS",)
 
 SETTINGS = {
     # Default
-    "SERVER_BIND": "localhost",
+    "SERVER_BIND": "0.0.0.0",
     "SERVER_PORT": 4444,
     "DB_HOST": "localhost",
     "DB_PORT": 5432,
