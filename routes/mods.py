@@ -299,7 +299,7 @@ class Mods(RouteCog):
     @json
     async def get_ec(self):
         mod_ids = [x.mod_id for x in await EditorsChoice.query.gino.all()]
-        mods = await Mod.query.where(Mod.mod_id in mod_ids).order_by(Mod.downloads.desc()).limit(10).gino.all()
+        mods = await Mod.query.where(Mod.id in mod_ids).order_by(Mod.downloads.desc()).limit(10).gino.all()
         return jsonify(mods)
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH", "DELETE"])
