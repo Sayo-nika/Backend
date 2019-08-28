@@ -17,3 +17,4 @@ cachetools
 git+https://owo.codes/whats-this/owo.py.git
 psycopg2
 unidecode
+quart-cors

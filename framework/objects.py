@@ -7,6 +7,7 @@ import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from aioredis import ConnectionsPool
 from flask_limiter import Limiter
 from owo import Client as OWOClient
+from quart_cors import cors
 
 # Sayonika Internals
 from framework.db import db
@@ -22,7 +23,10 @@ __all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "maile
 loop = asyncio.get_event_loop()
 
 logger = logging.getLogger("Sayonika")
-sayonika_instance = Sayonika()
+sayonika_instance = cors(
+    Sayonika(),
+    allow_origin=["https://sayonika.moe", "http://localhost"]
+)
 jwt_service = JWT(SETTINGS)
 mailer = Mailer(SETTINGS)
 limiter = Limiter(
