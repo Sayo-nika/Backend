@@ -14,7 +14,7 @@ from webargs import fields, validate
 
 # Sayonika Internals
 from framework.models import (Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType,
-                              ModCategory, ReactionType, UserFavorite, ModPlaytester, ReviewReaction)
+                              ModCategory, ReactionType, UserFavorite, ModPlaytester, ReviewReaction, EditorsChoice)
 from framework.objects import db, owo, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -294,6 +294,13 @@ class Mods(RouteCog):
     async def get_trending(self):
         # TODO: implement
         return jsonify([])
+
+    @route("/api/v1/mods/editors_choice")
+    @json
+    async def get_ec(self):
+        mod_ids = [x.mod_id for x in await EditorsChoice.query.gino.all()]
+        mods = await Mod.query.where(Mod.mod_id in mod_ids).order_by(Mod.downloads.desc()).limit(10).gino.all()
+        return jsonify(mods)
 
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH", "DELETE"])
     @json
