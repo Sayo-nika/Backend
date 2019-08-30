@@ -26,7 +26,7 @@ logger = logging.getLogger("Sayonika")
 sayonika_instance = cors(
     Sayonika(),
     allow_origin=["https://sayonika.moe",
-                  "http://localhost:3000"]  # Remove this one when ready for prod
+                  "*"]  # Remove this one when ready for prod
 )
 jwt_service = JWT(SETTINGS)
 mailer = Mailer(SETTINGS)
