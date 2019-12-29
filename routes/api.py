@@ -1,8 +1,6 @@
-# Stdlib
-import json as json_
-
 # External Libraries
 import bcrypt
+from bs4 import BeautifulSoup
 from cachetools import TTLCache
 from quart import abort, jsonify
 from sqlalchemy import or_, and_, func
@@ -26,24 +24,18 @@ async def get_latest_medium_post(session):
     """
     publication = SETTINGS["MEDIUM_PUBLICATION"]
 
-    async with session.get(f"https://medium.com/{publication}/latest?format=json") as resp:
-        # Have to get the response body as text instead of json, because Medium prepends "])}while(1);</x>" to the
-        # start of responses from this "endpoint" because it's unofficial I guess, and there's no "official" endpoint
-        # we can use. Thanks, Medium.
-        data = await resp.text()
+    async with session.get(f"https://medium.com/feed/{publication}") as resp:
+        feed = await resp.text()
 
-    # Replace the first instance of the shitty string (may be present in the article), and then parse.
-    data = data.replace("])}while(1);</x>", "", 1)
-    data = json_.loads(data)
+    soup = BeautifulSoup(feed, "xml")
+    post = soup.item
+    content = BeautifulSoup(post("content:encoded")[0].string, "html.parser")
 
-    post = data["payload"]["posts"][0]
-
-    # Make nice object :) (one that can be simply expanded with `**` for news).
     return {
-        "title": post["title"],
-        "body": post["previewContent"]["subtitle"],
-        "url": f"https://medium.com/{publication}/{post['uniqueSlug']}",
-        "banner": f"https://cdn-images-1.medium.com/max/2048/{post['virtuals']['previewImage']['imageId']}"
+        "title": post.title.string,
+        "body": content.p.string,  # First paragraph is the subtitle thing
+        "url": post.link.string,
+        "banner": content.img["src"].replace("max/1024", "max/2048")  # First image is the banner
     }
 
 
