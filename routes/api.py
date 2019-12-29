@@ -1,5 +1,9 @@
+# Stdlib
+from base64 import b64encode as b64
+
 # External Libraries
 import bcrypt
+import mmh3
 from bs4 import BeautifulSoup
 from cachetools import TTLCache
 from quart import abort, jsonify
@@ -15,6 +19,10 @@ from framework.route_wrappers import json
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
 from framework.utils import verify_recaptcha
+
+
+def hash(string: str):
+    return b64(str(mmh3.hash(string)).encode("utf8")).decode("utf8")
 
 
 async def get_latest_medium_post(session):
@@ -34,8 +42,9 @@ async def get_latest_medium_post(session):
     return {
         "title": post.title.string,
         "body": content.p.string,  # First paragraph is the subtitle thing
-        "url": post.link.string,
-        "banner": content.img["src"].replace("max/1024", "max/2048")  # First image is the banner
+        "url": post.guid.string,
+        "banner": content.img["src"].replace("max/1024", "max/2048"),  # First image is the banner
+        "id": hash(post.guid.string)
     }
 
 
@@ -139,14 +148,16 @@ class Userland(RouteCog):
             "title": recent.title,
             "body": recent.tagline,
             "url": f"/mods/{recent.id}",
-            "banner": recent.banner
+            "banner": recent.banner,
+            "id": hash(recent.id)
         } if recent is not None else None
         featured = {
             "type": 1,
             "title": featured.mod.title,
             "body": featured.editors_notes,
             "url": featured.article_url,
-            "banner": featured.mod.banner
+            "banner": featured.mod.banner,
+            "id": hash(featured.mod.id)
         } if featured is not None else None
         blog = {
             "type": 2,

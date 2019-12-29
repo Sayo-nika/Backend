@@ -20,3 +20,4 @@ unidecode
 quart-cors
 beautifulsoup4
 lxml
+mmh3
