@@ -8,6 +8,7 @@ from typing import List, Tuple, Union, Optional
 # External Libraries
 from marshmallow import Schema
 from marshmallow_enum import EnumField
+from marshmallow_union import Union as UnionField
 from quart import abort, jsonify, request
 from sqlalchemy import and_, func, select
 from webargs import fields, validate
@@ -439,8 +440,10 @@ class Mods(RouteCog):
     @use_kwargs({
         "page": fields.Int(missing=0),
         "limit": fields.Int(missing=10),
-        # Probably won't work right now, will need union field.
-        "rating": fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5, "all"]), missing="all"),
+        "rating": UnionField([
+            fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5])),
+            fields.Str(validate=validate.Equal("all"))
+        ], missing="all")
         "sort": EnumField(ReviewSorting, missing=ReviewSorting.best)
     }, locations=("query",))
     async def get_reviews(self, mod_id: str, page: int, limit: int, rating: Union[int, str],

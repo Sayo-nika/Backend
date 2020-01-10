@@ -21,3 +21,4 @@ quart-cors
 beautifulsoup4
 lxml
 mmh3
+marshmallow_union
