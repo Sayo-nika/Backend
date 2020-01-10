@@ -485,9 +485,10 @@ class Mods(RouteCog):
 
             query = query.where(Review.rating.in_(values))
 
-        reviews = await query.gino.all()
+        reviews = await paginate(query, page, limit).gino.all()
+        total = await query.alias().count().gino.scalar()
 
-        return jsonify(self.dict_all(reviews))
+        return jsonify(total=total, page=page, limit=limit, results=self.dict_all(reviews))
 
     @multiroute("/api/v1/mods/<mod_id>/reviews", methods=["POST"], other_methods=["GET"])
     @requires_login
