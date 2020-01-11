@@ -9,7 +9,7 @@ from typing import List, Tuple, Union, Optional
 from marshmallow import Schema
 from marshmallow_enum import EnumField
 from marshmallow_union import Union as UnionField
-from quart import abort, jsonify, request
+from quart import abort, jsonify
 from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
@@ -18,7 +18,7 @@ from framework.models import (
     Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
     UserFavorite, EditorsChoice, ModPlaytester, ReviewReaction
 )
-from framework.objects import db, owo, limiter, jwt_service
+from framework.objects import db, owo, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
@@ -474,6 +474,31 @@ class Mods(RouteCog):
             downvotes=downvote_aggregate,
             funnys=funny_aggregate
         ).where(Review.mod_id == mod_id)
+
+        user_id = await get_token_user()
+
+        if user_id:
+            did_upvote_q = select([func.count()]).where(and_(
+                ReviewReaction.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.upvote,
+                ReviewReaction.user_id == user_id
+            )).as_scalar()
+            did_downvote_q = select([func.count()]).where(and_(
+                ReviewReaction.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.downvote,
+                ReviewReaction.user_id == user_id
+            )).as_scalar()
+            did_funny_q = select([func.count()]).where(and_(
+                ReviewReaction.review_id == Review.id,
+                ReviewReaction.reaction == ReactionType.funny,
+                ReviewReaction.user_id == user_id
+            )).as_scalar()
+
+            query = query.gino.load(
+                user_reacted_upvote=did_upvote_q,
+                user_reacted_downvote=did_downvote_q,
+                user_reacted_funny=did_funny_q,
+            )
 
         if review_sorters[sort]:
             query = query.order_by(review_sorters[sort])
