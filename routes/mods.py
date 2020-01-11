@@ -14,8 +14,10 @@ from sqlalchemy import and_, func, select
 from webargs import fields, validate
 
 # Sayonika Internals
-from framework.models import (Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType,
-                              ModCategory, ReactionType, UserFavorite, ModPlaytester, ReviewReaction, EditorsChoice)
+from framework.models import (
+    Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
+    UserFavorite, EditorsChoice, ModPlaytester, ReviewReaction
+)
 from framework.objects import db, owo, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
@@ -47,7 +49,7 @@ class ReviewSorting(Enum):
     funniest = 5
 
 
-def data_is_acceptable_img(data: str) -> bool:
+def is_acceptable_img(data: str) -> bool:
     """Check if a given file data is a PNG or JPEG."""
     return imghdr.test_png(data, None) or imghdr.test_jpeg(data, None)
 
@@ -67,7 +69,7 @@ def validate_img(uri: str, name: str, *, return_data: bool = True) -> Optional[T
 
     # Get first 33 bytes of icon data and decode. See: https://stackoverflow.com/a/34287968/8778928
     sample = base64.b64decode(data[:44])
-    type_ = data_is_acceptable_img(sample)
+    type_ = is_acceptable_img(sample)
 
     if type_ is None:
         abort(400, f"`{name}` data is not PNG, JPEG, or WEBP")
@@ -92,6 +94,7 @@ mod_sorters = {
     ModSorting.downloads: Mod.downloads
 }
 
+# Best and funniest handled separately
 review_sorters = {
     ReviewSorting.newest: Review.created_at,
     ReviewSorting.oldest: Review.created_at.asc(),
@@ -443,7 +446,7 @@ class Mods(RouteCog):
         "rating": UnionField([
             fields.Int(validate=validate.OneOf([1, 2, 3, 4, 5])),
             fields.Str(validate=validate.Equal("all"))
-        ], missing="all")
+        ], missing="all"),
         "sort": EnumField(ReviewSorting, missing=ReviewSorting.best)
     }, locations=("query",))
     async def get_reviews(self, mod_id: str, page: int, limit: int, rating: Union[int, str],
@@ -455,29 +458,33 @@ class Mods(RouteCog):
             limit = max(1, min(limit, 25))  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-        query = Review.query.where(Review.mod_id == mod_id)
+
+        upvote_aggregate = select([func.count()]).where(and_(
+            ReviewReaction.review_id == Review.id,
+            ReviewReaction.reaction == ReactionType.upvote
+        )).as_scalar()
+        downvote_aggregate = select([func.count()]).where(and_(
+            ReviewReaction.review_id == Review.id,
+            ReviewReaction.reaction == ReactionType.downvote
+        )).as_scalar()
+        funny_aggregate = select([func.count()]).where(and_(
+            ReviewReaction.review_id == Review.id,
+            ReviewReaction.reaction == ReactionType.funny
+        )).as_scalar()
+
+        query = Review.load(
+            author=User,
+            upvotes=upvote_aggregate,
+            downvotes=downvote_aggregate,
+            funnys=funny_aggregate
+        ).where(Review.mod_id == mod_id)
 
         if review_sorters[sort]:
             query = query.order_by(review_sorters[sort])
         elif sort == ReviewSorting.best:
-            upvoters_count = select([func.count()]).where(and_(
-                ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.upvote
-            )).as_scalar()
-
-            downvoters_count = select([func.count()]).where(and_(
-                ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.downvote
-            )).as_scalar()
-
-            query = query.order_by(upvoters_count - downvoters_count)
+            query = query.order_by(upvote_aggregate - downvote_aggregate)
         elif sort == ReviewSorting.funniest:
-            # Get count of all funny ratings by review.
-            sub_order = select([func.count()]).where(and_(
-                ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.funny
-            )).as_scalar()
-            query = query.order_by(sub_order.desc())
+            query = query.order_by(funny_aggregate.desc())
 
         if isinstance(rating, int):
             values = [rating, rating + 0.5]
