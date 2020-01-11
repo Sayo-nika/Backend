@@ -4,21 +4,21 @@ from enum import Enum
 
 # External Libraries
 from marshmallow_enum import EnumField
-from quart import abort, jsonify, request
+from quart import abort, jsonify
 from sqlalchemy import or_, not_
 from webargs import fields, validate
 
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.mailer import MailTemplates
-from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType, ReportType
+from framework.models import Mod, User, Review, ModAuthor, UserReport, UserFavorite, UserReportType
 from framework.objects import SETTINGS, mailer, limiter, jwt_service
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate, verify_recaptcha
+from framework.utils import paginate, get_token_user, verify_recaptcha
 
 
 class UserSorting(Enum):
@@ -118,17 +118,11 @@ class Users(RouteCog):
         is_through_atme = False
 
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get("token"))
+            user_id = await get_token_user()
 
-            if token is None:
-                abort(401, "Login required")
+            if not user_id:
+                abort(401, "Login required or invalid token")
 
-            parsed = await jwt_service.verify_login_token(token, True)
-
-            if parsed is False:
-                abort(401, "Invalid token")
-
-            user_id = parsed["id"]
             is_through_atme = True
 
         user = await User.get(user_id)
@@ -150,9 +144,7 @@ class Users(RouteCog):
         "avatar": None
     }, locations=("json",))
     async def patch_user(self, old_password: str, password: str = None, **kwargs):
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        user_id = parsed_token["id"]
+        user_id = await get_token_user()
 
         user = await User.get(user_id)
 
@@ -173,12 +165,10 @@ class Users(RouteCog):
     @json
     async def get_favorites(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get("token"))
+            user_id = await get_token_user()
 
-            if token is None:
-                abort(401, "Login required")
-
-            user_id = (await jwt_service.verify_login_token(token, True))["id"]
+            if not user_id:
+                abort(401, "Login required or invalid token")
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")
@@ -193,12 +183,10 @@ class Users(RouteCog):
     @json
     async def get_user_mods(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get("token"))
+            user_id = await get_token_user()
 
-            if token is None:
-                abort(401, "Login required")
-
-            user_id = (await jwt_service.verify_login_token(token, True))["id"]
+            if not user_id:
+                abort(401, "Login required or invalid token")
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")
@@ -213,12 +201,10 @@ class Users(RouteCog):
     @json
     async def get_user_reviews(self, user_id: str):
         if user_id == "@me":
-            token = request.headers.get("Authorization", request.cookies.get("token"))
+            user_id = await get_token_user()
 
-            if token is None:
-                abort(401, "Login required")
-
-            user_id = (await jwt_service.verify_login_token(token, True))["id"]
+            if not user_id:
+                abort(401, "Login required or invalid token")
 
         if not await User.exists(user_id):
             abort(404, "Unknown user")
@@ -231,7 +217,7 @@ class Users(RouteCog):
     @json
     @use_kwargs({
         "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
-        "type_": EnumField(ReportType, required=True),
+        "type_": EnumField(UserReportType, required=True),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     @requires_login
@@ -243,9 +229,7 @@ class Users(RouteCog):
             # TODO: send email/other 2FA when below 0.5
             abort(400, "Possibly a bot")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        author_id = parsed_token["id"]
+        author_id = await get_token_user()
 
         report = await UserReport.create(content=content, author_id=author_id, user_id=user_id, type=type)
         return jsonify(report.to_dict())

@@ -6,12 +6,12 @@ import urllib.parse as urlp
 
 # External Libraries
 import aiohttp
-from quart import abort
+from quart import abort, request
 from sqlalchemy.orm import Query
 from unidecode import unidecode
 
 # Sayonika Internals
-from framework.objects import SETTINGS
+from framework.objects import SETTINGS, jwt_service
 
 GRAVATAR_BASE = "https://www.gravatar.com/avatar/{}?s=512"  # noqa: P103
 DEFAULT_AVATAR = GRAVATAR_BASE.format(
@@ -78,6 +78,13 @@ async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: O
             abort(400, "Invalid captcha action")
 
     return data["score"]
+
+
+async def get_token_user() -> str:
+    token = request.headers.get("Authorization", request.cookies.get("token"))
+    parsed_token = await jwt_service.verify_login_token(token, True)
+
+    return parsed_token["id"] if isinstance(parsed_token, dict) else None
 
 
 class NamedBytes(bytes):

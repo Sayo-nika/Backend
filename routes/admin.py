@@ -14,13 +14,13 @@ from webargs import fields
 # Sayonika Internals
 from framework.authentication import Authenticator
 from framework.models import Mod, User, Report, ModAuthor, AuthorRole, UserReport
-from framework.objects import SETTINGS, db, jwt_service
+from framework.objects import SETTINGS, db
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_admin, requires_developer
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import paginate
+from framework.utils import paginate, get_token_user
 
 
 def get_members(type_) -> List[str]:
@@ -100,7 +100,9 @@ class Admin(RouteCog):
         )
 
         results = await paginate(query, page, limit).gino.all()
-        total = await Mod.query.where(Mod.verified == False).alias().count().gino.scalar()  # noqa: E712 pylint: disable=singleton-comparison
+        total = await Mod.query.where(
+            Mod.verified == False   # noqa: E712 pylint: disable=singleton-comparison
+        ).alias().count().gino.scalar()
         results = self.deep_dict_all(results)
 
         return jsonify(total=total, page=page, limit=limit, results=results)
@@ -166,9 +168,7 @@ class Admin(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        admin_user_id = parsed_token["id"]
+        admin_user_id = await get_token_user()
 
         user = await User.get(admin_user_id)
 
@@ -211,9 +211,7 @@ class Admin(RouteCog):
         if not await User.exists(user_id):
             abort(404, "Unknown user")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        admin_user_id = parsed_token["id"]
+        admin_user_id = await get_token_user()
 
         user = await User.get(admin_user_id)
 

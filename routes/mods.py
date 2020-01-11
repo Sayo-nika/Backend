@@ -24,7 +24,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import NamedBytes, paginate, generalize_text, verify_recaptcha
+from framework.utils import NamedBytes, paginate, get_token_user, generalize_text, verify_recaptcha
 
 
 class AuthorSchema(Schema):
@@ -202,9 +202,7 @@ class Mods(RouteCog):
             # TODO: discuss what to do here
             abort(400, "Possibly a bot")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        user_id = parsed_token["id"]
+        user_id = await get_token_user()
 
         # Check if any mod with a similar enough name exists already.
         generalized_title = generalize_text(title)
@@ -420,9 +418,7 @@ class Mods(RouteCog):
     @route("/api/v1/mods/<mod_id>/download")
     @json
     async def get_download(self, mod_id: str):
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        user_id = parsed_token["id"]
+        user_id = await get_token_user()
 
         mod = await Mod.get(mod_id)
 
@@ -516,9 +512,7 @@ class Mods(RouteCog):
         if not await Mod.exists(mod_id):
             abort(404, "Unknown mod")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        user_id = parsed_token["id"]
+        user_id = await get_token_user()
 
         if await Review.query.where(and_(Review.author_id == user_id, Review.mod_id == mod_id)).gino.first():
             abort(400, "Review already exists")
@@ -568,11 +562,9 @@ class Mods(RouteCog):
             # TODO: send email/other 2FA when below 0.5
             abort(400, "Possibly a bot")
 
-        token = request.headers.get("Authorization", request.cookies.get("token"))
-        parsed_token = await jwt_service.verify_login_token(token, True)
-        user_id = parsed_token["id"]
-
+        user_id = await get_token_user()
         report = await Report.create(content=content, author_id=user_id, mod_id=mod_id, type=type_)
+
         return jsonify(report.to_dict())
 
 
