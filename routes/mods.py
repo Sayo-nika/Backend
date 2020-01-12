@@ -480,19 +480,19 @@ class Mods(RouteCog):
         if user_id:
             did_upvote_q = select([func.count()]).where(and_(
                 ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.upvote,
-                ReviewReaction.user_id == user_id
-            )).as_scalar()
+                ReviewReaction.user_id == user_id,
+                ReviewReaction.reaction == ReactionType.upvote
+            )).limit(1).as_scalar()
             did_downvote_q = select([func.count()]).where(and_(
                 ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.downvote,
-                ReviewReaction.user_id == user_id
-            )).as_scalar()
+                ReviewReaction.user_id == user_id,
+                ReviewReaction.reaction == ReactionType.downvote
+            )).limit(1).as_scalar()
             did_funny_q = select([func.count()]).where(and_(
                 ReviewReaction.review_id == Review.id,
-                ReviewReaction.reaction == ReactionType.funny,
-                ReviewReaction.user_id == user_id
-            )).as_scalar()
+                ReviewReaction.user_id == user_id,
+                ReviewReaction.reaction == ReactionType.funny
+            )).limit(1).as_scalar()
 
             query = query.gino.load(
                 user_reacted_upvote=did_upvote_q,
@@ -545,6 +545,58 @@ class Mods(RouteCog):
         review = await Review.create(title=title, content=content, rating=rating, author_id=user_id, mod_id=mod_id)
 
         return jsonify(review.to_json())
+
+    @route("/api/v1/reviews/<review_id>/react", methods=["POST"])
+    @requires_login
+    @json
+    @use_kwargs({
+        "undo": fields.Bool(missing=False),
+        "type": EnumField(ReactionType, data_key="type", required=True)
+    })
+    async def react_review(self, review_id: str, undo: bool, type_: EnumField):
+        user_id = await get_token_user()
+        where_opts = [
+            ReviewReaction.review_id == review_id,
+            ReviewReaction.user_id == user_id,
+            ReviewReaction.reaction == type_
+        ]
+        create_opts = {
+            "review_id": review_id,
+            "user_id": user_id,
+            "reaction": type_
+        }
+
+        exists = bool(await ReviewReaction.select("id").where(and_(*where_opts)).gino.scalar())
+
+        if (exists and not undo) or (not exists and undo):
+            pass
+        elif not undo:
+            if type_ == ReactionType.upvote:
+                # Negate any downvotes by the user as upvoting and downvoting at the same time is stupid
+                await ReviewReaction.delete.where(and_(
+                    *where_opts[:-1],
+                    ReviewReaction.type == ReactionType.downvote
+                )).gino.status()
+            elif type_ == ReactionType.downvote:
+                # Ditto for any upvotes if trying to downvote
+                await ReviewReaction.delete.where(and_(
+                    *where_opts[:-1],
+                    ReviewReaction.type == ReactionType.downvote
+                )).gino.status()
+
+            await ReviewReaction.create(**create_opts)
+        else:
+            await ReviewReaction.delete.where(and_(*where_opts)).gino.status()
+
+        # Return user's current reaction results
+        results = await ReviewReaction.query.where(and_(*where_opts[:-1])).gino.all()
+        results = [x.reaction for x in results]
+
+        return jsonify(
+            upvote=ReactionType.upvote in results,
+            downvote=ReactionType.downvote in results,
+            funny=ReactionType.funny in results
+        )
 
     @route("/api/v1/mods/<mod_id>/authors")
     @json
