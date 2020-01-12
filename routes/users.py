@@ -217,7 +217,7 @@ class Users(RouteCog):
     @json
     @use_kwargs({
         "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
-        "type_": EnumField(UserReportType, required=True),
+        "type_": EnumField(UserReportType, data_key="type", required=True),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     @requires_login

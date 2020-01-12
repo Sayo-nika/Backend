@@ -575,7 +575,7 @@ class Mods(RouteCog):
     @json
     @use_kwargs({
         "content": fields.Str(required=True, validate=validate.Length(min=100, max=1000)),
-        "type_": EnumField(ReportType, required=True),
+        "type_": EnumField(ReportType, data_key="type", required=True),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     @requires_login
