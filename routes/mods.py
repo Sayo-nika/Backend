@@ -15,7 +15,7 @@ from webargs import fields, validate
 
 # Sayonika Internals
 from framework.models import (
-    Mod, User, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
+    Mod, User, Media, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
     UserFavorite, EditorsChoice, ModPlaytester, ReviewReaction
 )
 from framework.objects import db, owo, limiter
@@ -24,7 +24,7 @@ from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import NamedBytes, paginate, get_token_user, generalize_text, verify_recaptcha
+from framework.utils import NamedBytes, paginate, get_token_user, generalize_text, verify_recaptcha, chunk
 
 
 class AuthorSchema(Schema):
@@ -103,6 +103,17 @@ review_sorters = {
 }
 
 
+def b64img_field(name: str):
+    return fields.Str(
+        validate=validate.Regexp(
+            DATA_URI_RE,
+            error=(f"`{name}` should be a data uri like 'data:image/png;base64,<data>' or "
+                   "'data:image/jpeg;base64,<data>'"),
+        ),
+        required=True
+    )
+
+
 class Mods(RouteCog):
     @staticmethod
     def dict_all(models):
@@ -172,30 +183,18 @@ class Mods(RouteCog):
         "status": EnumField(ModStatus, required=True),
         "category": EnumField(ModCategory, required=True),
         "authors": fields.List(fields.Nested(AuthorSchema), required=True),
-        "icon": fields.Str(
-            validate=validate.Regexp(
-                DATA_URI_RE,
-                error=("`icon` should be a data uri like 'data:image/png;base64,<data>' or "
-                       "'data:image/jpeg;base64,<data>'")
-            ),
-            required=True
-        ),
-        "banner": fields.Str(
-            validate=validate.Regexp(
-                DATA_URI_RE,
-                error=("`banner` should be a data uri like 'data:image/png;base64,<data>' or "
-                       "'data:image/jpeg;base64,<data>'"),
-            ),
-            required=True
-        ),
+        "icon": b64img_field("icon"),
+        "banner": b64img_field("banner"),
+        "media": fields.List(b64img_field("media"), required=True),
         "is_private_beta": fields.Bool(missing=False),
         "mod_playtester": fields.List(fields.Str()),
         "color": EnumField(ModColor, missing=ModColor.default),
         "recaptcha": fields.Str(required=True)
     }, locations=("json",))
     async def post_mods(self, title: str, tagline: str, description: str, website: str, authors: List[dict],
-                        status: ModStatus, category: ModCategory, icon: str, banner: str, recaptcha: str,
-                        color: ModColor, is_private_beta: bool = None, mod_playtester: List[str] = None):
+                        status: ModStatus, category: ModCategory, icon: str, banner: str, media: List[str],
+                        recaptcha: str, color: ModColor, is_private_beta: bool = None,
+                        mod_playtester: List[str] = None):
         score = await verify_recaptcha(recaptcha, self.core.aioh_sess, "create_mod")
 
         if score < 0.5:
@@ -219,6 +218,7 @@ class Mods(RouteCog):
 
         icon_mimetype, icon_data = validate_img(icon, "icon")
         banner_mimetype, banner_data = validate_img(banner, "banner")
+        media = [validate_img(x, "media") for x in media]
 
         for i, author in enumerate(authors):
             if author["id"] == user_id:
@@ -254,12 +254,15 @@ class Mods(RouteCog):
         mod.icon = img_urls[icon_data.name]
         mod.banner = img_urls[banner_data.name]
 
+        # owo only allows uploads in multiples of 3
+        for chunk_ in chunk(media, 3):
+            resp = await owo.async_upload_files(*chunk_)
+            mod.media += resp
+
         await mod.create()
         await ModAuthor.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                             in authors])
-
-        if ModPlaytester is not None:
-            await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in mod_playtester])
+        await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in mod_playtester])
 
         return jsonify(mod.to_dict())
 
@@ -307,7 +310,8 @@ class Mods(RouteCog):
     @multiroute("/api/v1/mods/<mod_id>", methods=["GET"], other_methods=["PATCH", "DELETE"])
     @json
     async def get_mod(self, mod_id: str):
-        mod = await Mod.get(mod_id)
+        # mod = await Mod.get(mod_id)
+        mod = await Mod.load(authors=ModAuthor, media=Media).where(Mod.id == mod_id).gino.first()
 
         if mod is None:
             abort(404, "Unknown mod")
@@ -597,18 +601,6 @@ class Mods(RouteCog):
             downvote=ReactionType.downvote in results,
             funny=ReactionType.funny in results
         )
-
-    @route("/api/v1/mods/<mod_id>/authors")
-    @json
-    async def get_authors(self, mod_id: str):
-        if not await Mod.exists(mod_id):
-            abort(404, "Unknown mod")
-
-        author_pairs = await ModAuthor.query.where(ModAuthor.mod_id == mod_id).gino.all()
-        author_pairs = [x.user_id for x in author_pairs]
-        authors = await User.query.where(User.id.in_(author_pairs)).gino.all()
-
-        return jsonify(self.dict_all(authors))
 
     # This handles POST requests to add zip_url.
     # Usually this would be done via a whole entry but this

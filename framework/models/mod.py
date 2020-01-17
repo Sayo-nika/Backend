@@ -14,26 +14,19 @@ from .enums import ModColor, ModStatus, AuthorRole, ModCategory
 
 if TYPE_CHECKING:
     from .user import User
+    from .media import Media
 
 
 def create_generalized_title(context: DefaultExecutionContext) -> str:
     params = context.get_current_parameters()
-    print(params)
-    print(context.prefetch_cols)
-    # print(context.)
-
-    # FIXME: this will set generalized_title to null if title isn't update.
-    # How to get current row cols???
-    if "title" in params:
-        return generalize_text(params["title"])
+    return generalize_text(params["title"])
 
 
 class Mod(db.Model, Base):
     __tablename__ = "mod"
 
     title = db.Column(db.Unicode(64), unique=True)
-    generalized_title = db.Column(db.Unicode(), unique=True, default=create_generalized_title,
-                                  onupdate=create_generalized_title)
+    generalized_title = db.Column(db.Unicode(), unique=True, default=create_generalized_title)
     icon = db.Column(db.Unicode())
     banner = db.Column(db.Unicode())
     tagline = db.Column(db.Unicode(100))
@@ -56,6 +49,7 @@ class Mod(db.Model, Base):
 
         self._authors = []
         self._owner = None
+        self._media = []
 
     @property
     def authors(self):
@@ -76,11 +70,20 @@ class Mod(db.Model, Base):
     def owner(self):
         return self._owner
 
+    @property
+    def media(self):
+        return self._media
+
+    @media.setter
+    def media(self, value: "Media"):
+        self._media.append(value)
+
     def to_dict(self):
         return {
             **{k: v for k, v in super().to_dict().items() if k not in ("generalized_title",)},
             "authors": self._authors,
-            "owner": self._owner
+            "owner": self._owner,
+            "media": self._media
         }
 
 

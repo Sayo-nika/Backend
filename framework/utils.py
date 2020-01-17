@@ -87,6 +87,12 @@ async def get_token_user() -> str:
     return parsed_token["id"] if isinstance(parsed_token, dict) else None
 
 
+def chunk(l: list, n: int):
+    """Yield successive n-sized chunks from a list."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 class NamedBytes(bytes):
     """Helper class for having `bytes` with `name` for owo."""
 
