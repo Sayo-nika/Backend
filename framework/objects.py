@@ -6,7 +6,6 @@ import logging
 import quart.flask_patch  # noqa: F401 pylint: disable=unused-import
 from aioredis import ConnectionsPool
 from flask_limiter import Limiter
-from owo import Client as OWOClient
 from quart_cors import cors
 
 # Sayonika Internals
@@ -18,7 +17,7 @@ from framework.sayonika import Sayonika
 from framework.settings import SETTINGS
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "loop", "redis", "owo")
+__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "loop", "redis")
 
 loop = asyncio.get_event_loop()
 
@@ -40,7 +39,6 @@ limiter = Limiter(
 redis = InitLaterRedis(
     ConnectionsPool(SETTINGS["REDIS_URL"], minsize=5, maxsize=10, loop=loop)
 )
-owo = OWOClient(SETTINGS["OWO_KEY"])
 
 # Use env vars to update config
 sayonika_instance.config.update(SETTINGS)

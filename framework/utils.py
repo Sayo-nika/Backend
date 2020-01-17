@@ -1,5 +1,6 @@
 # Stdlib
 import hashlib
+import mimetypes
 import string
 from typing import Optional
 import urllib.parse as urlp
@@ -87,17 +88,11 @@ async def get_token_user() -> str:
     return parsed_token["id"] if isinstance(parsed_token, dict) else None
 
 
-def chunk(l: list, n: int):
-    """Yield successive n-sized chunks from a list."""
-    for i in range(0, len(l), n):
-        yield l[i:i + n]
+async def ipfs_upload(file: bytes, filename: str, session: aiohttp.ClientSession) -> dict:
+    form = aiohttp.FormData()
+    form.add_field("file", file, filename=filename, content_type=mimetypes.guess_type(filename)[0])
 
+    async with session.post("https://ipfs.infura.io:5001/api/v0/add") as resp:
+        data = await resp.json()
 
-class NamedBytes(bytes):
-    """Helper class for having `bytes` with `name` for owo."""
-
-    def __new__(cls, *args, name: str = None, **kwargs):
-        inst = bytes.__new__(cls, *args, **kwargs)
-        inst.name = name
-
-        return inst
+    return data

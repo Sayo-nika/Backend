@@ -16,15 +16,15 @@ from webargs import fields, validate
 # Sayonika Internals
 from framework.models import (
     Mod, User, Media, Report, Review, ModColor, ModAuthor, ModStatus, AuthorRole, ReportType, ModCategory, ReactionType,
-    UserFavorite, EditorsChoice, ModPlaytester, ReviewReaction
+    UserFavorite, EditorsChoice, ModPlaytester, ReviewReaction, MediaType
 )
-from framework.objects import db, owo, limiter
+from framework.objects import db, limiter
 from framework.quart_webargs import use_kwargs
 from framework.route import route, multiroute
 from framework.route_wrappers import json, requires_login, requires_supporter
 from framework.routecog import RouteCog
 from framework.sayonika import Sayonika
-from framework.utils import NamedBytes, paginate, get_token_user, generalize_text, verify_recaptcha, chunk
+from framework.utils import paginate, get_token_user, generalize_text, verify_recaptcha, ipfs_upload
 
 
 class AuthorSchema(Schema):
@@ -59,7 +59,7 @@ def get_b64_size(data: bytes) -> int:
     return (len(data) * 3) / 4 - data.count(b"=", -2)
 
 
-def validate_img(uri: str, name: str, *, return_data: bool = True) -> Optional[Tuple[str, str]]:
+def validate_img(uri: str, name: str, *, return_data: bool = True) -> Optional[Tuple[str, bytes]]:
     """Validates an image to be used for banner or icon."""
     # Pre-requirements for uri (determine proper type and size).
     mimetype, data = DATA_URI_RE.match(uri).groups()
@@ -246,23 +246,27 @@ class Mods(RouteCog):
         icon_ext = icon_mimetype.split("/")[1]
         banner_ext = banner_mimetype.split("/")[1]
 
-        icon_data = NamedBytes(icon_data, name=f"icon.{icon_ext}")
-        banner_data = NamedBytes(banner_data, name=f"banner.{banner_ext}")
+        icon_resp = await ipfs_upload(icon_data, f"icon.{icon_ext}", self.core.aioh_sess)
+        banner_resp = await ipfs_upload(banner_data, f"banner.{banner_ext}", self.core.aioh_sess)
 
-        img_urls = await owo.async_upload_files(icon_data, banner_data)
+        mod.icon = icon_resp["Hash"]
+        mod.banner = banner_resp["Hash"]
 
-        mod.icon = img_urls[icon_data.name]
-        mod.banner = img_urls[banner_data.name]
+        media_hashes = []
+        for mime, data in media:
+            ext = mime.split("/")[1]
+            resp = await ipfs_upload(data, f"media.{ext}", self.core.aioh_sess)
 
-        # owo only allows uploads in multiples of 3
-        for chunk_ in chunk(media, 3):
-            resp = await owo.async_upload_files(*chunk_)
-            mod.media += resp
+            media_hashes += [resp]
 
         await mod.create()
         await ModAuthor.insert().gino.all(*[dict(user_id=author["id"], mod_id=mod.id, role=author["role"]) for author
                                             in authors])
         await ModPlaytester.insert().gino.all(*[dict(user_id=user, mod_id=mod.id) for user in mod_playtester])
+
+        if media_hashes:
+            await Media.insert().gino.all(*[dict(type=MediaType.image, hash=hash_, mod_id=mod.id) for hash_
+                                            in media_hashes])
 
         return jsonify(mod.to_dict())
 
@@ -370,37 +374,24 @@ class Mods(RouteCog):
                         and_(ModPlaytester.user_id == playtester, ModPlaytester.mod_id == mod.id)).gino.all():
                     abort(400, f"{playtester} is already enrolled.")
 
-        to_upload = []
-
         if icon is not None:
             icon_mimetype, icon_data = validate_img(icon, "icon")
             icon_data = base64.b64decode(icon_data)
 
             icon_ext = icon_mimetype.split("/")[1]
-            icon_data = NamedBytes(icon_data, name=f"icon.{icon_ext}")
+            icon_resp = await ipfs_upload(icon_data, f"icon.{icon_ext}", self.core.aioh_sess)
 
-            to_upload.append(icon_data)
+            updates = updates.update(icon=icon_resp["Hash"])
 
         if banner is not None:
             banner_mimetype, banner_data = validate_img(banner, "banner")
             banner_data = base64.b64decode(banner_data)
 
             banner_ext = banner_mimetype.split("/")[1]
-            banner_data = NamedBytes(banner_data, name=f"banner.{banner_ext}")
+            banner_resp = await ipfs_upload(banner_data, f"banner.{banner_ext}", self.core.aioh_sess)
 
-            to_upload.append(banner_data)
+            updates = updates.update(banner=banner_resp["Hash"])
 
-        img_urls = await owo.async_upload_files(*to_upload)
-        img_updates = {}
-
-        if icon is not None:
-            img_updates["icon"] = img_urls[icon_data.name]
-
-        if banner is not None:
-            img_updates["banner"] = img_urls[banner_data.name]
-
-        # Lump together image updates because lessening operations or some shit.
-        updates = updates.update(**img_updates)
 
         await updates.apply()
         await ModAuthor.insert().gino.all(*[
