@@ -36,6 +36,7 @@ class EmailFailed(Exception):
 
 class Mailer:
     """Sending mail templates via Mailgun."""
+
     # XXX: switch to redis soon
     cached_templates = {}
 
@@ -61,8 +62,13 @@ class Mailer:
 
         return data
 
-    async def send_mail(self, mail_type: MailTemplates, recipient: str, replacers: Dict[str, str],
-                        session: aiohttp.ClientSession) -> None:
+    async def send_mail(
+        self,
+        mail_type: MailTemplates,
+        recipient: str,
+        replacers: Dict[str, str],
+        session: aiohttp.ClientSession,
+    ) -> None:
         """
         Send mail using a template, along with optionally replacing some values.
         Templates can be found in `framework/mail_templates`.
@@ -77,15 +83,18 @@ class Mailer:
             # interpolate our variable into them
             template = template.replace(f"{{{{{replace_string}}}}}", replace_value)
 
-        msg = {"from": "Sayonika <noreply@sayonika.moe>",
-               "subject": getattr(MailSubjects, mail_type.value),
-               "to": [recipient],
-               "html": template}
+        msg = {
+            "from": "Sayonika <noreply@sayonika.moe>",
+            "subject": getattr(MailSubjects, mail_type.value),
+            "to": [recipient],
+            "html": template,
+        }
 
         async with session.post(
-                "https://api.mailgun.net/v3/sayonika.moe/messages",
-                auth=aiohttp.BasicAuth("api", self.mailgun_key),
-                data=msg) as resp:
+            "https://api.mailgun.net/v3/sayonika.moe/messages",
+            auth=aiohttp.BasicAuth("api", self.mailgun_key),
+            data=msg,
+        ) as resp:
             if resp.status == 200:
                 return True
             raise EmailFailed

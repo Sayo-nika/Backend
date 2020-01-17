@@ -24,17 +24,20 @@ def json(func):
         except _json.JSONDecodeError:
             data = text
 
-        result = _json.dumps({
-            "result": data,
-            "status": response.status_code,
-            "success": response.status_code < 400
-        }, indent=4 if request.args.get("pretty") == "true" else None)
+        result = _json.dumps(
+            {
+                "result": data,
+                "status": response.status_code,
+                "success": response.status_code < 400,
+            },
+            indent=4 if request.args.get("pretty") == "true" else None,
+        )
 
         return Response(
             response=result,
             headers=response.headers,
             status=response.status_code,
-            content_type="application/json"
+            content_type="application/json",
         )
 
     return inner

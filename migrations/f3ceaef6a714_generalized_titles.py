@@ -11,17 +11,19 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'f3ceaef6a714'
-down_revision = '2c6a0e4b5616'
+revision = "f3ceaef6a714"
+down_revision = "2c6a0e4b5616"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.add_column('mod', sa.Column('generalized_title', sa.Unicode(), nullable=True))
-    op.create_unique_constraint(op.f('uq_mod_generalized_title'), 'mod', ['generalized_title'])
+    op.add_column("mod", sa.Column("generalized_title", sa.Unicode(), nullable=True))
+    op.create_unique_constraint(
+        op.f("uq_mod_generalized_title"), "mod", ["generalized_title"]
+    )
 
 
 def downgrade():
-    op.drop_constraint(op.f('uq_mod_generalized_title'), 'mod', type_='unique')
-    op.drop_column('mod', 'generalized_title')
+    op.drop_constraint(op.f("uq_mod_generalized_title"), "mod", type_="unique")
+    op.drop_column("mod", "generalized_title")

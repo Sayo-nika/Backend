@@ -9,7 +9,9 @@ class InitLaterRedis(Redis):  # pylint: disable=abstract-method,too-many-ancesto
         pool = self._pool_or_conn
 
         try:
-            await pool._fill_free(override_min=False)  # pylint: disable=protected-access
+            await pool._fill_free(
+                override_min=False
+            )  # pylint: disable=protected-access
         except Exception:
             pool.close()
             await pool.wait_closed()

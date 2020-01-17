@@ -53,6 +53,7 @@ class Review(db.Model, Base):
             "funnys": self._funnys,
         }
 
+
 class ReviewReaction(db.Model, Base):
     __tablename__ = "review_reaction"
 

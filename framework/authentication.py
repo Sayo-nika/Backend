@@ -11,6 +11,7 @@ class Authenticator:
     """
     Class for checking permissions of users, and hashing passwords.
     """
+
     @classmethod
     async def has_authorized_access(cls, _, **kwargs) -> bool:
         """Checks if a user has a valid token and has verified email."""
@@ -35,10 +36,17 @@ class Authenticator:
 
         if request.method != "GET":  # Check all methods other than get
             if "mod_id" in kwargs:
-                user_mods = await Mod.query.where(ModAuthor.user_id == user.id).gino.all()
+                user_mods = await Mod.query.where(
+                    ModAuthor.user_id == user.id
+                ).gino.all()
 
-                if not (user.developer or user.moderator) and kwargs["mod_id"] not in (mod.id for mod in user_mods):
-                    abort(403, "User does not have the required permissions to fulfill the request.")
+                if not (user.developer or user.moderator) and kwargs["mod_id"] not in (
+                    mod.id for mod in user_mods
+                ):
+                    abort(
+                        403,
+                        "User does not have the required permissions to fulfill the request.",
+                    )
 
         return True
 
@@ -58,7 +66,10 @@ class Authenticator:
         user = await User.get(parsed_token["id"])
 
         if not user.supporter:
-            abort(403, "User does not have the required permissions to fulfill the request.")
+            abort(
+                403,
+                "User does not have the required permissions to fulfill the request.",
+            )
 
         return True
 
@@ -77,9 +88,13 @@ class Authenticator:
 
         user = await User.get(parsed_token["id"])
 
-        if ((developer_only and not user.developer) or (
-                not developer_only and (not user.moderator and not user.developer))):
-            abort(403, "User does not have the required permissions to fulfill the request.")
+        if (developer_only and not user.developer) or (
+            not developer_only and (not user.moderator and not user.developer)
+        ):
+            abort(
+                403,
+                "User does not have the required permissions to fulfill the request.",
+            )
 
         return True
 

@@ -17,24 +17,31 @@ from framework.sayonika import Sayonika
 from framework.settings import SETTINGS
 from framework.tokens import JWT
 
-__all__ = ("sayonika_instance", "limiter", "logger", "jwt_service", "db", "mailer", "loop", "redis")
+__all__ = (
+    "sayonika_instance",
+    "limiter",
+    "logger",
+    "jwt_service",
+    "db",
+    "mailer",
+    "loop",
+    "redis",
+)
 
 loop = asyncio.get_event_loop()
 
 logger = logging.getLogger("Sayonika")
 sayonika_instance = cors(
     Sayonika(),
-    allow_origin=["https://sayonika.moe",
-                  "*"]  # Remove this one when ready for prod
+    allow_origin=["https://sayonika.moe", "*"],  # Remove this one when ready for prod
 )
 jwt_service = JWT(SETTINGS)
 mailer = Mailer(SETTINGS)
 limiter = Limiter(
     key_func=get_ratelimit_key,
-    default_limits=SETTINGS.get(
-        "RATELIMITS",
-        "5 per 2 seconds;1000 per hour"
-    ).split(";")
+    default_limits=SETTINGS.get("RATELIMITS", "5 per 2 seconds;1000 per hour").split(
+        ";"
+    ),
 )
 redis = InitLaterRedis(
     ConnectionsPool(SETTINGS["REDIS_URL"], minsize=5, maxsize=10, loop=loop)

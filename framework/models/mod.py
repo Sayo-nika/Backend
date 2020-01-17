@@ -26,7 +26,9 @@ class Mod(db.Model, Base):
     __tablename__ = "mod"
 
     title = db.Column(db.Unicode(64), unique=True)
-    generalized_title = db.Column(db.Unicode(), unique=True, default=create_generalized_title)
+    generalized_title = db.Column(
+        db.Unicode(), unique=True, default=create_generalized_title
+    )
     icon = db.Column(db.Unicode())
     banner = db.Column(db.Unicode())
     tagline = db.Column(db.Unicode(100))
@@ -37,7 +39,9 @@ class Mod(db.Model, Base):
     nsfw = db.Column(db.Boolean(), default=False)
     theme_color = db.Column(db.Enum(ModColor))
     released_at = db.Column(db.Date(), nullable=True)
-    last_updated = db.Column(db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_updated = db.Column(
+        db.DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow
+    )
     status = db.Column(db.Enum(ModStatus))
     # TODO: probably turn this into a table and have better metrics for determining DLs
     downloads = db.Column(db.BigInteger(), default=0)
@@ -80,10 +84,14 @@ class Mod(db.Model, Base):
 
     def to_dict(self):
         return {
-            **{k: v for k, v in super().to_dict().items() if k not in ("generalized_title",)},
+            **{
+                k: v
+                for k, v in super().to_dict().items()
+                if k not in ("generalized_title",)
+            },
             "authors": self._authors,
             "owner": self._owner,
-            "media": self._media
+            "media": self._media,
         }
 
 

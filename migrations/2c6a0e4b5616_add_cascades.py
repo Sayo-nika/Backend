@@ -13,8 +13,8 @@ import re
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '2c6a0e4b5616'
-down_revision = '3007e0d40f26'
+revision = "2c6a0e4b5616"
+down_revision = "3007e0d40f26"
 branch_labels = None
 depends_on = None
 
@@ -41,7 +41,7 @@ constraints = [
     "fk_user_favorite_user_id_user",
     "fk_user_favorite_mod_id_mod",
     "fk_user_mod_user_id_user",
-    "fk_user_mod_mod_id_mod"
+    "fk_user_mod_mod_id_mod",
 ]
 
 
@@ -51,7 +51,9 @@ def upgrade():
         table, column, foreign = constraint_re.match(constraint).groups()
 
         op.drop_constraint(constraint, table, type_="foreignkey")
-        op.create_foreign_key(op.f(constraint), table, foreign, [column], ['id'], ondelete='CASCADE')
+        op.create_foreign_key(
+            op.f(constraint), table, foreign, [column], ["id"], ondelete="CASCADE"
+        )
 
 
 def downgrade():
@@ -60,4 +62,4 @@ def downgrade():
         table, column, foreign = constraint_re.match(constraint).groups()
 
         op.drop_constraint(op.f(constraint), table, type_="foreignkey")
-        op.create_foreign_key(constraint, table, foreign, [column], ['id'])
+        op.create_foreign_key(constraint, table, foreign, [column], ["id"])

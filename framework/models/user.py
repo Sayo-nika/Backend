@@ -59,9 +59,7 @@ class User(db.Model, Base):
         Converts the model to a dict, but keeps `email` in.
         Used for the `/users/@me` endpoint in particular.
         """
-        return {
-            k: v for k, v in super().to_dict().items() if k not in COMMON_FILTERED
-        }
+        return {k: v for k, v in super().to_dict().items() if k not in COMMON_FILTERED}
 
 
 class UserFavorite(db.Model, Base):

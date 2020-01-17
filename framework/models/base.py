@@ -18,6 +18,7 @@ class Base:
         `exists`: check if a row exists with given id
         `get_any`: gets all rows matching at least one of the given arguments, being optionally case insensitive.
     """
+
     id = db.Column(db.Unicode(), primary_key=True, default=lambda: str(simpleflake()))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -27,7 +28,9 @@ class Base:
         return bool(await cls.select("id").where(cls.id == id_).gino.scalar())
 
     @classmethod
-    def get_any(cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs) -> Gino:
+    def get_any(
+        cls: db.Model, insensitive: Union[bool, List[str]] = False, **kwargs
+    ) -> Gino:
         """Get models that match any of the given kwargs, with them optionally being case insensitive."""
         if not kwargs:
             raise ValueError("No kwargs provided")
@@ -41,7 +44,9 @@ class Base:
                 else:
                     queries.push(getattr(cls, k) == v)
         elif insensitive is True:
-            queries = [func.lower(getattr(cls, k)) == func.lower(v) for k, v in kwargs.items()]
+            queries = [
+                func.lower(getattr(cls, k)) == func.lower(v) for k, v in kwargs.items()
+            ]
         else:
             queries = [getattr(cls, k) == v for k, v in kwargs.items()]
 

@@ -4,6 +4,7 @@ from enum import Enum
 
 class ModStatus(Enum):
     """All valid statuses for a mod."""
+
     archived = 0
     planning = 1
     in_development = 2
@@ -13,6 +14,7 @@ class ModStatus(Enum):
 
 class ConnectionType(Enum):
     """All valid service types for profile connections."""
+
     github = 0
     gitlab = 1
     discord = 2
@@ -25,6 +27,7 @@ class MediaType(Enum):
 
 class ModCategory(Enum):
     """All valid categories for a mod."""
+
     unassigned = 0
     tools = 1
     comedy = 2
@@ -35,12 +38,15 @@ class ModCategory(Enum):
     horror = 7
     mystery = 8
     satire = 9  # Elected Satire instead of Memes and Satire since Memes can fall under satire anyways.
-    thriller = 10  # Compressed Suspense/Thriller into this since they're almost the same.
+    thriller = (
+        10  # Compressed Suspense/Thriller into this since they're almost the same.
+    )
     sci_fi = 11
 
 
 class ModColor(Enum):
     """All valid theme colours for a mod."""
+
     default = 0  # Default Sayonika theme colour
     red = 1
     pink = 2
@@ -59,6 +65,7 @@ class ModColor(Enum):
 
 class AuthorRole(Enum):
     """All valid roles for mod authors."""
+
     unassigned = 0
     owner = 1
     co_owner = 2

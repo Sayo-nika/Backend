@@ -10,9 +10,13 @@ from sqlalchemy.engine.url import URL
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-from framework.db import db as target_metadata  # noqa: E402 isort:skip pylint: disable=wrong-import-position
+from framework.db import (
+    db as target_metadata,
+)  # noqa: E402 isort:skip pylint: disable=wrong-import-position
 import framework.models  # noqa: F401 E402 isort:skip pylint: disable=unused-import,wrong-import-position
-from framework.settings import SETTINGS  # noqa: E402 isort:skip pylint: disable=wrong-import-position
+from framework.settings import (
+    SETTINGS,
+)  # noqa: E402 isort:skip pylint: disable=wrong-import-position
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -35,7 +39,7 @@ def get_url():
         password=SETTINGS["DB_PASS"],
         host=SETTINGS["DB_HOST"],
         port=SETTINGS["DB_PORT"],
-        database=SETTINGS["DB_NAME"]
+        database=SETTINGS["DB_NAME"],
     )
 
 
@@ -45,9 +49,7 @@ def run_migrations_offline():
     Outputs an SQL string which is used to upgrade/downgrade a database, instead of working on it through alembic.
     """
     url = get_url()
-    context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True
-    )
+    context.configure(url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -61,9 +63,7 @@ def run_migrations_online():
     connectable = create_engine(get_url())
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

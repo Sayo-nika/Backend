@@ -95,7 +95,9 @@ class QuartParser(AsyncParser):
             headers=error_headers,
         )
 
-    def handle_invalid_json_error(self, error, req, *args, **kwargs):  # pylint: disable=unused-argument
+    def handle_invalid_json_error(
+        self, error, req, *args, **kwargs
+    ):  # pylint: disable=unused-argument
         abort(400, exc=error, messages={"json": ["Invalid JSON body."]})
 
     def get_default_request(self):

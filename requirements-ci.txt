@@ -6,3 +6,4 @@ flake8-quotes
 flake8-string-format
 flake8-tidy-imports
 isort
+black

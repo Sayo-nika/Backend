@@ -58,18 +58,18 @@ def paginate(query: Query, page: int, limit: int = 50) -> Query:
     return query.limit(limit).offset(page * limit)
 
 
-async def verify_recaptcha(token: str, session: aiohttp.ClientSession, action: Optional[str] = None
-                           ) -> float:
+async def verify_recaptcha(
+    token: str, session: aiohttp.ClientSession, action: Optional[str] = None
+) -> float:
     """Verify a reCAPTCHA request."""
 
     secret = SETTINGS["RECAPTCHA_SECRET_KEY"]
 
-    params = {
-        "secret": secret,
-        "response": token
-    }
+    params = {"secret": secret, "response": token}
 
-    async with session.post("https://www.google.com/recaptcha/api/siteverify", params=params) as resp:
+    async with session.post(
+        "https://www.google.com/recaptcha/api/siteverify", params=params
+    ) as resp:
         data = await resp.json()
 
         if data["success"] is False:
@@ -88,9 +88,13 @@ async def get_token_user() -> str:
     return parsed_token["id"] if isinstance(parsed_token, dict) else None
 
 
-async def ipfs_upload(file: bytes, filename: str, session: aiohttp.ClientSession) -> dict:
+async def ipfs_upload(
+    file: bytes, filename: str, session: aiohttp.ClientSession
+) -> dict:
     form = aiohttp.FormData()
-    form.add_field("file", file, filename=filename, content_type=mimetypes.guess_type(filename)[0])
+    form.add_field(
+        "file", file, filename=filename, content_type=mimetypes.guess_type(filename)[0]
+    )
 
     async with session.post("https://ipfs.infura.io:5001/api/v0/add") as resp:
         data = await resp.json()

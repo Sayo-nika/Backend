@@ -43,8 +43,10 @@ async def get_latest_medium_post(session):
         "title": post.title.string,
         "body": content.p.string,  # First paragraph is the subtitle thing
         "url": post.guid.string,
-        "banner": content.img["src"].replace("max/1024", "max/2048"),  # First image is the banner
-        "id": hash(post.guid.string)
+        "banner": content.img["src"].replace(
+            "max/1024", "max/2048"
+        ),  # First image is the banner
+        "id": hash(post.guid.string),
     }
 
 
@@ -57,11 +59,14 @@ class Userland(RouteCog):
 
     @route("/api/v1/login", methods=["POST"])
     @json
-    @use_kwargs({
-        "username": fields.Str(required=True),
-        "password": fields.Str(required=True),
-        "recaptcha": fields.Str(required=True)
-    }, locations=("json",))
+    @use_kwargs(
+        {
+            "username": fields.Str(required=True),
+            "password": fields.Str(required=True),
+            "recaptcha": fields.Str(required=True),
+        },
+        locations=("json",),
+    )
     async def login(self, username: str, password: str, recaptcha: str):
         score = await verify_recaptcha(recaptcha, self.core.aioh_sess, "login")
 
@@ -86,9 +91,7 @@ class Userland(RouteCog):
 
     @route("/api/v1/verify", methods=["GET"])
     @json
-    @use_kwargs({
-        "token": fields.Str(required=True)
-    }, locations=("query",))
+    @use_kwargs({"token": fields.Str(required=True)}, locations=("query",))
     async def verify_email(self, token):
         parsed_token = await jwt_service.verify_email_token(token, True)
 
@@ -106,25 +109,31 @@ class Userland(RouteCog):
 
     @route("/api/v1/search", methods=["GET"])
     @json
-    @use_kwargs({
-        "q": fields.Str(required=True)
-    }, locations=("query",))
+    @use_kwargs({"q": fields.Str(required=True)}, locations=("query",))
     async def search(self, q: str):
         like = f"%{q}%"
 
-        mods = await Mod.query.where(or_(
-            Mod.title.match(q),
-            Mod.tagline.match(q),
-            Mod.description.match(q),
-
-            Mod.title.ilike(like),
-            Mod.tagline.ilike(like),
-            Mod.description.ilike(like)
-        )).limit(5).gino.all()
-        users = await User.query.where(or_(
-            User.username.match(q),
-            User.username.ilike(like)
-        )).limit(5).gino.all()
+        mods = (
+            await Mod.query.where(
+                or_(
+                    Mod.title.match(q),
+                    Mod.tagline.match(q),
+                    Mod.description.match(q),
+                    Mod.title.ilike(like),
+                    Mod.tagline.ilike(like),
+                    Mod.description.ilike(like),
+                )
+            )
+            .limit(5)
+            .gino.all()
+        )
+        users = (
+            await User.query.where(
+                or_(User.username.match(q), User.username.ilike(like))
+            )
+            .limit(5)
+            .gino.all()
+        )
 
         return jsonify(mods=self.dict_all(mods), users=self.dict_all(users))
 
@@ -134,41 +143,47 @@ class Userland(RouteCog):
         if self.news_cache.get("news"):
             return jsonify(self.news_cache["news"])
 
-        recent = await Mod.query.where(and_(
-            Mod.verified,
-            Mod.status == ModStatus.released
-        )).order_by(func.random()).limit(10).gino.first()
-        featured = await EditorsChoice.load(mod=Mod).where(EditorsChoice.featured).order_by(
-            EditorsChoice.created_at.desc()
-        ).gino.first()
+        recent = (
+            await Mod.query.where(and_(Mod.verified, Mod.status == ModStatus.released))
+            .order_by(func.random())
+            .limit(10)
+            .gino.first()
+        )
+        featured = (
+            await EditorsChoice.load(mod=Mod)
+            .where(EditorsChoice.featured)
+            .order_by(EditorsChoice.created_at.desc())
+            .gino.first()
+        )
         blog = await get_latest_medium_post(self.core.aioh_sess)
 
-        recent = {
-            "type": 0,
-            "title": recent.title,
-            "body": recent.tagline,
-            "url": f"/mods/{recent.id}",
-            "banner": recent.banner,
-            "id": hash(recent.id)
-        } if recent is not None else None
-        featured = {
-            "type": 1,
-            "title": featured.mod.title,
-            "body": featured.editors_notes,
-            "url": featured.article_url,
-            "banner": featured.mod.banner,
-            "id": hash(featured.mod.id)
-        } if featured is not None else None
-        blog = {
-            "type": 2,
-            **blog
-        }
+        recent = (
+            {
+                "type": 0,
+                "title": recent.title,
+                "body": recent.tagline,
+                "url": f"/mods/{recent.id}",
+                "banner": recent.banner,
+                "id": hash(recent.id),
+            }
+            if recent is not None
+            else None
+        )
+        featured = (
+            {
+                "type": 1,
+                "title": featured.mod.title,
+                "body": featured.editors_notes,
+                "url": featured.article_url,
+                "banner": featured.mod.banner,
+                "id": hash(featured.mod.id),
+            }
+            if featured is not None
+            else None
+        )
+        blog = {"type": 2, **blog}
 
-        news = [
-            recent,
-            featured,
-            blog
-        ]
+        news = [recent, featured, blog]
 
         # Featured and recent may be None if there are no EditorsChoices or Mods respectively.
         self.news_cache["news"] = news = [x for x in news if x is not None]

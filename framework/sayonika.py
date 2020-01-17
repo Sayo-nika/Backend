@@ -26,7 +26,9 @@ class Sayonika(Quart):
 
         self.route_dir = ""
         self.json_encoder = CombinedEncoder
-        self.aioh_sess = ClientSession(cookie_jar=DummyCookieJar(), raise_for_status=True)
+        self.aioh_sess = ClientSession(
+            cookie_jar=DummyCookieJar(), raise_for_status=True
+        )
 
         for code, func in exception_handlers.items():
             self.register_error_handler(code, func)

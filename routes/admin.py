@@ -25,7 +25,9 @@ from framework.utils import paginate, get_token_user
 
 def get_members(type_) -> List[str]:
     non_routines = inspect.getmembers(type_, lambda x: not inspect.isroutine(x))
-    return [x[0] for x in non_routines if not (x[0].startswith("_") or x[0].endswith("_"))]
+    return [
+        x[0] for x in non_routines if not (x[0].startswith("_") or x[0].endswith("_"))
+    ]
 
 
 # Probably will need to add this to util or smth later
@@ -54,7 +56,7 @@ class VerifyQueueSorting(Enum):
 
 queue_sorting = {
     VerifyQueueSorting.date_submitted: Mod.created_at,
-    VerifyQueueSorting.name: Mod.title
+    VerifyQueueSorting.name: Mod.title,
 }
 
 
@@ -70,18 +72,28 @@ class Admin(RouteCog):
     @route("/api/v1/mods/verify_queue", methods=["GET"])
     @requires_admin
     @json
-    @use_kwargs({
-        "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50),
-        "sort": EnumField(VerifyQueueSorting, missing="date_submitted"),
-        "ascending": fields.Bool(missing=False),
-        "get_all_authors": fields.Bool(missing=False)
-    })
-    async def get_verify_queue(self, limit: int, page: int, sort: VerifyQueueSorting, ascending: bool,
-                               get_all_authors: bool):  # pylint: disable=unused-argument
+    @use_kwargs(
+        {
+            "page": fields.Int(missing=0),
+            "limit": fields.Int(missing=50),
+            "sort": EnumField(VerifyQueueSorting, missing="date_submitted"),
+            "ascending": fields.Bool(missing=False),
+            "get_all_authors": fields.Bool(missing=False),
+        }
+    )
+    async def get_verify_queue(
+        self,
+        limit: int,
+        page: int,
+        sort: VerifyQueueSorting,
+        ascending: bool,
+        get_all_authors: bool,
+    ):  # pylint: disable=unused-argument
         # TODO: Handle get_all_authors
         if not 1 <= limit <= 100:
-            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+            limit = max(
+                1, min(limit, 100)
+            )  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
         sort_by = queue_sorting[sort]
@@ -89,20 +101,25 @@ class Admin(RouteCog):
         query = Mod.outerjoin(ModAuthor).outerjoin(User).select()
 
         loader = Mod.distinct(Mod.id).load(
-            authors=User.load(
-                role=ModAuthor.distinct(ModAuthor.id)
-            )
+            authors=User.load(role=ModAuthor.distinct(ModAuthor.id))
         )
         query = query.gino.load(loader).query
 
-        query = query.where(Mod.verified == False).order_by(  # noqa: E712 pylint: disable=singleton-comparison
+        query = query.where(
+            Mod.verified == False
+        ).order_by(  # noqa: E712 pylint: disable=singleton-comparison
             sort_by.asc() if ascending else sort_by.desc()
         )
 
         results = await paginate(query, page, limit).gino.all()
-        total = await Mod.query.where(
-            Mod.verified == False   # noqa: E712 pylint: disable=singleton-comparison
-        ).alias().count().gino.scalar()
+        total = (
+            await Mod.query.where(
+                Mod.verified == False  # noqa: E712 pylint: disable=singleton-comparison
+            )
+            .alias()
+            .count()
+            .gino.scalar()
+        )
         results = self.deep_dict_all(results)
 
         return jsonify(total=total, page=page, limit=limit, results=results)
@@ -110,16 +127,20 @@ class Admin(RouteCog):
     @route("/api/v1/mods/report_queue", methods=["GET"])
     @requires_admin
     @json
-    @use_kwargs({
-        "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50)
-    }, locations=("json",))
+    @use_kwargs(
+        {"page": fields.Int(missing=0), "limit": fields.Int(missing=50)},
+        locations=("json",),
+    )
     async def get_mod_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
-            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+            limit = max(
+                1, min(limit, 100)
+            )  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-        reports = await paginate(Report.query.order_by("mod_id"), page, limit).gino.all()
+        reports = await paginate(
+            Report.query.order_by("mod_id"), page, limit
+        ).gino.all()
 
         return jsonify(self.dict_all(reports))
 
@@ -153,16 +174,21 @@ class Admin(RouteCog):
 
         return jsonify(parsed)
 
-    @multiroute("/api/v1/admin/users/<user_id>", methods=["PATCH"], other_methods=["DELETE"])
+    @multiroute(
+        "/api/v1/admin/users/<user_id>", methods=["PATCH"], other_methods=["DELETE"]
+    )
     @requires_developer
     @json
-    @use_kwargs({
-        "supporter": fields.Boolean(allow_none=True),
-        "editor": fields.Boolean(allow_none=True),
-        "moderator": fields.Boolean(allow_none=True),
-        "developer": fields.Boolean(allow_none=True),
-        "password": fields.Str(required=True)
-    }, locations=("json",))
+    @use_kwargs(
+        {
+            "supporter": fields.Boolean(allow_none=True),
+            "editor": fields.Boolean(allow_none=True),
+            "moderator": fields.Boolean(allow_none=True),
+            "developer": fields.Boolean(allow_none=True),
+            "password": fields.Str(required=True),
+        },
+        locations=("json",),
+    )
     async def patch_user_roles(self, user_id: str, password: str, **kwargs):
         # TODO: audit log stuff
         if not await User.exists(user_id):
@@ -178,34 +204,38 @@ class Admin(RouteCog):
         if not kwargs:
             return jsonify(True)
 
-        await User.update.values(**{
-            k: v for k, v in kwargs.items() if v is not None
-        }).where(User.id == user_id).gino.status()
+        await User.update.values(
+            **{k: v for k, v in kwargs.items() if v is not None}
+        ).where(User.id == user_id).gino.status()
 
         return jsonify(True)
 
     @route("/api/v1/admin/users/report_queue", methods=["GET"])
     @requires_admin
     @json
-    @use_kwargs({
-        "page": fields.Int(missing=0),
-        "limit": fields.Int(missing=50)
-    }, locations=("json",))
+    @use_kwargs(
+        {"page": fields.Int(missing=0), "limit": fields.Int(missing=50)},
+        locations=("json",),
+    )
     async def get_user_report_queue(self, limit: int, page: int):
         if not 1 <= limit <= 100:
-            limit = max(1, min(limit, 100))  # Clamp `limit` to 1 or 100, whichever is appropriate
+            limit = max(
+                1, min(limit, 100)
+            )  # Clamp `limit` to 1 or 100, whichever is appropriate
 
         page = page - 1 if page > 0 else 0
-        reports = await paginate(UserReport.query.order_by("user_id"), page, limit).gino.all()
+        reports = await paginate(
+            UserReport.query.order_by("user_id"), page, limit
+        ).gino.all()
 
         return jsonify(self.dict_all(reports))
 
-    @multiroute("/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"])
+    @multiroute(
+        "/api/v1/admin/users/<user_id>", methods=["DELETE"], other_methods=["PATCH"]
+    )
     @requires_developer
     @json
-    @use_kwargs({
-        "password": fields.Str(required=True)
-    }, locations=("json",))
+    @use_kwargs({"password": fields.Str(required=True)}, locations=("json",))
     async def delete_user(self, user_id: str, password: str):
         # TODO: audit log stuff
         if not await User.exists(user_id):
@@ -218,11 +248,13 @@ class Admin(RouteCog):
         if not Authenticator.compare_password(password, user.password):
             abort(401, "Invalid password")
 
-        await Mod.delete.where(and_(
-            ModAuthor.user_id == user_id,
-            ModAuthor.mod_id == Mod.id,
-            ModAuthor.role == AuthorRole.owner
-        )).gino.status()
+        await Mod.delete.where(
+            and_(
+                ModAuthor.user_id == user_id,
+                ModAuthor.mod_id == Mod.id,
+                ModAuthor.role == AuthorRole.owner,
+            )
+        ).gino.status()
         await User.delete.where(User.id == user_id).gino.status()
 
         return jsonify(True)

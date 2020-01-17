@@ -16,13 +16,10 @@ SETTINGS = {
     "AES_KEY": "this is a  pretty long key oh no",
     "REDIS_URL": "redis://localhost:6379/0",
     "EMAIL_BASE": "http://localhost:4444",
-    "MEDIUM_PUBLICATION": "sayonika"
+    "MEDIUM_PUBLICATION": "sayonika",
 }
 
-SETTINGS.update({
-    k[9:]: v for k, v in os.environ.items()
-    if k.startswith("SAYONIKA_")
-})
+SETTINGS.update({k[9:]: v for k, v in os.environ.items() if k.startswith("SAYONIKA_")})
 
 if len(SETTINGS["AES_KEY"]) != 32:
     # Early catch for wrong length key
